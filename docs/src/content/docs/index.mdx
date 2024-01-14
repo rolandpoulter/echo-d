@@ -1,0 +1,40 @@
+---
+title: Welcome
+description: Networking middleware for game ECS
+template: splash
+hero:
+  title: Echo-D
+  tagline: Networking middleware for game ECS
+  image:
+    alt: Dolphin wearing heaphones
+    # file: ../../assets/houston.webp
+    dark: ../../../public/echo-d-dolphin-blur-mirror-medium-night.png
+    light: ../../../public/echo-d-dolphin-blur-mirror-medium.png
+  actions:
+    - text: Get Started
+      link: /guides/example/
+      icon: right-arrow
+      variant: primary
+    - text: Read the specification
+      link: https://github.com/rolantpoulter/echo-d/SPEC.md
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Features
+
+<CardGrid stagger>
+	<Card title="Effecient payload delivery" icon="rocket">
+		Edit `src/content/docs/index.mdx` to see this page change.
+	</Card>
+	<Card title="Modular and portable" icon="puzzle">
+		Add Markdown or MDX files to `src/content/docs` to create new pages.
+	</Card>
+	<Card title="Configure your site" icon="setting">
+		Edit your `sidebar` and other config in `astro.config.mjs`.
+	</Card>
+	<Card title="Read the docs" icon="open-book">
+		Learn more in [the Starlight Docs](https://starlight.astro.build/).
+	</Card>
+</CardGrid>
