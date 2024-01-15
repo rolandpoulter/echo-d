@@ -7,18 +7,26 @@ import starlightTypeDoc, { typeDocSidebarGroup } from 'starlight-typedoc'
 export default defineConfig({
 	integrations: [
 		starlight({
-			title: 'Echo-D Docs',
+			title: 'Echo-D',
 			favicon: 'public/favicon.ico',
-			// logo: {
-			// 	src: './public/echo-d-dolphin.png',
-			// },
+			pagination: true,
+			lastUpdated: true,
+			logo: {
+				src: './src/assets/dolphin/echo-d-dolphin-logo.png',
+			},
 			customCss: [
 				// Path to your Tailwind base styles:
-				'./src/tailwind.css',
-				'./src/custom.css'
+				'./src/assets/tailwind.css',
+				'./src/assets/landing.css'
 			],
+			editLink: {
+				baseUrl: 'https://github.com/rolandpoulter/echo-d/edit/main/docs/',
+			},
 			social: {
 				github: 'https://github.com/rolandpoulter/echo-d',
+			},
+			components: {
+				Footer: './src/components/Footer.astro',
 			},
 			plugins: [
 				// Generate the documentation.
@@ -42,15 +50,24 @@ export default defineConfig({
 				}),
 			],
 			sidebar: [
+				{ label: 'Demo', link: '/demo' },
+				{ label: 'Specification', link: '/spec' },
 				{
 					label: 'Guides',
+					collapsed: true,
 					items: [
 						// Each item here is one entry in the navigation menu.
-						{ label: 'Example Guide', link: '/guides/example/' },
+						{ label: 'Quick Start', link: '/guides/quick_start/' },
+						{ label: 'Configuration', link: '/guides/configuration/' },
+						{ label: 'Networking', link: '/guides/networking/' },
+						{ label: 'Storage Adapters', link: '/guides/storage_adapters/' },
+						{ label: 'Common Issues', link: '/guides/common_issues/' },
 					],
+					// autogenerate: { directory: 'guides' },
 				},
 				{
 					label: 'Reference',
+					collapsed: true,
 					autogenerate: { directory: 'reference' },
 				},
 				// Add the generated sidebar group to the sidebar.

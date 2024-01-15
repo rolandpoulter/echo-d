@@ -1,40 +1,61 @@
 ---
 title: Welcome
-description: Networking middleware for game ECS
+description: Echo-D is a network layer for ECS libraries
 template: splash
 hero:
-  title: Echo-D
-  tagline: Networking middleware for game ECS
+  title: <span class='hero-gradient-text'>Distributed</span> <br/> <span class=''>Entity-Components</span>
+  tagline: Fast, simple network layer for Entity-Component Systems
   image:
     alt: Dolphin wearing heaphones
-    # file: ../../assets/houston.webp
-    dark: ../../../public/echo-d-dolphin-blur-mirror-medium-night.png
-    light: ../../../public/echo-d-dolphin-blur-mirror-medium.png
+    dark: ../../assets/dolphin/echo-d-dolphin-blur-medium-night.png
+    light: ../../assets/dolphin/echo-d-dolphin-blur-medium.png
   actions:
     - text: Get Started
-      link: /guides/example/
+      link: /guides/quick_start/
       icon: right-arrow
       variant: primary
-    - text: Read the specification
-      link: https://github.com/rolantpoulter/echo-d/SPEC.md
-      icon: external
+    - text: View Demo
+      link: /demo
+    - text: See the Spec
+      link: /spec # https://github.com/rolantpoulter/echo-d/SPEC.md
+      variant: secondary
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
+import CardMouseTracker from '../../components/CardMouseTracker.astro';
 
-## Features
+<div class="features">
+  {/* ## Features */}
 
-<CardGrid stagger>
-	<Card title="Effecient payload delivery" icon="rocket">
-		Edit `src/content/docs/index.mdx` to see this page change.
-	</Card>
-	<Card title="Modular and portable" icon="puzzle">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
-	</Card>
-	<Card title="Configure your site" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
-	</Card>
-	<Card title="Read the docs" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
-	</Card>
-</CardGrid>
+  <CardGrid stagger>
+    <Card title="Stream in Real-time" icon="rss">
+      Replicate `entities` and `components`, to keep `systems` synchronized in real-time.
+    </Card>
+    <Card title="Effecient Payload Delivery" icon="rocket">
+      Can handle thousands of `component` updates per second on a single thread.
+    </Card>
+    <Card title="Modular and Flexible" icon="puzzle">
+      Simply integrates with virtually any `ECS` vendor, currently with `TypeScript` support.
+      
+      `Rust` coming soon.
+    </Card>
+    <Card title="Robust Configuration" icon="setting">
+      - Network Transport agnostic.
+      - Supports asynchronous storage adapters.
+      - Easily control data-flow.
+    </Card>
+    <Card title="Supported ECS" icon="list-format">
+      <ul style="columns: 2">
+        <li><input type="checkbox" checked disabled /> bitECS</li>
+        <li><input type="checkbox" checked disabled /> Miniplex</li>
+        <li><input type="checkbox" checked disabled /> Becsy</li>
+        <li><input type="checkbox" disabled /> Bevy (coming soon)</li>
+      </ul>
+    </Card>
+    <Card title="Free and Open Source" icon="open-book">
+      The source code and documentation is hosted publicly online, and contributions can be made by anyone.
+    </Card>
+  </CardGrid>
+</div>
+
+<CardMouseTracker />
