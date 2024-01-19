@@ -50,8 +50,8 @@ export default defineConfig({
 				}),
 			],
 			sidebar: [
-				{ label: 'Demo', link: '/demo' },
 				{ label: 'Specification', link: '/spec' },
+				{ label: 'Example', link: '/example' },
 				{
 					label: 'Guides',
 					collapsed: true,
@@ -60,6 +60,7 @@ export default defineConfig({
 						{ label: 'Quick Start', link: '/guides/quick_start/' },
 						{ label: 'Configuration', link: '/guides/configuration/' },
 						{ label: 'Networking', link: '/guides/networking/' },
+						{ label: 'Performance', link: '/guides/performance/' },
 						{ label: 'Storage Adapters', link: '/guides/storage_adapters/' },
 						{ label: 'Common Issues', link: '/guides/common_issues/' },
 					],

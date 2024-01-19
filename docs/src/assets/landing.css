@@ -29,7 +29,7 @@
 }
 
 :root[data-theme='light'], [data-theme='light'] ::backdrop  {
-    --overlay-blurple: hsla(282, 85%, 65%, 0.2);
+    --overlay-blurple: hsla(267, 85%, 65%, 0.2);
     --footer-blurple: hsla(213, 71%, 44%, 0.1);
     --sl-color-accent: #009bc6;
     --sl-color-text-accent: #009bc6;
@@ -45,7 +45,7 @@
     --ocean-bottom-color: #f5f3eb;
     --sky-top-offset: 20px;
     --sky-sun-color: #ffffff;
-    --sky-sun-offset: 5%;
+    --sky-sun-offset: 50px;
     --sky-sun-edge: 50%;
 }
 
@@ -117,7 +117,7 @@ header .right-group .social-icons a:hover {
             calc(100% + 16rem) / 100rem 28rem,
         radial-gradient(500px circle at 92.5% var(--sky-sun-offset),
             var(--sky-sun-color) 0%, var(--sky-sun-color) 20%, transparent var(--sky-sun-edge)) no-repeat 0 0,
-        linear-gradient(225deg, var(--overlay-blurple), transparent 50%),
+        linear-gradient(225deg, var(--overlay-blurple), transparent 50%) no-repeat 0 0,
         linear-gradient(var(--sky-top-color) var(--sky-top-offset),
             var(--sky-bottom-color) var(--sky-bottom-offset),
             var(--ocean-top-color) var(--ocean-top-offset),
@@ -228,7 +228,8 @@ img, a {
     border: solid 1.5px var(--sl-color-text-accent);
 }
 
-[data-theme='dark'][data-has-hero] .hero .action.minimal {
+[data-theme='dark'][data-has-hero] .hero .action.minimal,
+[data-theme='dark'][data-has-hero] .hero .action.secondary {
     border-width: 2px;
 }
 
