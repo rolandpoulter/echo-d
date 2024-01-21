@@ -1,9 +1,8 @@
 # node_modules
-ecmascript/node_modules/
-ecmascript/docs/node_modules
+node_modules/
 
 # docs build output
-ecmascript/docs/dist/
+docs/dist/
 
 # generated types
 .astro/
@@ -15,7 +14,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # rust target
-rust/target
+rust/target/
 
 # environment variables
 .env

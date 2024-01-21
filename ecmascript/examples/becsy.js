@@ -1,5 +1,6 @@
 import {System, Type, World} from '@lastolivegames/becsy';
 import { BecsyStorage } from '../lib/extra/storage/becsy.js'
+import { getWorld } from './echo.js';
 import EchoD, {
     // Context as EchoDContext,
     // Options as EchoDOptions,
@@ -58,11 +59,12 @@ export class Spin {
     };
 }
 
-export const echoD = new EchoD(
+export const createBecsyEchoD = (options = {}, Handler = EchoD, actions = EchoDNode.actions) => new Handler(
     // context,
     {},
     // options,
     {
+        ...(options || {}),
         types: {
             asset: String,
             collider: String,
@@ -72,12 +74,17 @@ export const echoD = new EchoD(
             rotation: ['f32', 3, Rotation, Rotation.schema],
             velocity: ['f32', 3, Velocity, Velocity.schema],
             spin: ['f32', 3, Spin, Spin.schema],
+            ...(options && options.types || {}),
         },
     },
-    EchoDNode.actions,
+    actions,
     BecsyStorage
 )
 
-export const world = echoD.context.store.world
+export function bescyExample() {
+    const echo = createBecsyEchoD()
+    const world = getWorld(echo)
+    return { echo, world }
+}
 
-export default echoD
+export default bescyExample()

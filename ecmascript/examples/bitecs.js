@@ -8,6 +8,7 @@ import {
     pipe,
 } from 'bitecs'
 import { BitECSStorage } from '../lib/extra/storage/bitecs.js'
+import { getWorld } from './echo.js';
 import EchoD, {
     // Context as EchoDContext,
     // Options as EchoDOptions,
@@ -39,11 +40,12 @@ export const Rotation = defineComponent(Vector3)
 export const Velocity = defineComponent(Vector3)
 export const Spin = defineComponent(Vector3)
 
-export const echoD = new EchoD(
+export const createBitECSEchoD = (options = {}, Handler = EchoD, actions = EchoDNode.actions) => new Handler(
     // context,
     {},
     // options,
     {
+        ...(options || {}),
         types: {
             asset: String,
             collider: String,
@@ -53,12 +55,17 @@ export const echoD = new EchoD(
             rotation: ['f32', 3, Rotation, Vector3],
             velocity: ['f32', 3, Velocity, Vector3],
             spin: ['f32', 3, Spin, Vector3],
+            ...(options && options.types || {}),
         },
     },
-    EchoDNode.actions,
+    actions,
     BitECSStorage
 )
 
-export const world = echoD.context.store.world
+export function bitECSExample() {
+    const echo = createBitECSEchoD()
+    const world = getWorld(echo)
+    return { echo, world }
+}
 
-export default echoD
+export default bitECSExample()

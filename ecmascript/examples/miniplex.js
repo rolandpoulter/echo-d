@@ -1,5 +1,6 @@
 // import { World } from 'miniplex'
 import { MiniplexStorage } from '../lib/extra/storage/miniplex.js'
+import { getWorld } from './echo.js';
 import EchoD, {
     // Context as EchoDContext,
     // Options as EchoDOptions,
@@ -25,15 +26,19 @@ type Entity = {
 // const echoDOptions = new EchoDOptions({}, EchoDNode.actions)
 // const echoDContext = new EchoDContext({}, options, MiniplexStorage)
 
-export const echoD = new EchoD(
+export const createMiniplexEchoD = (options, Handler = EchoD, actions = EchoDNode.actions) => new Handler(
     // echoDOptions,
     {},
     // echoDContext,
-    {},
-    EchoDNode.actions,
+    options,
+    actions,
     MiniplexStorage
 )
 
-export const world = echoD.context.store.world
+export function miniplexExample() {
+    const echo = createMiniplexEchoD()
+    const world = getWorld(echo)
+    return { echo, world }
+}
 
-export default echoD
+export default miniplexExample()

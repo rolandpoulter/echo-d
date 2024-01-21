@@ -8,12 +8,14 @@ export class System {
         return handler.queryComponents(query)
     }
 
+    declare name: string;
     declare handler: Handler;
     declare exclude: Set<string>;
     declare components: Set<string>;
     declare entities: Set<any>;
 
-    constructor (handler: Handler, components: Set<string>, exclude: Set<string> = new Set()) {
+    constructor (handler: Handler, name: string = '', components: Set<string>, exclude: Set<string> = new Set()) {
+        this.name = name || this.constructor.name
         this.handler = handler
         this.exclude = exclude
         this.components = components
@@ -24,19 +26,39 @@ export class System {
         return this.entities
     }
     
-    execute (fn: (handler: Handler, entity: string) => void) {
+    execute (
+        fn: (system: System, entity: string, data: any) => void,
+        data: ((system: System) => any) | any = null
+    ) {
         const entities = this.query()
-        const handler = this.handler
+        if (typeof data === 'function') {
+            data = data(this)
+        }
         for (const entity of entities) {
-            fn(handler, entity)
+            fn(this, entity, data)
         }
     }
 }
 
-export function executeSystems (systems: System[], fn: (handler: Handler, entity: string) => void) {
+export function executeSystems (
+    systems: System[],
+    fn: (system: System, entity: string, data: any) => void,
+    data: ((system: System) => any) | any = null
+) {
     for (const system of systems) {
-        system.execute(fn)
+        system.execute(fn, data)
     }
+}
+
+export function filterSystems (
+    names: string[],
+    systems: System[],
+    lowercase: boolean = true
+) {
+    return systems.filter(system => {
+        const name = system.name
+        return names.includes(lowercase ? name.toLowerCase() : name)
+    })
 }
 
 export class SystemHandler extends Handler {
@@ -47,8 +69,8 @@ export class SystemHandler extends Handler {
         this.systems = []
     }
 
-    createSystem (components: Set<string>, exclude: Set<string> = new Set(), _System = System) {
-        const system = new _System(this, components, exclude)
+    createSystem (name: string = '', components: Set<string>, exclude: Set<string> = new Set(), _System = System) {
+        const system = new _System(this, name, components, exclude)
         this.systems.push(system)
         return system
     }
@@ -60,7 +82,28 @@ export class SystemHandler extends Handler {
         }
     }
 
-    executeSystems (fn: (handler: Handler, entity: string) => void) {
-        executeSystems(this.systems, fn)
+    executeSystems (
+        fn: (system: System, entity: string, data: any) => void,
+        data: ((handler: Handler) => any) | any = null,
+        systems: ((handler: Handler) => System[]) | System[] = this.systems
+    ) {
+        if (typeof systems === 'function') {
+            systems = systems(this)
+        }
+        if (typeof data === 'function') {
+            data = data(this)
+        }
+        executeSystems(systems, fn, data)
+    }
+
+    filterSystems (
+        names: string[],
+        lowercase: boolean = true,
+        systems: ((handler: Handler) => System[]) | System[] = this.systems
+    ) {
+        if (typeof systems === 'function') {
+            systems = systems(this)
+        }
+        return filterSystems(names, systems, lowercase)
     }
 }

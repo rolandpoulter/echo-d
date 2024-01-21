@@ -7,12 +7,20 @@ import EchoD, {
 // const echoDOptions = new EchoDOptions({}, EchoDNode.actions)
 // const echoDContext = new EchoDContext({}, options, MiniplexStorage)
 
-const echoD = new EchoD(
-    // echoDOptions,
-    {},
+const createEchoD = (options = {}, Handler = EchoD, actions = EchoDNode.actions) => new Handler(
     // echoDContext,
     {},
-    EchoDNode.actions,
+    // echoDOptions,
+    options,
+    actions,
 )
 
-export default echoD
+export const getWorld = (echo) => echo.context.store.world
+
+export function echoExample() {
+    const echo = createEchoD()
+    const world = getWorld(echo)
+    return { echo, world }
+}
+
+export default echoExample()

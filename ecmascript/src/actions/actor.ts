@@ -34,7 +34,7 @@ export const ActorActionsFactory = (Parent: any = Object): any => class ActorAct
     
     if (Array.isArray(payload)) {
       input = payload[0] as InputPayload
-      tick = payload[1]
+      tick = payload[1] || 0
     } else {
       input = payload as InputPayload
     }

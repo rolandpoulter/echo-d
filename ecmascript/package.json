@@ -37,6 +37,7 @@
   },
   "browser": {},
   "scripts": {
+    "cloc": "cloc --exclude-dir=node_modules,docs,dist ..",
     "build": "npm run compile && npm run pack",
     "compile": "npm run precompile && npm run patch-storage-bitecs",
     "precompile": "tsc --build . && tsc-alias",
