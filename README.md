@@ -1,8 +1,10 @@
-<img alt="Dolphin" src="https://gitlab.rumblinglabs.com/roland/echo-d/-/raw/main/docs/public/dolphin/echo-d-dolphin.png?inline=false" width="50%" style="transform: scaleX(-1) scaleY(0.9) rotate(25deg); margin: 0 auto;" />
+<table align="center"><tr><td align="center" width="9999">
+<img alt="Dolphin" src="https://gitlab.rumblinglabs.com/roland/echo-d/-/raw/main/docs/public/dolphin/echo-d-dolphin.png?inline=false" width="50%" style="transform: scaleX(-1) scaleY(0.9) rotate(25deg);" />
 
 # Echo-D
 
 Distributed Entity-Component network protocol
+</td></tr></table>
 
 ## Badges
 
