@@ -2,16 +2,14 @@
 editUrl: false
 next: true
 prev: true
-title: "TypeMap"
+title: "BasicTypes"
 ---
 
-> **`const`** **TypeMap**: `any`
-
-The Indexes interface represents a mapping from keys to any array.
+> **`const`** **BasicTypes**: `Map`\<`string`, `any`\>
 
 ## Source
 
-ecmascript/src/storage.ts:57
+ecmascript/src/types.ts:1
 
 ***
 

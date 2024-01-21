@@ -72,9 +72,9 @@ ecmascript/src/updater.ts:32
 
 ***
 
-### validkeys?
+### validKeys?
 
-> **validkeys**?: `null` \| `Object`
+> **validKeys**?: `null` \| `Object`
 
 #### Source
 

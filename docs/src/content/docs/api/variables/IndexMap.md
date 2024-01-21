@@ -2,14 +2,16 @@
 editUrl: false
 next: true
 prev: true
-title: "ArrayTypes"
+title: "IndexMap"
 ---
 
-> **`const`** **ArrayTypes**: `Map`\<`string`, `any`\>
+> **`const`** **IndexMap**: `any`
+
+The Indexes interface represents a mapping from keys to any array.
 
 ## Source
 
-ecmascript/src/types.ts:15
+ecmascript/src/storage.ts:57
 
 ***
 
