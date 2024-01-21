@@ -1,5 +1,6 @@
-
-![Dolphin](https://gitlab.rumblinglabs.com/roland/echo-d/-/raw/main/docs/public/dolphin/echo-d-dolphin.png?inline=false)
+<center>
+<img alt="Dolphin" src="https://gitlab.rumblinglabs.com/roland/echo-d/-/raw/main/docs/public/dolphin/echo-d-dolphin.png?inline=false" width="50%" style="transform: scaleX(-1) scaleY(0.9) rotate(25deg)" />
+</center>
 
 # Echo-D
 
