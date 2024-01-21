@@ -2920,11 +2920,11 @@ class Options {
             ..._constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultUpdateOptions,
             ...overridenUpdateOptions
         };
-        updateOptions.validkeys = !overridenUpdateOptions?.validkeys
+        updateOptions.validKeys = !overridenUpdateOptions?.validKeys
             ? null
             : {
                 ..._constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultValidKeys,
-                ...(overridenUpdateOptions?.validkeys || {})
+                ...(overridenUpdateOptions?.validKeys || {})
             };
         this.actions = actions;
         this.batchActionPayloadSizes = batchActionPayloadSizes;
@@ -3953,7 +3953,7 @@ __webpack_require__.r(__webpack_exports__);
 async function updater(context, options, tick = Date.now()) {
     options = options instanceof _options_js__WEBPACK_IMPORTED_MODULE_0__.Options ? options : new _options_js__WEBPACK_IMPORTED_MODULE_0__.Options(options);
     const { responder, enumDefaultSymbols, compressStringsAsInts, enableRollback, isOrdered, isDiffed, isGroupedComponents, types, setGroupedValue, updateOptions } = options;
-    const { batched, batchSize, mask, type, validkeys } = updateOptions;
+    const { batched, batchSize, mask, type, validKeys } = updateOptions;
     if (!context.pending) {
         return;
     }
@@ -4020,7 +4020,7 @@ async function updater(context, options, tick = Date.now()) {
             }
             const updatedComponents = pendingComponents ? pendingComponents[id] : {};
             for (const key of Object.keys(updatedComponents[id] ?? {})) {
-                if (validkeys && !validkeys[key]) {
+                if (validKeys && !validKeys[key]) {
                     break;
                 }
                 let group = null;
@@ -4164,7 +4164,7 @@ async function updater(context, options, tick = Date.now()) {
             }
             const nid = ensureSymbol(id);
             for (const key of Object.keys(components)) {
-                if (validkeys && !validkeys[key]) {
+                if (validKeys && !validKeys[key]) {
                     break;
                 }
                 const nkey = ensureSymbol(key);

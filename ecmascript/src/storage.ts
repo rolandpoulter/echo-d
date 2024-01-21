@@ -3,7 +3,7 @@ import { Index } from './indexes/index'
 import { SortedIndex } from './indexes/sorted'
 import { SpatialIndex } from './indexes/spatial'
 import { ComponentsIndex } from './indexes/components'
-import { ArrayTypes } from './types'
+import { BasicTypes, ArrayTypes } from './types'
 import { binarySearch } from './utils'
 import { paginate } from './utils'
 
@@ -54,7 +54,7 @@ export interface StorageOptions {
 /**
  * The Indexes interface represents a mapping from keys to any array.
  */
-export const TypeMap: any = {
+export const IndexMap: any = {
   sorted: SortedIndex,
   spatial: SpatialIndex,
 }
@@ -108,9 +108,9 @@ export class Storage {
     for (let key in types) {
       let TypeCtor = types[key];
       if (Array.isArray(TypeCtor)) {
-        TypeCtor = ArrayTypes.get(TypeCtor[0])
+        TypeCtor = BasicTypes.get(TypeCtor[0]) || ArrayTypes.get(TypeCtor[0])
       } else if (typeof TypeCtor === 'string') {
-        TypeCtor = ArrayTypes.get(TypeCtor)
+        TypeCtor = BasicTypes.get(TypeCtor) || ArrayTypes.get(TypeCtor)
       }
       if (typeof TypeCtor === 'function') {
         if (TypeCtor) {
@@ -124,7 +124,7 @@ export class Storage {
     this.indexes = {}
     for (let key in indexes) {
       const { type } = indexes[key]
-      const IndexCtor = TypeMap[type]
+      const IndexCtor = IndexMap[type]
       if (IndexCtor) {
         this.indexes[key] = {
           actors: new IndexCtor([], indexes[key]),

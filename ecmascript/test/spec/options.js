@@ -53,7 +53,7 @@ export default function optionsSpec(echo, { describe, it, expect, mock, spy }) {
             //     symbols: true
             // });
             expect(options.updateOptions.type).toBe(true);
-            // expect(options.updateOptions.validkeys).toEqual({
+            // expect(options.updateOptions.validKeys).toEqual({
             //     collider: true,
             //     color: true,
             //     hidden: true,
@@ -116,7 +116,7 @@ export default function optionsSpec(echo, { describe, it, expect, mock, spy }) {
                         symbols: false
                     },
                     type: false,
-                    validkeys: {
+                    validKeys: {
                         collider: false,
                         color: false,
                         hidden: false,
@@ -149,7 +149,7 @@ export default function optionsSpec(echo, { describe, it, expect, mock, spy }) {
             //     symbols: false
             // });
             expect(options.updateOptions.type).toBe(false);
-            // expect(options.updateOptions.validkeys).toEqual({
+            // expect(options.updateOptions.validKeys).toEqual({
             //     collider: false,
             //     color: false,
             //     hidden: false,

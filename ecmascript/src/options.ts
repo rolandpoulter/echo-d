@@ -160,11 +160,11 @@ export class Options  {
       ...overridenUpdateOptions
     }
 
-    updateOptions.validkeys = !overridenUpdateOptions?.validkeys
+    updateOptions.validKeys = !overridenUpdateOptions?.validKeys
       ? null
       : {
           ...Constants.defaultValidKeys,
-          ...(overridenUpdateOptions?.validkeys || {})
+          ...(overridenUpdateOptions?.validKeys || {})
         }
 
     this.actions = actions

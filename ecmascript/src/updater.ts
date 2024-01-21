@@ -30,7 +30,7 @@ export interface UpdateOptions {
     symbols?: boolean;
   };
   type?: any;
-  validkeys?: { [key: string]: boolean } | null;
+  validKeys?: { [key: string]: boolean } | null;
 }
 
 /**
@@ -61,7 +61,7 @@ export async function updater (context: Context, options: Options | any, tick: n
     batchSize,
     mask,
     type,
-    validkeys
+    validKeys
   } = updateOptions
 
   if (!context.pending) {
@@ -144,7 +144,7 @@ export async function updater (context: Context, options: Options | any, tick: n
       const updatedComponents = pendingComponents ? pendingComponents[id] : {}
 
       for (const key of Object.keys(updatedComponents[id] ?? {})) {
-        if (validkeys && !validkeys[key]) {
+        if (validKeys && !validKeys[key]) {
           break
         }
 
@@ -313,7 +313,7 @@ export async function updater (context: Context, options: Options | any, tick: n
       const nid = ensureSymbol(id)
 
       for (const key of Object.keys(components)) {
-        if (validkeys && !validkeys[key]) {
+        if (validKeys && !validKeys[key]) {
           break
         }
 

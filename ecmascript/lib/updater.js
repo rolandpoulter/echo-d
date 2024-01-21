@@ -11,7 +11,7 @@ import { ArrayTypes } from './types.js';
 export async function updater(context, options, tick = Date.now()) {
     options = options instanceof Options ? options : new Options(options);
     const { responder, enumDefaultSymbols, compressStringsAsInts, enableRollback, isOrdered, isDiffed, isGroupedComponents, types, setGroupedValue, updateOptions } = options;
-    const { batched, batchSize, mask, type, validkeys } = updateOptions;
+    const { batched, batchSize, mask, type, validKeys } = updateOptions;
     if (!context.pending) {
         return;
     }
@@ -78,7 +78,7 @@ export async function updater(context, options, tick = Date.now()) {
             }
             const updatedComponents = pendingComponents ? pendingComponents[id] : {};
             for (const key of Object.keys(updatedComponents[id] ?? {})) {
-                if (validkeys && !validkeys[key]) {
+                if (validKeys && !validKeys[key]) {
                     break;
                 }
                 let group = null;
@@ -222,7 +222,7 @@ export async function updater(context, options, tick = Date.now()) {
             }
             const nid = ensureSymbol(id);
             for (const key of Object.keys(components)) {
-                if (validkeys && !validkeys[key]) {
+                if (validKeys && !validKeys[key]) {
                     break;
                 }
                 const nkey = ensureSymbol(key);

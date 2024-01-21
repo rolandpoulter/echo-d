@@ -57,11 +57,11 @@ export class Options {
             ...Constants.defaultUpdateOptions,
             ...overridenUpdateOptions
         };
-        updateOptions.validkeys = !overridenUpdateOptions?.validkeys
+        updateOptions.validKeys = !overridenUpdateOptions?.validKeys
             ? null
             : {
                 ...Constants.defaultValidKeys,
-                ...(overridenUpdateOptions?.validkeys || {})
+                ...(overridenUpdateOptions?.validKeys || {})
             };
         this.actions = actions;
         this.batchActionPayloadSizes = batchActionPayloadSizes;

@@ -28,7 +28,7 @@ fn updater(context: Context, options: ExtendedOptions) {
         batchSize,
         mask,
         type,
-        validkeys,
+        validKeys,
     } = updateOptions;
 
     if !context.pending {
@@ -123,7 +123,7 @@ fn updater(context: Context, options: ExtendedOptions) {
             let nid = ensureSymbol(id);
 
             for (key, _) in components {
-                if validkeys && !validkeys[key] {
+                if validKeys && !validKeys[key] {
                     break;
                 }
 
@@ -148,7 +148,7 @@ fn updater(context: Context, options: ExtendedOptions) {
             }
 
             for (key, value) in components[id] {
-                if validkeys && !validkeys[key] {
+                if validKeys && !validKeys[key] {
                     break;
                 }
 
@@ -174,7 +174,7 @@ fn updater(context: Context, options: ExtendedOptions) {
             }
 
             for (key, _) in updatedComponents[id] {
-                if validkeys && !validkeys[key] {
+                if validKeys && !validKeys[key] {
                     break;
                 }
 

@@ -143,11 +143,11 @@ export default function storeSpec(echo, { describe, it, expect, mock, spy }) {
             // Add assertions to verify that no part of the system state has been updated
         });
 
-        // When validkeys is defined and a component has a key that is not in the validkeys object, it should not update that component.
-        it('should not update a component when it has a key that is not in the validkeys object', () => {
+        // When validKeys is defined and a component has a key that is not in the validKeys object, it should not update that component.
+        it('should not update a component when it has a key that is not in the validKeys object', () => {
             // Arrange
             const context = new Context();
-            const options = new Options({ updateOptions: { validkeys: { key1: true } } });
+            const options = new Options({ updateOptions: { validKeys: { key1: true } } });
 
             context.store.setComponents({
                 component1: { key1: 'value1', key2: 'value2' }
@@ -157,7 +157,7 @@ export default function storeSpec(echo, { describe, it, expect, mock, spy }) {
             updater(context, options);
 
             // Assert
-            // Add assertions to verify that the component with a key not in the validkeys object has not been updated
+            // Add assertions to verify that the component with a key not in the validKeys object has not been updated
         });
     });
 }
