@@ -1,5 +1,5 @@
 
-![Logo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/th5xamgrr6se0x5ro4g6.png)
+![Dolphin](https://gitlab.rumblinglabs.com/roland/echo-d/-/raw/main/docs/public/dolphin/echo-d-dolphin.png?inline=false)
 
 # Echo-D
 
