@@ -1,6 +1,4 @@
-<center>
-<img alt="Dolphin" src="https://gitlab.rumblinglabs.com/roland/echo-d/-/raw/main/docs/public/dolphin/echo-d-dolphin.png?inline=false" width="50%" style="transform: scaleX(-1) scaleY(0.9) rotate(25deg)" />
-</center>
+<img alt="Dolphin" src="https://gitlab.rumblinglabs.com/roland/echo-d/-/raw/main/docs/public/dolphin/echo-d-dolphin.png?inline=false" width="50%" style="transform: scaleX(-1) scaleY(0.9) rotate(25deg); margin: 0 auto;" />
 
 # Echo-D
 
@@ -29,11 +27,9 @@ See `contributing.md` for ways to get started.
 
 Please adhere to this project's `code of conduct`.
 
-
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
-
 
 ## Related
 
