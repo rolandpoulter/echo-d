@@ -4,7 +4,7 @@ description: High level example of the Echo-D usage.
 ---
 import echoD from '../../../../ecmascript/dist/module/lib.echo-d.js'
 
-Setting up an instance of Echo-D:
+Import Echo-D:
 
 ```js
 import EchoD, {
@@ -13,21 +13,31 @@ import EchoD, {
     Context as EchoDContext,
     Storage as EchoDStorage,
 } from 'echo-d'
+```
 
+Configure options:
+
+```js
 const customOptions = {}
 
 const echoDOptions = new EchoDOptions(customOptions, EchoDNode.actions)
+```
 
+Create a new context:
+
+```js
 const customContext = {}
 
 const echoDContext = new EchoDContext(customContext, echoDOptions, EchoDStorage)
+```
 
+Setting up an instance of Echo-D:
+
+```js
 const echoD = new EchoD(
     echoDContext,
     echoDOptions,
 )
-
-export default echoD
 ```
 
 Using Echo-D to synchornize entity-component state:
@@ -36,15 +46,17 @@ Using Echo-D to synchornize entity-component state:
 // create pending state
 echoD.spawnActor('actor') // spawn an actor
 echoD.upsertComponent('actor', 'position', [0, 0, 0]) // position actor
+```
 
-const events = new EventEmitter()
-
+```js
 events.on('echoD', (messages) => {
   other_echoD.many(messages) // handle message(s)
   // Now our other Echo-D instance will have
   // an 'actor' with a 'position' of [0, 0, 0]
 })
+```
 
+```js
 // send pending messages to other echoDs
 echoD.updater({
     responder: (message) => {

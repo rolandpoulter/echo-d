@@ -254,6 +254,7 @@ This document describes the Echo-D protocol, as well as the main Echo-D APIs and
 Echo-D uses a types that are based on common JavaScript/TypeScript object types. Implementations must have access to basic `JSON` like data structures such as `String`, `Number`, and `Array`.
 
 A list of valid types for use in `options.types`, for more information see [types](#types--object)
+
 * **'str'** : `String` -- UTF-8 string
 * **'bool'** : `Boolean` -- true or false
 * **'num'** : `Number` -- 64 bit float
@@ -288,16 +289,17 @@ Echo-D sends and recieves messages as either a tuple or an object. Each with two
 // Array
 [ 'upsertComponent,
   [ 'entity', 'position', [0, 0, 0] ] ]
+
 // Object
 { action: 'upsertComponent',
   payload: ['entity', 'position', [0, 0, 0] ] }
 ```
 
 > ### Batch Message Structure
-> 
+>
 > Related: [batchActionPayloadSizes](#batchactionpayloadsizes--object), [updateOptions](#updateoptions--object), [batch](#batch), and [many](#many)
 >
-> Messages can be batched in Echo-D, because the action is being called multiple time it is only provided once, the remaining elements are the payload which is a flat array of all batched payloads for the provided action.
+> Messages can be batched in Echo-D, because the action is being called multiple times it is only provided once, the remaining elements are the payload which is a flat array of all batched payloads for the provided action.
 >
 > ```js
 > // Array
@@ -313,7 +315,7 @@ Echo-D sends and recieves messages as either a tuple or an object. Each with two
 
 > ### Grouped Component Updates
 >
-> Related: [isGroupedComponent](#isgroupedcomponents--boolean), [changeComponent](#changecomponent), and [upsertComponent](#upsertcomponent)
+> Related: [isGroupedComponent](#isgroupedcomponents--boolean), [getGroupedValue](#getgroupedvalue--function), [setGroupedValue](#setgroupedvalue--function), [changeComponent](#changecomponent), and [upsertComponent](#upsertcomponent)
 >
 > Component updates can be made in groups, which basically means they are grouped by an array of IDs which correlates to a flattened array of values.
 >
@@ -369,34 +371,41 @@ Echo-D sends and recieves messages as either a tuple or an object. Each with two
 ## Action Handler
 
 > #### one
+>
 > Should call one action based on a message.
 
 > #### many
+>
 > Should call many actions based on a possible batch of messages
 
 ## Actor Actions
 
 > #### actorInput
+>
 > ```js
 > [ 0, [ { id: 'actor', /* ...input data... */ }, tick ] ]
 > ```
 
 > #### actors
+>
 > ```js
 > [ 1, { /* ...query actors... */ } ]
 > ```
 
 > #### mergeActors
+>
 > ```js
 > [ 10, [ 'actor1', 'actor2' ] ]
 > ```
 
 > #### removeActor
+>
 > ```js
 > [ 15, 'actor' ]
 > ```
 
 > #### spawnActor
+>
 > ```js
 > [ 18, 'actor' ]
 > ```
@@ -404,26 +413,31 @@ Echo-D sends and recieves messages as either a tuple or an object. Each with two
 ## Component Actions
 
 > #### changeComponent
+>
 > ```js
 > [ 4, [ 'actor|entity', 'position', [0, 0, 0] ] ]
 > ```
 
 > #### components
+>
 > ```js
 > [ 5 ]
 > ```
 
 > #### mergeComponents
+>
 > ```js
 > [ 18, { actor: { position: [0, 0, 0] }, entity: { position: [0, 0, 0] } } ]
 > ```
 
 > #### removeComponent
+>
 > ```js
 > [ 16, [ 'actor|entity', 'position' ] ]
 > ```
 
 > #### upsertComponent
+>
 > ```js
 > [ 21, [ 'actor|entity', 'position', [0, 0, 0] ] ]
 > ```
@@ -431,6 +445,7 @@ Echo-D sends and recieves messages as either a tuple or an object. Each with two
 ## Core Actions
 
 > #### batch
+>
 > ```js
 > [ 3, [ /* ...batch messages ...*/ ] ]
 > ```
@@ -438,21 +453,25 @@ Echo-D sends and recieves messages as either a tuple or an object. Each with two
 ## Entity Actions
 
 > #### createEntity
+>
 > ```js
 > [ 6, 'entity' ]
 > ```
 
 > #### entities
+>
 > ```js
 > [ 7 ]
 > ```
 
 > #### mergeEntities
+>
 > ```js
 > [ 12, ['entity1', 'entity2'] ]
 > ```
 
 > #### removeEntity
+>
 > ```js
 > [ 17, 'entity' ]
 > ```
@@ -460,41 +479,50 @@ Echo-D sends and recieves messages as either a tuple or an object. Each with two
 ## Symbol Actions
 
 > #### addSymbol
+>
 > ```js
 > [ 2, 'symbol' ]
 > ```
 
 > #### fetchSymbol
+>
 > ```js
 > [ 8, symbol ]
 > ```
 
 > #### getSymbol
+>
 > ```js
 > [ 9, 0 ]
 > ```
 
 > #### mergeSymbol
+>
 > ```js
 > [ 14, ['symbol', 0] ]
 > ```
 
 > #### mergeSymbols
+>
 > ```js
 > [ 13, [0, 'symbol0', 'symbol1'] ]
 > ```
 
 > #### symbol
+>
 > ```js
 > [ 19, symbol ]
 > ```
 
 > #### symbols
+>
 > ```js
 > [ 20 ]
 > ```
 
 ## Indexes
+
+Related: [enableQuerying](#enablequerying--boolean)
 
 > ### Components Index
 
@@ -504,12 +532,24 @@ Echo-D sends and recieves messages as either a tuple or an object. Each with two
 
 ## Storage
 
+Related: [isAsyncStorage](#isasyncstorage--boolean)
+
 ## Symbols
+
+Related: [compressStringsAsInts](#compressstringsasints--boolean), [isSymbolLeader](#issymbolleader--boolean), and [isSymbolRelay](#issymbolrelay--boolean)
 
 ## Updater
 
+Related: [compressStringsAsInts](#compressstringsasints--boolean), and [responder](#responder--function)
+
 ## Pending
+
+Related: [skipPending](#skippending--boolean)
 
 ## Ordered
 
+Related: [isOrdered](#isordered--boolean)
+
 ## Changes
+
+Related: [isDiffed](#isdiffed--boolean)
