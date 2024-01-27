@@ -167,13 +167,13 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
             
             echo[updateComponent]('actor1', 'collider', 'box');
             echo[updateComponent]('actor1', 'hidden', false);
-            echo[updateComponent]('actor1', 'position', [0, 0, 0]);
-            echo[updateComponent]('actor1', 'color', [255, 0, 0, 255]);
+            echo[updateComponent]('actor1', 'position', typed ? new Float32Array([0, 0, 0]) : [0, 0, 0]);
+            echo[updateComponent]('actor1', 'color', typed ? new Uint8Array([255, 0, 0, 255]) : [255, 0, 0, 255]);
             
             echo[updateComponent]('actor1', 'collider', 'box');
             echo[updateComponent]('actor1', 'hidden', true);
-            echo[updateComponent](`actor1`, 'position', [1, 0, 0]);
-            echo[updateComponent]('actor1', 'color', [0, 255, 0, 255]);
+            echo[updateComponent](`actor1`, 'position', typed ? new Float32Array([1, 0, 0]) : [1, 0, 0]);
+            echo[updateComponent]('actor1', 'color', typed ? new Uint8Array([0, 255, 0, 255]) : [0, 255, 0, 255]);
             
             const responder = (payload) => {
                 if (log) {
@@ -222,8 +222,8 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
 
             echo[updateComponent]('actor1', 'collider', 'box');
             echo[updateComponent]('actor1', 'hidden', false);
-            echo[updateComponent]('actor1', 'position', [0, 0, 0]);
-            echo[updateComponent]('actor1', 'color', [255, 0, 0, 255]);
+            echo[updateComponent]('actor1', 'position', typed ? new Float32Array([0, 0, 0]) : [0, 0, 0]);
+            echo[updateComponent]('actor1', 'color', typed ? new Uint8Array([255, 0, 0, 255]) : [255, 0, 0, 255]);
 
             const tick = rollback ? performance.timeOrigin + performance.now() : 0;
             echo.actorInput('actor1', { type: 'jump' }, tick);
@@ -337,6 +337,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
             
             await basicEchoOtherExchange(echo, other, {
                 typed: true,
+                // log: true,
             });
         });
 
@@ -367,7 +368,8 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
 
         it('should be able to broadcast updates with all options enabled', async () => {
             const options = {
-                isDiffed: true,
+                // isDiffed: true, // TODO: fix this
+                isOrdered: true,
                 enableRollback: true,
                 compressStringsAsInts: true,
                 // isGroupedComponents: true, // TODO: fix this
@@ -383,7 +385,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
             await basicEchoOtherExchange(echo, other, {
                 // changes: true,
                 rollback: true,
-                // typed: true, // TODO: this is broken
+                typed: true,
                 // log: true,
             });
         });

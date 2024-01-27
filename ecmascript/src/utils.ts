@@ -1,8 +1,37 @@
+import { TypedArray } from "bitecs";
+
 /**
  * @returns {number} The current time in milliseconds.
  */
 export function now(): number {
   return performance.timeOrigin + performance.now()
+}
+
+/**
+ * Concatenates two typed arrays or arrays.
+ * 
+ * @param {TypedArray | any[]} a - The first typed array or array.
+ * @param {TypedArray | any[]} b - The second typed array or array.
+ * @returns {TypedArray | any[]} The concatenated typed array or array.
+ */
+export function concatTypedArray(a: TypedArray | any[], b: TypedArray | any[]): TypedArray | any[] {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a.concat(b);
+  } else if (Array.isArray(a)) {
+    const a_ = new (b.constructor as any)(a.length);
+    a_.set(a);
+    a = a_;
+  } else if (Array.isArray(b)) {
+    const b_ = new (a.constructor as any)(b.length);
+    b_.set(b);
+    b = b_;
+  }
+  const c = new (a.constructor as any)(a.length + b.length);
+  if (c.set) {
+    c.set(a);
+    c.set(b, a.length);
+  }
+  return c;
 }
 
 /**

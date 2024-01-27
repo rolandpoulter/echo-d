@@ -14,7 +14,7 @@ import {
   recursiveSymbolIndexesEnsured
 } from './symbols'
 import { ArrayTypes } from './types';
-import { now } from './utils'
+import { now, concatTypedArray } from './utils'
 
 /**
  * The UpdateOptions interface represents the options for updating the application.
@@ -150,15 +150,18 @@ const store = context.store
         if (validKeys && !validKeys[key]) {
           break
         }
+        
+        const type = types[key] ?? null
+        const Type = type ? ArrayTypes.get(Array.isArray(type) ? type[0] : type) : null
 
         let group = null
         if (groups) {
           group = groups[key] = groups[key] ?? {
             key,
-            ids: [],
+            ids: compressStringsAsInts ? new Uint32Array(0) : [],
             intIds: true,
-            values: [],
-            ticks: []
+            values: Type ? new Type(0) : [],
+            ticks: new Uint32Array(0),
           }
         }
 
@@ -175,15 +178,20 @@ const store = context.store
         const nkey = ensureSymbol(key)
 
         if (groups)  {
-          group.ids.push(nid)
+          group.ids = compressStringsAsInts
+            ? concatTypedArray(group.ids, [nid])
+            : group.ids.concat([id])
           if (nid === id) {
             group.intIds = false
           }
-          group.values = group.values.concat(
-            setGroupedValue(value, types, key)
-          )
+          group.values = Type
+            ? concatTypedArray(group.values, setGroupedValue(value, types, key))
+            : group.values.concat(setGroupedValue(value, types, key))
           if (isOrdered) {
-            group.ticks.push(isDiffed ? -tick : tick)
+            group.ticks = concatTypedArray(
+              group.ticks,
+              [isDiffed ? -tick : tick]
+            )
           }
           continue
         }

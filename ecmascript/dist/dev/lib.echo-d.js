@@ -4116,14 +4116,16 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
                 if (validKeys && !validKeys[key]) {
                     break;
                 }
+                const type = types[key] ?? null;
+                const Type = type ? _types_js__WEBPACK_IMPORTED_MODULE_2__.ArrayTypes.get(Array.isArray(type) ? type[0] : type) : null;
                 let group = null;
                 if (groups) {
                     group = groups[key] = groups[key] ?? {
                         key,
-                        ids: [],
+                        ids: compressStringsAsInts ? new Uint32Array(0) : [],
                         intIds: true,
-                        values: [],
-                        ticks: []
+                        values: Type ? new Type(0) : [],
+                        ticks: new Uint32Array(0),
                     };
                 }
                 let value = isAsyncStorage ? await store.fetchComponent(id, key) : store.fetchComponent(id, key);
@@ -4136,13 +4138,17 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
                 const nid = ensureSymbol(id);
                 const nkey = ensureSymbol(key);
                 if (groups) {
-                    group.ids.push(nid);
+                    group.ids = compressStringsAsInts
+                        ? (0,_utils_js__WEBPACK_IMPORTED_MODULE_3__.concatTypedArray)(group.ids, [nid])
+                        : group.ids.concat([id]);
                     if (nid === id) {
                         group.intIds = false;
                     }
-                    group.values = group.values.concat(setGroupedValue(value, types, key));
+                    group.values = Type
+                        ? (0,_utils_js__WEBPACK_IMPORTED_MODULE_3__.concatTypedArray)(group.values, setGroupedValue(value, types, key))
+                        : group.values.concat(setGroupedValue(value, types, key));
                     if (isOrdered) {
-                        group.ticks.push(isDiffed ? -tick : tick);
+                        group.ticks = (0,_utils_js__WEBPACK_IMPORTED_MODULE_3__.concatTypedArray)(group.ticks, [isDiffed ? -tick : tick]);
                     }
                     continue;
                 }
@@ -4369,6 +4375,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   binaryInsert: () => (/* binding */ binaryInsert),
 /* harmony export */   binarySearch: () => (/* binding */ binarySearch),
 /* harmony export */   combineValues: () => (/* binding */ combineValues),
+/* harmony export */   concatTypedArray: () => (/* binding */ concatTypedArray),
 /* harmony export */   createEnum: () => (/* binding */ createEnum),
 /* harmony export */   differenceSets: () => (/* binding */ differenceSets),
 /* harmony export */   intersectionSets: () => (/* binding */ intersectionSets),
@@ -4385,6 +4392,34 @@ __webpack_require__.r(__webpack_exports__);
  */
 function now() {
     return performance.timeOrigin + performance.now();
+}
+/**
+ * Concatenates two typed arrays or arrays.
+ *
+ * @param {TypedArray | any[]} a - The first typed array or array.
+ * @param {TypedArray | any[]} b - The second typed array or array.
+ * @returns {TypedArray | any[]} The concatenated typed array or array.
+ */
+function concatTypedArray(a, b) {
+    if (Array.isArray(a) && Array.isArray(b)) {
+        return a.concat(b);
+    }
+    else if (Array.isArray(a)) {
+        const a_ = new b.constructor(a.length);
+        a_.set(a);
+        a = a_;
+    }
+    else if (Array.isArray(b)) {
+        const b_ = new a.constructor(b.length);
+        b_.set(b);
+        b = b_;
+    }
+    const c = new a.constructor(a.length + b.length);
+    if (c.set) {
+        c.set(a);
+        c.set(b, a.length);
+    }
+    return c;
 }
 /**
  * Creates a union of multiple sets or arrays.

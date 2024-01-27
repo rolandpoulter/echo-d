@@ -5,6 +5,34 @@ export function now() {
     return performance.timeOrigin + performance.now();
 }
 /**
+ * Concatenates two typed arrays or arrays.
+ *
+ * @param {TypedArray | any[]} a - The first typed array or array.
+ * @param {TypedArray | any[]} b - The second typed array or array.
+ * @returns {TypedArray | any[]} The concatenated typed array or array.
+ */
+export function concatTypedArray(a, b) {
+    if (Array.isArray(a) && Array.isArray(b)) {
+        return a.concat(b);
+    }
+    else if (Array.isArray(a)) {
+        const a_ = new b.constructor(a.length);
+        a_.set(a);
+        a = a_;
+    }
+    else if (Array.isArray(b)) {
+        const b_ = new a.constructor(b.length);
+        b_.set(b);
+        b = b_;
+    }
+    const c = new a.constructor(a.length + b.length);
+    if (c.set) {
+        c.set(a);
+        c.set(b, a.length);
+    }
+    return c;
+}
+/**
  * Creates a union of multiple sets or arrays.
  *
  * @param {...Array<SetOrArray<any>>} sets - The sets or arrays to be united.
