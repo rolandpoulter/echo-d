@@ -373,7 +373,7 @@ export class Context {
     removeComponent(id, key, options) {
         const { skipPending, onUpdate } = options;
         const currentValue = this.store.fetchComponent(id, key);
-        if (currentValue !== undefined) {
+        if (currentValue !== undefined || currentValue !== null) {
             this.store.destroyComponent(id, key);
             if (!skipPending && this.pending) {
                 this.pending.removeComponent(id, key);

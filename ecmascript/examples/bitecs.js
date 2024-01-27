@@ -1,12 +1,4 @@
-import {
-    createWorld,
-    Types,
-    defineComponent,
-    defineQuery,
-    addEntity,
-    addComponent,
-    pipe,
-} from 'bitecs'
+import * as bitecs from 'bitecs'
 import { getWorld } from './echo.js';
 import {
     BitECSStorage,
@@ -29,6 +21,19 @@ import EchoD, {
 // 'velocity',
 // 'spin'
 
+export const api = bitecs;
+
+const {
+    // createWorld,
+    Types,
+    defineComponent,
+    setDefaultSize,
+    // defineQuery,
+    // addEntity,
+    // addComponent,
+    // pipe,
+} = bitecs
+
 export const Vector3 = { x: Types.f32, y: Types.f32, z: Types.f32 }
 export const RGBA = { r: Types.ui8, g: Types.ui8, b: Types.ui8, a: Types.ui8 }
 
@@ -37,6 +42,8 @@ export const RGBA = { r: Types.ui8, g: Types.ui8, b: Types.ui8, a: Types.ui8 }
 //     asset: String,
 //     collider: String,
 // }
+
+setDefaultSize(1000)
 
 export const Color = null && defineComponent(RGBA) 
 export const Position = null && defineComponent(Vector3)
@@ -70,8 +77,8 @@ export const createBitECSEchoD = (options = {}, Handler = EchoD, actions = EchoD
 
 export const Handler = EchoD
 
-export function bitECSExample() {
-    const echo = createBitECSEchoD()
+export function bitECSExample(options) {
+    const echo = createBitECSEchoD(options)
     const world = getWorld(echo)
     return { echo, world }
 }

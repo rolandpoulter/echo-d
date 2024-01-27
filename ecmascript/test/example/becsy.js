@@ -1,32 +1,40 @@
 export default function (echo, extras, { describe, it, expect, mock, spy }) {
     // const xit = (n) => { console.log('skip:', n) };
-    const xdescribe = (n) => { console.log('skip all:', n) };
+    // const xdescribe = (n) => { console.log('skip all:', n) };
 
     const EchoD = extras.becsy.Handler;
     const echoExample = extras.becsy.becsyExample
 
-    xdescribe('bescy example', () => {
+    describe('bescy example', () => {
         // The function creates an instance of EchoD.
         it('should create an instance of EchoD', () => {
-            const result = echoExample();
+            const result = echoExample({
+                isAsyncStorage: true
+            });
             expect(result.echo).toBeInstanceOf(EchoD);
         });
 
         // The function retrieves the world from the EchoD context store.
         it('should retrieve the world from the EchoD context store', () => {
-            const result = echoExample();
+            const result = echoExample({
+                isAsyncStorage: true
+            });
             expect(result.world).toBeDefined();
         });
 
         it('should be able to create an entity', () => {
-            const { echo } = echoExample();
+            const { echo } = echoExample({
+                isAsyncStorage: true
+            });
             echo.createEntity('entity1');
             const entities = echo.context.store.getEntities();
             expect(entities).toEqual([['entity1']]);
         });
 
         it('should be able to remove an entity', () => {
-            const { echo } = echoExample();
+            const { echo } = echoExample({
+                isAsyncStorage: true
+            });
             echo.createEntity('entity1');
             echo.removeEntity('entity1');
             const entities = echo.context.store.getEntities();
@@ -34,7 +42,9 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
         });
 
         it('should be able to create multiple entities', () => {
-            const { echo } = echoExample();
+            const { echo } = echoExample({
+                isAsyncStorage: true
+            });
             echo.createEntity('entity1');
             echo.createEntity('entity2');
             const entities = echo.context.store.getEntities();
@@ -42,14 +52,18 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
         });
 
         it('should be able to create an actor', () => {
-            const { echo } = echoExample();
+            const { echo } = echoExample({
+                isAsyncStorage: true
+            });
             echo.createEntity('actor1');
             const entities = echo.context.store.getEntities();
             expect(entities).toEqual([['actor1']]);
         });
 
         it('should be able to remove an actor', () => {
-            const { echo } = echoExample();
+            const { echo } = echoExample({
+                isAsyncStorage: true
+            });
             echo.createEntity('actor1');
             echo.removeEntity('actor1');
             const actors = echo.context.store.getActors();
@@ -58,6 +72,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
 
         it('should be able to create and actor with inputs', () => {
             const { echo } = echoExample({
+                isAsyncStorage: true,
                 enableRollback: true
             });
             echo.createEntity('actor1');
@@ -70,7 +85,9 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
         });
 
         it('should be able to create multiple actors', () => {
-            const { echo } = echoExample();
+            const { echo } = echoExample({
+                isAsyncStorage: true
+            });
             echo.spawnActor('actor1');
             echo.spawnActor('actor2');
             const actors = echo.context.store.getActors();
@@ -78,7 +95,9 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
         });
 
         it('should be able to create an entity with components', () => {
-            const { echo } = echoExample();
+            const { echo } = echoExample({
+                isAsyncStorage: true
+            });
             echo.createEntity('entity1');
             echo.upsertComponent('entity1', 'position', [0, 0, 0]);
             
@@ -91,7 +110,9 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
         });
 
         it('should be able to create an actor with components', () => {
-            const { echo } = echoExample();
+            const { echo } = echoExample({
+                isAsyncStorage: true
+            });
             echo.spawnActor('actor1');
             echo.upsertComponent('actor1', 'position', [0, 0, 0]);
             
@@ -104,7 +125,9 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
         })
 
         it('should be able to create mixed entities and actors with components', () => {
-            const { echo } = echoExample();
+            const { echo } = echoExample({
+                isAsyncStorage: true
+            });
             echo.spawnActor('actor1');
             echo.spawnActor('actor2');
             echo.createEntity('entity1');
@@ -128,7 +151,9 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
         })
 
         it('should be able to remove a component', () => {
-            const { echo } = echoExample();
+            const { echo } = echoExample({
+                isAsyncStorage: true
+            });
             echo.spawnActor('actor1');
             echo.upsertComponent('actor1', 'position', [0, 0, 0]);
             echo.removeComponent('actor1', 'position');

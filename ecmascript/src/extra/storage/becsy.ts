@@ -3,7 +3,8 @@ import {
     StorageOptions,
     StorageProps,
     Components,
-    Types
+    Types,
+    AsyncStorage,
 } from '../../storage';
 
 import { paginate, now } from '../../utils';
@@ -31,7 +32,7 @@ export function defaultSetGroupedValue (value: any, _types: Types, _key: string)
     return value;
 }
 
-export class BecsyStorage extends Storage {
+export class BecsyStorage extends AsyncStorage {
     declare eids: Map<string, any>;
     declare world: any;
     declare actors: Map<string, any> & string[];
@@ -109,11 +110,11 @@ export class BecsyStorage extends Storage {
         */
     }
     
-    destroyActor(id: string): boolean {
+    async destroyActor(id: string): Promise<boolean> {
         return this.destroyId(this.actors, id);
     }
 
-    destroyComponent(id: string, key: string) {
+    async destroyComponent(id: string, key: string) {
         const eid = this.actors.get(id) || this.entities.get(id);
         const Component = this.components.get(key);
         if (!eid || !Component) {
@@ -142,11 +143,11 @@ export class BecsyStorage extends Storage {
         }
     }
 
-    destroyEntity(id: string): boolean {
+    async destroyEntity(id: string): Promise<boolean> {
         return this.destroyId(this.entities, id);
     }
 
-    destroyId(list: Map<string, number> | any, id: string): boolean {
+    async destroyId(list: Map<string, number> | any, id: string): Promise<boolean> {
         const eid = list.get(id);
         if (eid) {
             // removeEntity(this.world, eid);
@@ -156,7 +157,7 @@ export class BecsyStorage extends Storage {
         return false
     }
 
-    fetchComponents(id: string) {
+    async fetchComponents(id: string) {
         const eid = this.actors.get(id) || this.entities.get(id);
         if (!eid) {
             return;
@@ -164,7 +165,7 @@ export class BecsyStorage extends Storage {
         return eid
     }
 
-    fetchComponent(id: string, key: string) {
+    async fetchComponent(id: string, key: string) {
         const eid = this.actors.get(id) || this.entities.get(id);
         const Component = this.components.get(key);
         if (!eid || !Component) {
@@ -187,7 +188,7 @@ export class BecsyStorage extends Storage {
         }
     }
 
-    getActors(query: any, pageSize: number) {
+    async getActors(query: any, pageSize: number) {
         if (query !== null) {
             return super.getActors(query, pageSize);
         }
@@ -195,7 +196,7 @@ export class BecsyStorage extends Storage {
         return paginate(actors, pageSize)
     }
 
-    getComponents(query: any, pageSize: number) {
+    async getComponents(query: any, pageSize: number) {
         // const queryKeys = Object.keys(query);
         // const entities = this.world.with(...queryKeys);
         let ids
@@ -216,7 +217,7 @@ export class BecsyStorage extends Storage {
         })
     }
 
-    getEntities(query: any, pageSize: number) {
+    async getEntities(query: any, pageSize: number) {
         if (query !== null) {
             return super.getEntities(query, pageSize);
         }
@@ -252,11 +253,11 @@ export class BecsyStorage extends Storage {
         return super.setInputs(inputs);
     }
 
-    storeActor(id: string): boolean {
+    async storeActor(id: string): Promise<boolean> {
         return this.storeId(this.actors, id);
     }
 
-    storeComponent(id: string, key: string, value: any) {
+    async storeComponent(id: string, key: string, value: any) {
         const entity = this.actors.get(id) || this.entities.get(id);
         if (entity) {
             const prevValue = entity[key]
@@ -284,15 +285,18 @@ export class BecsyStorage extends Storage {
         }
     }
 
-    storeEntity(id: string): boolean {
+    async storeEntity(id: string): boolean {
         return this.storeId(this.entities, id);
     }
 
-    storeId(list: Map<string, string> | any, id: string): boolean {
-        const entity = list.get(id);
+    async storeId(list: Map<string, string> | any, id: string): boolean {
+        let entity = list.get(id);
         if (!entity) {
+            console.log('GOT HERE BABY', this.world)
+            entity = this.world.createEntity(
+                // entity
+            );
             list.set(id, entity);
-            this.world.add(entity);
             return true
         }
         return false

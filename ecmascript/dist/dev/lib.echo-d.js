@@ -1583,7 +1583,7 @@ class Context {
     removeComponent(id, key, options) {
         const { skipPending, onUpdate } = options;
         const currentValue = this.store.fetchComponent(id, key);
-        if (currentValue !== undefined) {
+        if (currentValue !== undefined || currentValue !== null) {
             this.store.destroyComponent(id, key);
             if (!skipPending && this.pending) {
                 this.pending.removeComponent(id, key);
@@ -4570,7 +4570,7 @@ function messageTuple(message) {
 /**
  * Split an array into pages
  *
- * @param {any[]} array - The array to be split into pages.
+ * @param {Iterable<any> | any[]} array - The array to be split into pages.
  * @param {number} pageSize - The size of each page.
  * @returns {any[][]} The array of pages.
  */
@@ -4578,9 +4578,9 @@ function paginate(array, pageSize) {
     const pages = [];
     let page = [];
     let i = 0;
-    if (!Array.isArray(array)) {
-        throw new Error('paginate: array must be an array');
-    }
+    // if (!Array.isArray(array)) {
+    //   throw new Error('paginate: array must be an array');
+    // }
     for (const v of array) {
         if (i >= pageSize) {
             pages.push(page);

@@ -204,17 +204,17 @@ export function messageTuple(message: { action?: any, payload?: any }): Array<an
 /**
  * Split an array into pages
  * 
- * @param {any[]} array - The array to be split into pages.
+ * @param {Iterable<any> | any[]} array - The array to be split into pages.
  * @param {number} pageSize - The size of each page.
  * @returns {any[][]} The array of pages.
  */
-export function paginate(array: any[], pageSize: number): any[][] {
+export function paginate(array: Iterable<any> | any[], pageSize: number): any[][] {
   const pages = [];
   let page = [];
   let i = 0;
-  if (!Array.isArray(array)) {
-    throw new Error('paginate: array must be an array');
-  }
+  // if (!Array.isArray(array)) {
+  //   throw new Error('paginate: array must be an array');
+  // }
   for (const v of array) {
     if (i >= pageSize) {
       pages.push(page);

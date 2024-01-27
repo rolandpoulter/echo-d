@@ -268,10 +268,13 @@ class BecsyStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
         return this.storeId(this.entities, id);
     }
     storeId(list, id) {
-        const entity = list.get(id);
+        let entity = list.get(id);
         if (!entity) {
+            console.log('GOT HERE BABY', this.world);
+            entity = this.world.createEntity(
+            // entity
+            );
             list.set(id, entity);
-            this.world.add(entity);
             return true;
         }
         return false;

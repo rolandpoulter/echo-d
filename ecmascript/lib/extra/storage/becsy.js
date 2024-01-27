@@ -240,10 +240,13 @@ export class BecsyStorage extends Storage {
         return this.storeId(this.entities, id);
     }
     storeId(list, id) {
-        const entity = list.get(id);
+        let entity = list.get(id);
         if (!entity) {
+            console.log('GOT HERE BABY', this.world);
+            entity = this.world.createEntity(
+            // entity
+            );
             list.set(id, entity);
-            this.world.add(entity);
             return true;
         }
         return false;

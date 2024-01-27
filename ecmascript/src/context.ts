@@ -482,7 +482,7 @@ export class Context {
 
     const currentValue = this.store.fetchComponent(id, key)
 
-    if (currentValue !== undefined) {
+    if (currentValue !== undefined || currentValue !== null) {
       this.store.destroyComponent(id, key)
 
       if (!skipPending && this.pending) {

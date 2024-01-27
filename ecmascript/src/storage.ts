@@ -501,3 +501,33 @@ export class Storage {
     return this.componentsIndex.query(query)
   }
 }
+
+export type AsyncStorage = Storage & {
+  destroyActor(id: string): Promise<boolean>;
+  destroyComponent(id: string, key: string): Promise<void>;
+  destroyEntity(id: string): Promise<boolean>
+  destroyId(list: Map<string, number> | any, id: string): Promise<boolean>
+
+  fetchComponents(id: string): Promise<Components>;
+  fetchComponent(id: string, key: string): Promise<any>;
+
+  getActors(query: any, pageSize: number): Promise<string[][]>;
+   getComponents(query: any, pageSize: number): Promise<Components[]>;
+
+  getInputs(query: any, pageSize: number): Promise<Inputs[]>;
+
+  // isActor(id: string): Promise<boolean>;
+  // isEntity(id: string): Promise<boolean>;
+
+  // setActors(actors: string[]): Promise<string[]>;
+  // setComponents(components: Components): Promise<Components>;
+  // setEntities(entities: any): Promise<string[]>;
+  // setInputs(inputs: any): Promise<Inputs>;
+
+  storeActor(id: string): Promise<boolean>;
+  storeComponent(id: string, key: string, value: any): Promise<void>;
+  storeEntity(id: string): Promise<boolean>;
+  storeId(list: Map<string, string> | any, id: string): Promise<boolean>;
+
+  // storeInput(id: string, input: any, tick: number = now());
+}

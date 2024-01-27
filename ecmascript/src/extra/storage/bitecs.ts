@@ -1,3 +1,4 @@
+import { hasComponent } from 'bitecs';
 import {
     Storage,
     StorageOptions,
@@ -7,7 +8,7 @@ import {
 } from '../../storage';
 
 import { ArrayTypes } from '../../types';
-import { paginate, now } from '../../utils';
+import { paginate } from '../../utils';
 
 // interface WorldOptions {
 //     defs: any[];
@@ -21,8 +22,10 @@ const {
     removeComponent,
     removeEntity,
     // defineQuery,
+    entityExists,
     addEntity,
     addComponent,
+    getEntityComponents,
     // pipe,
 } = await import('bitecs')
 
@@ -122,13 +125,13 @@ export class BitECSStorage extends Storage {
     }
 
     destroyComponent(id: string, key: string) {
-        const eid = this.actors.get(id) || this.entities.get(id);
+        const eid = this.getEID(id);
         const Component = this.components.get(key);
-        if (!eid || !Component) {
+        if ((eid === undefined || eid === null) || !Component) {
             return;
         }
         const updateIndexes = () => {
-            const prevValue = this.fetchComponent(id, key)
+            const prevValue = this.fetchComponentProcess(id, key, Component, eid)
             if (this.indexes[key]) {
                 const index = this.indexes[key]
                 if (this.isActor(id)) {
@@ -139,13 +142,16 @@ export class BitECSStorage extends Storage {
             }
         }
         if (Component instanceof Map) {
-            const entity = Component.get(eid);
-            if (entity) {
+            if (Component.has(eid)) {
                 Component.delete(eid);
             }
             updateIndexes()
         } else {
-            removeComponent(this.world, Component, eid);
+            if (entityExists(this.world, eid)) {
+                if (hasComponent(this.world, Component, eid)) {
+                    removeComponent(this.world, Component, eid);
+                }
+            }
             updateIndexes()
         }
     }
@@ -156,26 +162,34 @@ export class BitECSStorage extends Storage {
 
     destroyId(list: Map<string, number> | any, id: string): boolean {
         const eid = list.get(id);
-        if (eid) {
-            removeEntity(this.world, eid);
-            list.delete(id);
+        if (eid !== null && eid !== undefined) {
+            if (entityExists(this.world, eid)) {
+                removeEntity(this.world, eid);
+            }
+            if (list.has(id)) {
+                list.delete(id);
+            }
             return true
         }
         return false
     }
 
     fetchComponents(id: string) {
-        const eid = this.actors.get(id) || this.entities.get(id);
-        if (!eid) {
+        const eid = this.getEID(id);
+        if (eid !== null && eid !== undefined) {
             return;
         }
         return eid
     }
 
     fetchComponent(id: string, key: string) {
-        const eid = this.actors.get(id) || this.entities.get(id);
-        const Component = this.components.get(key);
-        if (!eid || !Component) {
+        return this.fetchComponentProcess(id, key, undefined, undefined);
+    }
+
+    fetchComponentProcess(id: string, key: string, Component: any, eid: any) {
+        eid = (eid === undefined || eid === null) ? this.getEID(id) : eid;
+        Component = Component || this.components.get(key);
+        if ((eid !== null && eid !== undefined) || !Component) {
             return;
         }
         if (Component instanceof Map) {
@@ -199,7 +213,7 @@ export class BitECSStorage extends Storage {
         if (query !== null) {
             return super.getActors(query, pageSize);
         }
-        const actors = Array.from(this.actors.keys())
+        const actors = this.actors.keys()
         return paginate(actors, pageSize)
     }
 
@@ -210,15 +224,54 @@ export class BitECSStorage extends Storage {
         if (query !== null) {
             ids = query
         } else {
-            const actors = Array.from(this.actors.keys())
-            const entities = Array.from(this.entities.keys())
-            ids = actors.concat(entities)
+            const actors = this.actors.keys()
+            const entities = this.entities.keys()
+            ids = [
+                ...actors,
+                ...entities
+            ]
         }
         const pages = paginate(ids, pageSize)
+        const compEntries = this.components.entries()
+        const compLookup = new Map<string, any>()
+        for (let [key, value] of compEntries) {
+            compLookup.set(value, key)
+        }
         return pages.map((page) => {
             const components: { [key: string]: any } = {}
             for (let id of page) {
-                components[id] = this.actors.get(id) || this.entities.get(id)
+                const eid = this.getEID(id);
+                if (eid === undefined || eid === null) {
+                    continue
+                }
+                const entity = {} as { [key: string]: any }
+                const compList = getEntityComponents(this.world, eid)
+                compList.forEach((Component: any) => {
+                    const key = compLookup.get(Component)
+                    if (!key) {
+                        return
+                    }
+                    // TODO: fix this
+                    // const val = this.fetchComponentProcess(id, key, Component, eid)
+                    let val;
+                    if (Component instanceof Map) {
+                        val = Component.get(eid);
+                    } else {
+                        const type = this.types[key];
+                        const schema = type[3]
+                        const Type = ArrayTypes.get(type[0])
+                        const size = type[1]
+                        const value = new Type(size)
+                        let i = 0
+                        for (let prop in schema) {
+                            value[i] = Component[prop][eid]
+                            i++
+                        }
+                        val = value
+                    }
+                    entity[key] = val
+                })
+                components[id] = entity
             }
             return components
         })
@@ -228,12 +281,22 @@ export class BitECSStorage extends Storage {
         if (query !== null) {
             return super.getEntities(query, pageSize);
         }
-        const entities = Array.from(this.entities.keys())
+        const entities = this.entities.keys()
         return paginate(entities, pageSize)
     }
 
     getInputs(query: any = null, pageSize: number) {
         return super.getInputs(query, pageSize);
+    }
+
+    getEID(id: string) {
+        if (this.actors.has(id)) {
+            return this.actors.get(id)
+        }
+        if (this.entities.has(id)) {
+            return this.entities.get(id)
+        }
+        return;
     }
 
     isActor(id: string) {
@@ -265,20 +328,44 @@ export class BitECSStorage extends Storage {
     }
 
     storeComponent(id: string, key: string, value: any) {
-        const entity = this.actors.get(id) || this.entities.get(id);
-        if (entity) {
-            const prevValue = entity[key]
-            // entity[key] = value
+        let entity = this.getEID(id);
+        if (entity !== null && entity !== undefined) {
+            if (!entityExists(this.world, entity)) {
+                entity = addEntity(this.world)
+                if (this.isActor(id)) {
+                    // this.actors.delete(id);
+                    this.actors.set(id, entity);
+                } else {
+                    // this.entities.delete(id);
+                    this.entities.set(id, entity);
+                }
+            }
             
-            // const type = this.types[key];
-            // const schema = type[3]
-            const component = this.components.get(key);
-            // let i = 0;
-            // for (let prop in schema) {
-            //     component[prop] = value[i]
-            //     i++
-            // }
-            addComponent(this.world, entity, component, value);
+            const Component = this.components.get(key);
+
+            if (!Component) {
+                return;
+            }
+            
+            if (!hasComponent(this.world, Component, entity)) {
+                addComponent(this.world, Component, entity);
+            }
+            
+            let prevValue = []; // TODO: fix this
+            if (Component instanceof Map) {
+                prevValue = Component.get(entity)
+                Component.set(entity, value)
+            } else {
+                const type = this.types[key];
+                const schema = type[3]
+                let i = 0;
+                for (let prop in schema) {
+                    prevValue[i] = Component[prop][entity]
+                    Component[prop][entity] = value[i]
+                    i++
+                }
+            }
+          
             // this.world.reindex(entity)
             if (this.indexes[key]) {
                 const index = this.indexes[key]
@@ -299,7 +386,12 @@ export class BitECSStorage extends Storage {
 
     storeId(list: Map<string, string> | any, id: string): boolean {
         let entity = list.get(id);
-        if (!entity) {
+        if (entity == null && entity == undefined) {
+            entity = addEntity(this.world);
+            list.set(id, entity);
+            return true
+        } else if (!entityExists(this.world, entity)) {
+            // list.delete(id);
             entity = addEntity(this.world);
             list.set(id, entity);
             return true
@@ -307,7 +399,7 @@ export class BitECSStorage extends Storage {
         return false
     }
 
-    storeInput(id: string, input: any, tick: number = now()) {
+    storeInput(id: string, input: any, tick: number = 0) {
         return super.storeInput(id, input, tick);
     }
 }
