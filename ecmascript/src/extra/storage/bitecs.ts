@@ -21,8 +21,8 @@ const {
     removeComponent,
     removeEntity,
     // defineQuery,
-    // addEntity,
-    // addComponent,
+    addEntity,
+    addComponent,
     // pipe,
 } = await import('bitecs')
 
@@ -60,7 +60,7 @@ export class BitECSStorage extends Storage {
         for (let key in this.types) {
             const type = this.types[key];
             if (typeof type[0] === 'string') {
-                this.components.set(key, defineComponent(type[2]));
+                this.components.set(key, type[2] || defineComponent(type[3], type[4]));
             } else switch (type) {
                 case Boolean:
                 case Number:
@@ -195,7 +195,7 @@ export class BitECSStorage extends Storage {
         }
     }
 
-    getActors(query: any, pageSize: number) {
+    getActors(query: any = null, pageSize: number) {
         if (query !== null) {
             return super.getActors(query, pageSize);
         }
@@ -203,7 +203,7 @@ export class BitECSStorage extends Storage {
         return paginate(actors, pageSize)
     }
 
-    getComponents(query: any, pageSize: number) {
+    getComponents(query: any = null, pageSize: number) {
         // const queryKeys = Object.keys(query);
         // const entities = this.world.with(...queryKeys);
         let ids
@@ -224,7 +224,7 @@ export class BitECSStorage extends Storage {
         })
     }
 
-    getEntities(query: any, pageSize: number) {
+    getEntities(query: any = null, pageSize: number) {
         if (query !== null) {
             return super.getEntities(query, pageSize);
         }
@@ -232,7 +232,7 @@ export class BitECSStorage extends Storage {
         return paginate(entities, pageSize)
     }
 
-    getInputs(query: any, pageSize: number) {
+    getInputs(query: any = null, pageSize: number) {
         return super.getInputs(query, pageSize);
     }
 
@@ -269,15 +269,16 @@ export class BitECSStorage extends Storage {
         if (entity) {
             const prevValue = entity[key]
             // entity[key] = value
-            const type = this.types[key];
-            const schema = type[3]
-            const component: { [key: string]: any } = {}
-            let i = 0;
-            for (let prop in schema) {
-                component[prop] = value[i]
-                i++
-            }
-            this.world.addComponent(entity, key, component);
+            
+            // const type = this.types[key];
+            // const schema = type[3]
+            const component = this.components.get(key);
+            // let i = 0;
+            // for (let prop in schema) {
+            //     component[prop] = value[i]
+            //     i++
+            // }
+            addComponent(this.world, entity, component, value);
             // this.world.reindex(entity)
             if (this.indexes[key]) {
                 const index = this.indexes[key]
@@ -297,10 +298,10 @@ export class BitECSStorage extends Storage {
     }
 
     storeId(list: Map<string, string> | any, id: string): boolean {
-        const entity = list.get(id);
+        let entity = list.get(id);
         if (!entity) {
+            entity = addEntity(this.world);
             list.set(id, entity);
-            this.world.add(entity);
             return true
         }
         return false

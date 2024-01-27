@@ -91,6 +91,8 @@ export const createBecsyEchoD = (options = {}, Handler = EchoD, actions = EchoDN
     BecsyStorage
 )
 
+export const Handler = EchoD
+
 export function bescyExample() {
     const echo = createBecsyEchoD()
     const world = getWorld(echo)

@@ -1567,14 +1567,14 @@ class MiniplexStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
             return entity[key];
         }
     }
-    getActors(query, pageSize) {
+    getActors(query = null, pageSize) {
         if (query !== null) {
             return super.getActors(query, pageSize);
         }
         const actors = Array.from(this.actors.keys());
         return (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.paginate)(actors, pageSize);
     }
-    getComponents(query, pageSize) {
+    getComponents(query = null, pageSize) {
         // const queryKeys = Object.keys(query);
         // const entities = this.world.with(...queryKeys);
         let ids;
@@ -1595,14 +1595,14 @@ class MiniplexStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
             return components;
         });
     }
-    getEntities(query, pageSize) {
+    getEntities(query = null, pageSize) {
         if (query !== null) {
             return super.getEntities(query, pageSize);
         }
         const entities = Array.from(this.entities.keys());
         return (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.paginate)(entities, pageSize);
     }
-    getInputs(query, pageSize) {
+    getInputs(query = null, pageSize) {
         return super.getInputs(query, pageSize);
     }
     isActor(id) {
@@ -1649,8 +1649,9 @@ class MiniplexStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
         return this.storeId(this.entities, id);
     }
     storeId(list, id) {
-        const entity = list.get(id);
+        let entity = list.get(id);
         if (!entity) {
+            entity = {};
             list.set(id, entity);
             this.world.add(entity);
             return true;

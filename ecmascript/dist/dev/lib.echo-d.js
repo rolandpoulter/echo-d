@@ -4578,6 +4578,9 @@ function paginate(array, pageSize) {
     const pages = [];
     let page = [];
     let i = 0;
+    if (!Array.isArray(array)) {
+        throw new Error('paginate: array must be an array');
+    }
     for (const v of array) {
         if (i >= pageSize) {
             pages.push(page);

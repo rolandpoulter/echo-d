@@ -45,8 +45,8 @@ export const createMiniplexEchoD = (options, Handler = EchoD, actions = EchoDNod
 
 export const Handler = EchoD
 
-export function miniplexExample() {
-    const echo = createMiniplexEchoD()
+export function miniplexExample(options) {
+    const echo = createMiniplexEchoD(options)
     const world = getWorld(echo)
     return { echo, world }
 }

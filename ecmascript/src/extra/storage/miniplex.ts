@@ -104,7 +104,7 @@ export class MiniplexStorage extends Storage {
         }
     }
 
-    getActors(query: any, pageSize: number) {
+    getActors(query: any = null, pageSize: number) {
         if (query !== null) {
             return super.getActors(query, pageSize);
         }
@@ -112,7 +112,7 @@ export class MiniplexStorage extends Storage {
         return paginate(actors, pageSize)
     }
 
-    getComponents(query: any, pageSize: number) {
+    getComponents(query: any = null, pageSize: number) {
         // const queryKeys = Object.keys(query);
         // const entities = this.world.with(...queryKeys);
         let ids
@@ -133,7 +133,7 @@ export class MiniplexStorage extends Storage {
         })
     }
 
-    getEntities(query: any, pageSize: number) {
+    getEntities(query: any = null, pageSize: number) {
         if (query !== null) {
             return super.getEntities(query, pageSize);
         }
@@ -141,7 +141,7 @@ export class MiniplexStorage extends Storage {
         return paginate(entities, pageSize)
     }
 
-    getInputs(query: any, pageSize: number) {
+    getInputs(query: any = null, pageSize: number) {
         return super.getInputs(query, pageSize);
     }
 
@@ -197,8 +197,9 @@ export class MiniplexStorage extends Storage {
     }
 
     storeId(list: any, id: string): boolean {
-        const entity = list.get(id);
+        let entity = list.get(id);
         if (!entity) {
+            entity = {}
             list.set(id, entity);
             this.world.add(entity);
             return true

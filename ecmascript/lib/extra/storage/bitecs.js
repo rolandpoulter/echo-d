@@ -7,10 +7,9 @@ import { paginate, now } from '../../utils.js';
 // }
 const { createWorld, 
 // Types,
-defineComponent, removeComponent, removeEntity,
+defineComponent, removeComponent, removeEntity, 
 // defineQuery,
-// addEntity,
-// addComponent,
+addEntity, addComponent,
 // pipe,
  } = await import('bitecs');
 export function defaultGetGroupedValue(value, i, types, key) {
@@ -36,7 +35,7 @@ export class BitECSStorage extends Storage {
         for (let key in this.types) {
             const type = this.types[key];
             if (typeof type[0] === 'string') {
-                this.components.set(key, defineComponent(type[2]));
+                this.components.set(key, type[2] || defineComponent(type[3], type[4]));
             }
             else
                 switch (type) {
@@ -164,14 +163,14 @@ export class BitECSStorage extends Storage {
             return value;
         }
     }
-    getActors(query, pageSize) {
+    getActors(query = null, pageSize) {
         if (query !== null) {
             return super.getActors(query, pageSize);
         }
         const actors = Array.from(this.actors.keys());
         return paginate(actors, pageSize);
     }
-    getComponents(query, pageSize) {
+    getComponents(query = null, pageSize) {
         // const queryKeys = Object.keys(query);
         // const entities = this.world.with(...queryKeys);
         let ids;
@@ -192,14 +191,14 @@ export class BitECSStorage extends Storage {
             return components;
         });
     }
-    getEntities(query, pageSize) {
+    getEntities(query = null, pageSize) {
         if (query !== null) {
             return super.getEntities(query, pageSize);
         }
         const entities = Array.from(this.entities.keys());
         return paginate(entities, pageSize);
     }
-    getInputs(query, pageSize) {
+    getInputs(query = null, pageSize) {
         return super.getInputs(query, pageSize);
     }
     isActor(id) {
@@ -228,15 +227,15 @@ export class BitECSStorage extends Storage {
         if (entity) {
             const prevValue = entity[key];
             // entity[key] = value
-            const type = this.types[key];
-            const schema = type[3];
-            const component = {};
-            let i = 0;
-            for (let prop in schema) {
-                component[prop] = value[i];
-                i++;
-            }
-            this.world.addComponent(entity, key, component);
+            // const type = this.types[key];
+            // const schema = type[3]
+            const component = this.components.get(key);
+            // let i = 0;
+            // for (let prop in schema) {
+            //     component[prop] = value[i]
+            //     i++
+            // }
+            addComponent(this.world, entity, component, value);
             // this.world.reindex(entity)
             if (this.indexes[key]) {
                 const index = this.indexes[key];
@@ -255,10 +254,10 @@ export class BitECSStorage extends Storage {
         return this.storeId(this.entities, id);
     }
     storeId(list, id) {
-        const entity = list.get(id);
+        let entity = list.get(id);
         if (!entity) {
+            entity = addEntity(this.world);
             list.set(id, entity);
-            this.world.add(entity);
             return true;
         }
         return false;

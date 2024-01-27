@@ -27,10 +27,9 @@ __webpack_require__.r(__webpack_exports__);
 // }
 const { createWorld, 
 // Types,
-defineComponent, removeComponent, removeEntity,
+defineComponent, removeComponent, removeEntity, 
 // defineQuery,
-// addEntity,
-// addComponent,
+addEntity, addComponent,
 // pipe,
  } = await Promise.resolve(/*! import() */).then(__webpack_require__.bind(__webpack_require__, /*! bitecs */ "./node_modules/.deno/bitecs@0.3.40/node_modules/bitecs/dist/index.mjs"));
 function defaultGetGroupedValue(value, i, types, key) {
@@ -56,7 +55,7 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
         for (let key in this.types) {
             const type = this.types[key];
             if (typeof type[0] === 'string') {
-                this.components.set(key, defineComponent(type[2]));
+                this.components.set(key, type[2] || defineComponent(type[3], type[4]));
             }
             else
                 switch (type) {
@@ -184,14 +183,14 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
             return value;
         }
     }
-    getActors(query, pageSize) {
+    getActors(query = null, pageSize) {
         if (query !== null) {
             return super.getActors(query, pageSize);
         }
         const actors = Array.from(this.actors.keys());
         return (0,_utils_js__WEBPACK_IMPORTED_MODULE_2__.paginate)(actors, pageSize);
     }
-    getComponents(query, pageSize) {
+    getComponents(query = null, pageSize) {
         // const queryKeys = Object.keys(query);
         // const entities = this.world.with(...queryKeys);
         let ids;
@@ -212,14 +211,14 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
             return components;
         });
     }
-    getEntities(query, pageSize) {
+    getEntities(query = null, pageSize) {
         if (query !== null) {
             return super.getEntities(query, pageSize);
         }
         const entities = Array.from(this.entities.keys());
         return (0,_utils_js__WEBPACK_IMPORTED_MODULE_2__.paginate)(entities, pageSize);
     }
-    getInputs(query, pageSize) {
+    getInputs(query = null, pageSize) {
         return super.getInputs(query, pageSize);
     }
     isActor(id) {
@@ -248,15 +247,15 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
         if (entity) {
             const prevValue = entity[key];
             // entity[key] = value
-            const type = this.types[key];
-            const schema = type[3];
-            const component = {};
-            let i = 0;
-            for (let prop in schema) {
-                component[prop] = value[i];
-                i++;
-            }
-            this.world.addComponent(entity, key, component);
+            // const type = this.types[key];
+            // const schema = type[3]
+            const component = this.components.get(key);
+            // let i = 0;
+            // for (let prop in schema) {
+            //     component[prop] = value[i]
+            //     i++
+            // }
+            addComponent(this.world, entity, component, value);
             // this.world.reindex(entity)
             if (this.indexes[key]) {
                 const index = this.indexes[key];
@@ -275,10 +274,10 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
         return this.storeId(this.entities, id);
     }
     storeId(list, id) {
-        const entity = list.get(id);
+        let entity = list.get(id);
         if (!entity) {
+            entity = addEntity(this.world);
             list.set(id, entity);
-            this.world.add(entity);
             return true;
         }
         return false;

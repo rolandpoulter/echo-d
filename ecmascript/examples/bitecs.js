@@ -38,11 +38,11 @@ export const RGBA = { r: Types.ui8, g: Types.ui8, b: Types.ui8, a: Types.ui8 }
 //     collider: String,
 // }
 
-export const Color = defineComponent(RGBA) 
-export const Position = defineComponent(Vector3)
-export const Rotation = defineComponent(Vector3)
-export const Velocity = defineComponent(Vector3)
-export const Spin = defineComponent(Vector3)
+export const Color = null && defineComponent(RGBA) 
+export const Position = null && defineComponent(Vector3)
+export const Rotation = null && defineComponent(Vector3)
+export const Velocity = null && defineComponent(Vector3)
+export const Spin = null && defineComponent(Vector3)
 
 export const createBitECSEchoD = (options = {}, Handler = EchoD, actions = EchoDNode.actions) => new Handler(
     // context,
@@ -56,17 +56,19 @@ export const createBitECSEchoD = (options = {}, Handler = EchoD, actions = EchoD
             asset: String,
             collider: String,
             hidden: Boolean,
-            color: ['ui8', 4, Color, RGBA],
-            position: ['f32', 3, Position, Vector3],
-            rotation: ['f32', 3, Rotation, Vector3],
-            velocity: ['f32', 3, Velocity, Vector3],
-            spin: ['f32', 3, Spin, Vector3],
+            color: ['ui8', 4, Color, RGBA, 10],
+            position: ['f32', 3, Position, Vector3, 10],
+            rotation: ['f32', 3, Rotation, Vector3, 10],
+            velocity: ['f32', 3, Velocity, Vector3, 10],
+            spin: ['f32', 3, Spin, Vector3, 10],
             ...(options && options.types || {}),
         },
     },
     actions,
     BitECSStorage
 )
+
+export const Handler = EchoD
 
 export function bitECSExample() {
     const echo = createBitECSEchoD()
