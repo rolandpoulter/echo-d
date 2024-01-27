@@ -112,12 +112,13 @@ export const defaultOptions = {
   types: {
     asset: 'str',
     collider: 'str',
-    color: 'str',
+    color: ['ui8', 4],
     hidden: 'bool',
     position: ['f32', 3],
     rotation: ['f32', 3],
     velocity: ['f32', 3],
     spin: ['f32', 3],
+    size: ['f32', 3],
   }
 }
 
@@ -141,13 +142,15 @@ export const defaultUpdateOptions = {
  * An object that maps keys to their validity.
  */
 export const defaultValidKeys = {
+  asset: true,
   collider: true,
   color: true,
   hidden: true,
   position: true,
   rotation: true,
   velocity: true,
-  spin: true
+  spin: true,
+  size: true,
 }
 
 /**

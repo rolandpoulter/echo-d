@@ -7,7 +7,7 @@ import EchoD, {
 // const echoDOptions = new EchoDOptions({}, EchoDNode.actions)
 // const echoDContext = new EchoDContext({}, options, MiniplexStorage)
 
-const createEchoD = (options = {}, Handler = EchoD, actions = EchoDNode.actions) => new Handler(
+export const createEchoD = (options = {}, Handler = EchoD, actions = EchoDNode.actions) => new Handler(
     // echoDContext,
     {},
     // echoDOptions,
@@ -17,10 +17,12 @@ const createEchoD = (options = {}, Handler = EchoD, actions = EchoDNode.actions)
 
 export const getWorld = (echo) => echo.context.store.world
 
-export function echoExample() {
-    const echo = createEchoD()
+export function echoExample(options) {
+    const echo = createEchoD(options)
     const world = getWorld(echo)
     return { echo, world }
 }
+
+export const Handler = EchoD
 
 export default echoExample()

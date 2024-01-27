@@ -50,8 +50,8 @@ function executeSystems(systems, fn, data = null) {
 }
 function filterSystems(names, systems, lowercase = true) {
     return systems.filter(system => {
-        const name = system.name;
-        return names.includes(lowercase ? name.toLowerCase() : name);
+        const name = system.name || system.constructor.name || '';
+        return names.includes(lowercase && name ? name.toLowerCase() : name);
     });
 }
 class SystemHandler extends _handler_js__WEBPACK_IMPORTED_MODULE_0__.Handler {

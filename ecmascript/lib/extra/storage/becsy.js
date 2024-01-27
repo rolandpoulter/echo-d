@@ -1,9 +1,19 @@
 import { Storage } from '../../storage.js';
-import { paginate } from '../../utils.js';
+import { paginate, now } from '../../utils.js';
 const { 
 // System,
 // Type,
-World } = await import('@lastolivegames/becsy');
+World } = await import('@lastolivegames/becsy/index.js');
+export function defaultGetGroupedValue(value, i, types, key) {
+    const type = types[key];
+    if (Array.isArray(type)) {
+        return value.slice(i * type[1], (i + 1) * type[1]);
+    }
+    return value[i];
+}
+export function defaultSetGroupedValue(value, _types, _key) {
+    return value;
+}
 export class BecsyStorage extends Storage {
     constructor(storage, options) {
         super({
@@ -14,11 +24,27 @@ export class BecsyStorage extends Storage {
             // inputs: new Map(),
             inputs: null,
         }, options);
-        const { 
+        let { 
         // types,
         // indexes,
         worldOptions } = options;
-        this.world = storage?.world || World.create(worldOptions);
+        worldOptions = worldOptions || { defs: [] };
+        if (worldOptions && !worldOptions.defs) {
+            worldOptions.defs = [];
+        }
+        // if (!((worldOptions as WorldOptions).defs as any[]).length) {
+        //      for (let component of this.components.values()) {
+        //         if (!component) {
+        //             continue
+        //         }
+        //         if ((component as any) instanceof Map) {
+        //             continue
+        //         }
+        //         (worldOptions as WorldOptions).defs.push(component)
+        //     }
+        // }
+        this.worldOptions = worldOptions;
+        this.world = storage?.world || World.create(this.worldOptions);
         this.eids = storage?.eids || new Map();
         // for (let key in this.types) {
         //     const type = this.types[key];
@@ -222,7 +248,7 @@ export class BecsyStorage extends Storage {
         }
         return false;
     }
-    storeInput(id, input, tick = Date.now()) {
+    storeInput(id, input, tick = now()) {
         return super.storeInput(id, input, tick);
     }
 }

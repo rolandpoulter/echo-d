@@ -1,7 +1,7 @@
 // import { describe, it } from 'mocha'
 // import { expect, mockFn } from 'earl'
 
-import * as echo from '../../../../dist/module/echo-d.js'
+import * as echo from '../../../../dist/module/lib.echo-d.js'
 
 // import contextSpec from '../../../spec/context.js'
 

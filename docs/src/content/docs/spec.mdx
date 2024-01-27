@@ -685,6 +685,13 @@ An Actions `Object` contains all the handler functions for each action that can 
 > // Payload
 > [ 18, { actor: { position: [0, 0, 0] }, entity: { position: [0, 0, 0] } } ]
 > ```
+> If `isGroupedComponent` is true then the following payload is also supported. 
+>
+> TODO: Support using grouped upsertComponent when isGroupedComponent
+> ```js
+> // Payload
+> [ 18, [ [ ['actor', 'entity'], 'position', [0, 0, 0, 0, 0, 0] ] ] ]
+> ```
 
 > #### removeComponent
 >

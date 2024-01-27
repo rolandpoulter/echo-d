@@ -2,10 +2,10 @@ export const id = "miniplex";
 export const ids = ["miniplex"];
 export const modules = {
 
-/***/ "./node_modules/@hmans/id/dist/hmans-id.esm.js":
-/*!*****************************************************!*\
-  !*** ./node_modules/@hmans/id/dist/hmans-id.esm.js ***!
-  \*****************************************************/
+/***/ "./node_modules/.deno/@hmans+id@0.0.1/node_modules/@hmans/id/dist/hmans-id.esm.js":
+/*!****************************************************************************************!*\
+  !*** ./node_modules/.deno/@hmans+id@0.0.1/node_modules/@hmans/id/dist/hmans-id.esm.js ***!
+  \****************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -26,10 +26,10 @@ var id = function id(object) {
 
 /***/ }),
 
-/***/ "./node_modules/@hmans/queue/dist/hmans-queue.esm.js":
-/*!***********************************************************!*\
-  !*** ./node_modules/@hmans/queue/dist/hmans-queue.esm.js ***!
-  \***********************************************************/
+/***/ "./node_modules/.deno/@hmans+queue@0.0.1/node_modules/@hmans/queue/dist/hmans-queue.esm.js":
+/*!*************************************************************************************************!*\
+  !*** ./node_modules/.deno/@hmans+queue@0.0.1/node_modules/@hmans/queue/dist/hmans-queue.esm.js ***!
+  \*************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -64,17 +64,17 @@ function createQueue() {
 
 /***/ }),
 
-/***/ "./node_modules/@miniplex/bucket/dist/miniplex-bucket.esm.js":
-/*!*******************************************************************!*\
-  !*** ./node_modules/@miniplex/bucket/dist/miniplex-bucket.esm.js ***!
-  \*******************************************************************/
+/***/ "./node_modules/.deno/@miniplex+bucket@2.0.0/node_modules/@miniplex/bucket/dist/miniplex-bucket.esm.js":
+/*!*************************************************************************************************************!*\
+  !*** ./node_modules/.deno/@miniplex+bucket@2.0.0/node_modules/@miniplex/bucket/dist/miniplex-bucket.esm.js ***!
+  \*************************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Bucket: () => (/* binding */ Bucket)
 /* harmony export */ });
-/* harmony import */ var eventery__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! eventery */ "./node_modules/eventery/dist/eventery.cjs.dev.js");
+/* harmony import */ var eventery__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! eventery */ "./node_modules/.deno/eventery@0.0.4/node_modules/eventery/dist/eventery.cjs.dev.js");
 
 
 function _arrayLikeToArray(arr, len) {
@@ -392,10 +392,10 @@ var Bucket = /*#__PURE__*/function () {
 
 /***/ }),
 
-/***/ "./node_modules/eventery/dist/eventery.cjs.dev.js":
-/*!********************************************************!*\
-  !*** ./node_modules/eventery/dist/eventery.cjs.dev.js ***!
-  \********************************************************/
+/***/ "./node_modules/.deno/eventery@0.0.4/node_modules/eventery/dist/eventery.cjs.dev.js":
+/*!******************************************************************************************!*\
+  !*** ./node_modules/.deno/eventery@0.0.4/node_modules/eventery/dist/eventery.cjs.dev.js ***!
+  \******************************************************************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -666,19 +666,19 @@ exports.Event = Event;
 
 /***/ }),
 
-/***/ "./node_modules/miniplex/dist/miniplex.cjs.dev.js":
-/*!********************************************************!*\
-  !*** ./node_modules/miniplex/dist/miniplex.cjs.dev.js ***!
-  \********************************************************/
+/***/ "./node_modules/.deno/miniplex@2.0.0/node_modules/miniplex/dist/miniplex.cjs.dev.js":
+/*!******************************************************************************************!*\
+  !*** ./node_modules/.deno/miniplex@2.0.0/node_modules/miniplex/dist/miniplex.cjs.dev.js ***!
+  \******************************************************************************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
-var bucket = __webpack_require__(/*! @miniplex/bucket */ "./node_modules/@miniplex/bucket/dist/miniplex-bucket.esm.js");
-var id = __webpack_require__(/*! @hmans/id */ "./node_modules/@hmans/id/dist/hmans-id.esm.js");
-var queue$1 = __webpack_require__(/*! @hmans/queue */ "./node_modules/@hmans/queue/dist/hmans-queue.esm.js");
+var bucket = __webpack_require__(/*! @miniplex/bucket */ "./node_modules/.deno/@miniplex+bucket@2.0.0/node_modules/@miniplex/bucket/dist/miniplex-bucket.esm.js");
+var id = __webpack_require__(/*! @hmans/id */ "./node_modules/.deno/@hmans+id@0.0.1/node_modules/@hmans/id/dist/hmans-id.esm.js");
+var queue$1 = __webpack_require__(/*! @hmans/queue */ "./node_modules/.deno/@hmans+queue@0.0.1/node_modules/@hmans/queue/dist/hmans-queue.esm.js");
 
 function _arrayLikeToArray(arr, len) {
   if (len == null || len > arr.length) len = arr.length;
@@ -1463,16 +1463,16 @@ exports.queue = queue;
 
 /***/ }),
 
-/***/ "./node_modules/miniplex/dist/miniplex.cjs.js":
-/*!****************************************************!*\
-  !*** ./node_modules/miniplex/dist/miniplex.cjs.js ***!
-  \****************************************************/
+/***/ "./node_modules/.deno/miniplex@2.0.0/node_modules/miniplex/dist/miniplex.cjs.js":
+/*!**************************************************************************************!*\
+  !*** ./node_modules/.deno/miniplex@2.0.0/node_modules/miniplex/dist/miniplex.cjs.js ***!
+  \**************************************************************************************/
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 
 
 if (false) {} else {
-  module.exports = __webpack_require__(/*! ./miniplex.cjs.dev.js */ "./node_modules/miniplex/dist/miniplex.cjs.dev.js");
+  module.exports = __webpack_require__(/*! ./miniplex.cjs.dev.js */ "./node_modules/.deno/miniplex@2.0.0/node_modules/miniplex/dist/miniplex.cjs.dev.js");
 }
 
 
@@ -1487,15 +1487,26 @@ if (false) {} else {
 __webpack_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   MiniplexStorage: () => (/* binding */ MiniplexStorage)
+/* harmony export */   MiniplexStorage: () => (/* binding */ MiniplexStorage),
+/* harmony export */   defaultGetGroupedValue: () => (/* binding */ defaultGetGroupedValue),
+/* harmony export */   defaultSetGroupedValue: () => (/* binding */ defaultSetGroupedValue)
 /* harmony export */ });
 /* harmony import */ var _storage_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../storage.js */ "./lib/storage.js");
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../utils.js */ "./lib/utils.js");
 
 
-const { World, } = await Promise.resolve(/*! import() */).then(__webpack_require__.t.bind(__webpack_require__, /*! miniplex/dist/miniplex.cjs.js */ "./node_modules/miniplex/dist/miniplex.cjs.js", 19));
+const { World, } = await Promise.resolve(/*! import() */).then(__webpack_require__.t.bind(__webpack_require__, /*! miniplex/dist/miniplex.cjs.js */ "./node_modules/.deno/miniplex@2.0.0/node_modules/miniplex/dist/miniplex.cjs.js", 19));
+function defaultGetGroupedValue(value, i, types, key) {
+    const type = types[key];
+    if (Array.isArray(type)) {
+        return value.slice(i * type[1], (i + 1) * type[1]);
+    }
+    return value[i];
+}
+function defaultSetGroupedValue(value, _types, _key) {
+    return value;
+}
 class MiniplexStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
-    // declare inputs: Map<string, any> & string[];
     constructor(storage, options) {
         super({
             ...(storage || {}),
@@ -1507,7 +1518,8 @@ class MiniplexStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
             inputs: null,
         }, options);
         const { worldOptions = [], } = options;
-        this.world = storage?.world || new World(worldOptions);
+        this.worldOptions = worldOptions;
+        this.world = storage?.world || new World();
     }
     destroyActor(id) {
         return this.destroyId(this.actors, id);
@@ -1645,7 +1657,7 @@ class MiniplexStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
         }
         return false;
     }
-    storeInput(id, input, tick = Date.now()) {
+    storeInput(id, input, tick = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.now)()) {
         return super.storeInput(id, input, tick);
     }
 }
@@ -1666,6 +1678,8 @@ __webpack_require__.C(__webpack_chunk_0__);
 var __webpack_exports__ = __webpack_exec__("./lib/extra/storage/miniplex.js");
 __webpack_exports__ = await __webpack_exports__;
 var __webpack_exports__MiniplexStorage = __webpack_exports__.MiniplexStorage;
-export { __webpack_exports__MiniplexStorage as MiniplexStorage };
+var __webpack_exports__defaultGetGroupedValue = __webpack_exports__.defaultGetGroupedValue;
+var __webpack_exports__defaultSetGroupedValue = __webpack_exports__.defaultSetGroupedValue;
+export { __webpack_exports__MiniplexStorage as MiniplexStorage, __webpack_exports__defaultGetGroupedValue as defaultGetGroupedValue, __webpack_exports__defaultSetGroupedValue as defaultSetGroupedValue };
 
 //# sourceMappingURL=miniplex.echo-d.js.map

@@ -1,4 +1,11 @@
 /**
+ * @returns {number} The current time in milliseconds.
+ */
+export function now(): number {
+  return performance.timeOrigin + performance.now()
+}
+
+/**
  * A type that can be either a Set or an Array.
  */
 type SetOrArray<type> = Set<type> | Array<type>
@@ -185,6 +192,9 @@ export function paginate(array: any[], pageSize: number): any[][] {
     page.push(v);
     i++;
   }
+  if (page.length > 0) {
+    pages.push(page);
+  }
   return pages;
 }
 
@@ -253,7 +263,7 @@ export function recursiveCombination (objA: any, objB: any): [boolean, any] {
       }
       const newObj: Record<string, any> = {};
       let combined = true;
-      for (const k of Object.keys(objB)) {
+      for (const k in objB) {
         const [c, value] = recursiveCombination(objA[k], objB[k]);
         if (c === false) {
           combined = false;

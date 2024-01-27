@@ -57,7 +57,7 @@ title: "echo-d"
 - [batchActionPayloadSizes](/api/variables/batchactionpayloadsizes/)
 - [defaultOptions](/api/variables/defaultoptions/)
 - [defaultUpdateOptions](/api/variables/defaultupdateoptions/)
-- [defaultValidKeys](/api/variables/defaultvalidKeys/)
+- [defaultValidKeys](/api/variables/defaultvalidkeys/)
 - [enumActions](/api/variables/enumactions/)
 - [enumCommonComponents](/api/variables/enumcommoncomponents/)
 - [enumDefaultSymbols](/api/variables/enumdefaultsymbols/)

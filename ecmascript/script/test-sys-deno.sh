@@ -1,3 +1,8 @@
 #!/bin/bash
 
-deno task test
+if [ $# -eq 0 ]
+  then
+    npm run build
+fi
+
+deno task test --allow-hrtime

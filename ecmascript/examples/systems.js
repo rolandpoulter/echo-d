@@ -1,4 +1,4 @@
-import { System, SystemHandler, filterSystems } from '../lib/extra/systems.js'
+import { System, SystemHandler, filterSystems } from '../lib/extra/system.js'
 
 import { createEchoD } from './echo.js'
 

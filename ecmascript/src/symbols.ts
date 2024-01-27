@@ -233,7 +233,7 @@ export function recursiveSymbolExtraction (key: string, value: any, context: any
             break
           }
           case 'object':
-            for (const key of Object.keys(value)) {
+            for (const key in value) {
               value[key] = recursiveFix(value[key])
             }
             break
@@ -272,7 +272,7 @@ export function recursiveSymbolIndexesEnsured (key: string, value: any, context:
             break
           }
           case 'object':
-            for (const key of Object.keys(value)) {
+            for (const key in value) {
               value[key] = recursiveFix(value[key])
             }
             break

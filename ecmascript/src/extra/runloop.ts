@@ -1,3 +1,5 @@
+import { now } from '../utils'
+
 type RunLoopProps = {
     updateFrequency: number,
     setImmediate: Function,
@@ -24,19 +26,21 @@ export function createRunLoop(props: RunLoopProps = {
 
     let lastFrameTime: number | null = null
 
-    function nextCycle (nf = nextFrame, state = getState(), start = Date.now(), now = Date.now()) {
+    function nextCycle (nf = nextFrame, state = getState(), start = now(), n = now()) {
         if (lastFrameTime === null) {
-            lastFrameTime = now
+            lastFrameTime = n
         }
-        const delta = now - lastFrameTime
-        lastFrameTime = now
+        const delta = n - lastFrameTime
+        lastFrameTime = n
         state.start = start
-        return setImmediate(() => nf(state, start, now - start, delta), 0)
+        if (typeof setImmediate === 'function') {
+            return setImmediate(() => nf(state, start, n - start, delta), 0)
+        }
     }
 
     let lastEmitDelta: number | null = null
 
-    function nextFrame (state = getState(), start = Date.now(), timestamp = 0, delta = 0) {
+    function nextFrame (state = getState(), start = now(), timestamp = 0, delta = 0) {
         if (lastEmitDelta === null) {
             lastEmitDelta = 0
         }
@@ -51,7 +55,7 @@ export function createRunLoop(props: RunLoopProps = {
         }
         lastEmitDelta += delta
         if (!state.stop) {
-            state.pendingFrame = nextCycle(nextFrame, state, start, Date.now())
+            state.pendingFrame = nextCycle(nextFrame, state, start, now())
         }
         return state
     }

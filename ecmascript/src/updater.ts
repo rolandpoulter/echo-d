@@ -14,6 +14,7 @@ import {
   recursiveSymbolIndexesEnsured
 } from './symbols'
 import { ArrayTypes } from './types';
+import { now } from './utils'
 
 /**
  * The UpdateOptions interface represents the options for updating the application.
@@ -39,8 +40,9 @@ export interface UpdateOptions {
  * @param {Context} context - The current context.
  * @param {Options | any} options - The options for updating the context.
  * @param {number} tick - The current tick.
+ * @returns {Promise<any[]>} A promise that resolves to an array of arrays, where each sub-array represents a batch of updates. This is only relevant if the `batched` option is enabled.
  */
-export async function updater (context: Context, options: Options | any, tick: number = Date.now()): Promise<void> {
+export async function updater (context: Context, options: Options | any, tick: number = now()): Promise<any[]> {
   options = options instanceof Options ? options : new Options(options)
 
   const {
@@ -51,6 +53,7 @@ export async function updater (context: Context, options: Options | any, tick: n
     isOrdered,
     isDiffed,
     isGroupedComponents,
+    isAsyncStorage,
     types,
     setGroupedValue,
     updateOptions
@@ -65,25 +68,27 @@ export async function updater (context: Context, options: Options | any, tick: n
   } = updateOptions
 
   if (!context.pending) {
-    return
+    return []
   }
-
+  
   /**
    * An array of arrays, where each sub-array represents a batch of updates.
-   */
-  const batch: Array<Array<string | number>> = []
+  */
+ const batch: Array<Array<string | number>> = []
+ 
+ /**
+  * An array representing the current batch of updates.
+ */
+let batchBlock: Array<any> = []
 
-  /**
-   * An array representing the current batch of updates.
-   */
-  let batchBlock: Array<any> = []
+const {
+  created = {} as CreatedState,
+  removed = {} as RemovedState,
+  symbols = [] as any[],
+  updated = {} as UpdatedState
+} = context.pending
 
-  const {
-    created = {} as CreatedState,
-    removed = {} as RemovedState,
-    symbols = [] as any[],
-    updated = {} as UpdatedState
-  } = context.pending
+const store = context.store
 
   /**
    * Merges the current batch block into the batch array.
@@ -130,20 +135,18 @@ export async function updater (context: Context, options: Options | any, tick: n
     return symbol
   }
 
-  const upsertComponents = async (pendingComponents: Components = {}) => {
-    const store = context.store
-
+  const upsertComponents = async (pendingComponents: Components = {}, state: string) => {
     const groups = isGroupedComponents ? {} as { [key: string]: any } : null
-
-    for (const id of Object.keys(pendingComponents)) {
-      const components = store.fetchComponents(id)
+    
+    for (const id in (pendingComponents ?? {})) {
+      const components = isAsyncStorage ? await store.fetchComponents(id) : store.fetchComponents(id)
       if (!components) {
         break
       }
 
       const updatedComponents = pendingComponents ? pendingComponents[id] : {}
-
-      for (const key of Object.keys(updatedComponents[id] ?? {})) {
+      
+      for (const key in (updatedComponents ?? {})) {
         if (validKeys && !validKeys[key]) {
           break
         }
@@ -153,20 +156,15 @@ export async function updater (context: Context, options: Options | any, tick: n
           group = groups[key] = groups[key] ?? {
             key,
             ids: [],
+            intIds: true,
             values: [],
             ticks: []
           }
         }
 
-        let value
-        if (isDiffed && context.changes) {
-          value = context.changes.getValue(id, key)
-        } else {
-          // TODO: support async fetchComponent
-          value = store.fetchComponent(id, key)
-          if (value instanceof Promise) {
-            value = await value
-          }
+        let value = isAsyncStorage ? await store.fetchComponent(id, key) : store.fetchComponent(id, key)
+        if (isDiffed && context.changes && (state === 'updated' || !true)) {
+          value = context.changes.getValue(id, key, value)
         }
 
         if (compressStringsAsInts) {
@@ -178,7 +176,12 @@ export async function updater (context: Context, options: Options | any, tick: n
 
         if (groups)  {
           group.ids.push(nid)
-          group.values.push(setGroupedValue(value, types, key))
+          if (nid === id) {
+            group.intIds = false
+          }
+          group.values = group.values.concat(
+            setGroupedValue(value, types, key)
+          )
           if (isOrdered) {
             group.ticks.push(isDiffed ? -tick : tick)
           }
@@ -202,13 +205,13 @@ export async function updater (context: Context, options: Options | any, tick: n
     }
 
     if (groups) {
-      for (const key of Object.keys(groups)) {
+      for (const key in groups) {
         const group = groups[key]
-        const bufferIds = compressStringsAsInts ? new Uint32Array(group.ids) : group.ids
+        const bufferIds = compressStringsAsInts && group.intIds ? new Uint32Array(group.ids) : group.ids
         const type = types[key] ?? null
         const Type = type ? ArrayTypes.get(Array.isArray(type) ? type[0] : type) : null
         const bufferValues = Type ? new Type(group.values) : group.values
-        
+
         let i = 0;
         const size = bufferIds.length;
         for (; i < size; i += batchSize) {
@@ -231,6 +234,7 @@ export async function updater (context: Context, options: Options | any, tick: n
         }
       }
     }
+
     mergeBatch(isDiffed ? enumDefaultSymbols.changeComponent : enumDefaultSymbols.upsertComponent)
   }
 
@@ -256,7 +260,7 @@ export async function updater (context: Context, options: Options | any, tick: n
    * queues a message to spawn each actor, merges the batch of messages, and then clears the `created.actors` array.
    */
   if (!mask || !mask.actors) {
-    for (const id of Object.keys(created.actors ?? {})) {
+    for (const id in (created.actors ?? {})) {
       const nid = ensureSymbol(id)
 
       queueMessage(enumDefaultSymbols.spawnActor, nid)
@@ -288,7 +292,7 @@ export async function updater (context: Context, options: Options | any, tick: n
    * queues a message to remove each component, merges the batch of messages, and then clears the `removed.components` object.
    */
   if (!mask || !mask.actors) {
-    for (const id of Object.keys(removed.actors ?? {})) {
+    for (const id in (removed.actors ?? {})) {
       const nid = ensureSymbol(id)
 
       queueMessage(enumDefaultSymbols.removeActor, nid)
@@ -304,7 +308,7 @@ export async function updater (context: Context, options: Options | any, tick: n
    * queues a message to remove each component, merges the batch of messages, and then clears the `removed.components` object.
    */
   if (!mask || !mask.components) {
-    for (const id of Object.keys(removed.components ?? {})) {
+    for (const id in (removed.components ?? {})) {
       const components = removed?.components ? removed.components[id] : null
       if (!components) {
         break
@@ -312,7 +316,7 @@ export async function updater (context: Context, options: Options | any, tick: n
 
       const nid = ensureSymbol(id)
 
-      for (const key of Object.keys(components)) {
+      for (const key in components) {
         if (validKeys && !validKeys[key]) {
           break
         }
@@ -337,7 +341,7 @@ export async function updater (context: Context, options: Options | any, tick: n
    * queues a message to create each component, merges the batch of messages, and then clears the `created.components` object.
    */
   if (!mask || !mask.components) {
-    const promise = upsertComponents(created.components)
+    const promise = upsertComponents(created.components, 'created')
     created.components = {}
     await promise
   }
@@ -348,7 +352,7 @@ export async function updater (context: Context, options: Options | any, tick: n
    * queues a message to update each component, merges the batch of messages, and then clears the `updated.components` object.
    */
   if (!mask || !mask.components) {
-    const promise = upsertComponents(updated.components)
+    const promise = upsertComponents(updated.components, 'updated')
     updated.components = {}
     await promise
   }
@@ -359,21 +363,23 @@ export async function updater (context: Context, options: Options | any, tick: n
    * queues a message to create each input, merges the batch of messages, and then clears the `created.inputs` object.
    */
   if (!mask || !mask.inputs) {
-    for (const id of Object.keys(created.inputs ?? {})) {
+    for (const id in (created.inputs ?? {})) {
       // const nid = ensureSymbol(id)
 
-      const createdInputs = created?.inputs ? created.inputs[id] : []
+      const createdInputs = created?.inputs ? (created.inputs[id] ?? []) : []
 
-      for (const index of (createdInputs ?? [])) {
-        const payload = createdInputs ? createdInputs[index] : null
+      for (let i = 0; i < createdInputs.length; i += 1) {
+        const index = createdInputs[i]
 
-        const input = payload
-
-        // const input = { ...payload, id };
+        const payload = isAsyncStorage ? await store.fetchInput(id, index) : store.fetchInput(id, index)
+        
+        const isTuple = Array.isArray(payload)
+        const input = isTuple ? payload[0] : payload
+        const tick_ = isTuple ? payload[1] : tick
 
         queueMessage(
           enumDefaultSymbols.actorInput,
-          enableRollback ? [input, tick] : input
+          isTuple || enableRollback ? [input, tick_] : input
         )
       }
 
@@ -395,7 +401,7 @@ export async function updater (context: Context, options: Options | any, tick: n
         batchBlock.push(symbolOp)
       } else {
         const message = [enumDefaultSymbols.mergeSymbol, symbolOp]
-        responder(message, type)
+        await responder(message, type)
       }
 
       if (batchBlock.length >= batchSize && batchBlock.length) {
@@ -421,7 +427,7 @@ export async function updater (context: Context, options: Options | any, tick: n
     for (let i = 0; i < batch.length; i += 1) {
       const batchSlice = batch[i]
       if (batchSlice) {
-        responder([enumDefaultSymbols.batch, batchSlice])
+        await responder([enumDefaultSymbols.batch, batchSlice])
         // if (batchSlice.length > 1) {
         //   responder([enumDefaultSymbols.batch].concat(batchSlice))
         // } else {
@@ -430,6 +436,8 @@ export async function updater (context: Context, options: Options | any, tick: n
       }
     }
   }
+
+  return batch;
 }
 
 export default updater

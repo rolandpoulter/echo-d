@@ -1,5 +1,5 @@
 import actorActionsSpec from './spec/actions/actor.js';
-import componentActionsSpec from './spec/actions/components.js';
+import componentActionsSpec from './spec/actions/component.js';
 import coreActionsSpec from './spec/actions/core.js';
 import entityActionsSpec from './spec/actions/entity.js';
 import symbolActionsSpec from './spec/actions/symbol.js';
@@ -11,10 +11,10 @@ import extraMiniplexStorageSpec from './spec/extra/storage/miniplex.js';
 import extraRunLoopSpec from './spec/extra/runloop.js';
 import extraSystemSpec from './spec/extra/system.js';
 
-import indexSpec from './indexes/index.js';
-import componentsIndexSpec from './indexes/components.js';
-import sortedIndexSpec from './indexes/sorted.js';
-import spatialIndexSpec from './indexes/spatial.js';
+import indexSpec from './spec/indexes/index.js';
+import componentsIndexSpec from './spec/indexes/components.js';
+import sortedIndexSpec from './spec/indexes/sorted.js';
+import spatialIndexSpec from './spec/indexes/spatial.js';
 
 import changesSpec from './spec/changes.js';
 import clientSpec from './spec/client.js';

@@ -1,4 +1,10 @@
 /**
+ * @returns {number} The current time in milliseconds.
+ */
+export function now() {
+    return performance.timeOrigin + performance.now();
+}
+/**
  * Creates a union of multiple sets or arrays.
  *
  * @param {...Array<SetOrArray<any>>} sets - The sets or arrays to be united.
@@ -164,6 +170,9 @@ export function paginate(array, pageSize) {
         page.push(v);
         i++;
     }
+    if (page.length > 0) {
+        pages.push(page);
+    }
     return pages;
 }
 /**
@@ -234,7 +243,7 @@ export function recursiveCombination(objA, objB) {
             }
             const newObj = {};
             let combined = true;
-            for (const k of Object.keys(objB)) {
+            for (const k in objB) {
                 const [c, value] = recursiveCombination(objA[k], objB[k]);
                 if (c === false) {
                     combined = false;

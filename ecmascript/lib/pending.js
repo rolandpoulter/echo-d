@@ -9,7 +9,7 @@ export class Pending {
     /**
      * Constructs a new Pending object and resets its state.
      */
-    constructor() {
+    constructor(isDiffed = false) {
         this.created = {
             actors: {},
             components: {},
@@ -25,17 +25,17 @@ export class Pending {
             components: {}
         };
         this.symbols = [];
+        this.isDiffed = isDiffed;
     }
     /**
      * Adds an actor input to the created inputs state.
      *
      * @param {string} id - The ID of the actor.
      * @param {number} newindex - The index of the new input.
-     * @param {number} tick - The tick of the new input.
      */
-    actorInput(id, newindex, tick = 0) {
+    actorInput(id, newindex) {
         this.created.inputs[id] = this.created.inputs[id] || [];
-        this.created.inputs[id].push(tick ? [newindex, tick] : newindex);
+        this.created.inputs[id].push(newindex);
     }
     /**
      * Changes a component in the specified pending state.
@@ -105,6 +105,15 @@ export class Pending {
     upsertComponent(pendingType, id, key) {
         const pending = pendingType === 'created' ? this.created : this.updated;
         if (pending) {
+            if (
+            // !this.isDiffed // Diffed updates need to be created.
+            // &&
+            pendingType === 'updated'
+                && this.created.components[id]
+                && this.created.components[id][key]) {
+                // Skip updating a component that was created and updated in the same tick.
+                return;
+            }
             pending.components[id] = pending.components[id] || {};
             pending.components[id][key] = true;
         }

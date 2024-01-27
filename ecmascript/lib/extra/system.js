@@ -31,8 +31,8 @@ export function executeSystems(systems, fn, data = null) {
 }
 export function filterSystems(names, systems, lowercase = true) {
     return systems.filter(system => {
-        const name = system.name;
-        return names.includes(lowercase ? name.toLowerCase() : name);
+        const name = system.name || system.constructor.name || '';
+        return names.includes(lowercase && name ? name.toLowerCase() : name);
     });
 }
 export class SystemHandler extends Handler {

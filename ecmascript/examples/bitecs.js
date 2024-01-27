@@ -7,8 +7,12 @@ import {
     addComponent,
     pipe,
 } from 'bitecs'
-import { BitECSStorage } from '../lib/extra/storage/bitecs.js'
 import { getWorld } from './echo.js';
+import {
+    BitECSStorage,
+    defaultGetGroupedValue,
+    defaultSetGroupedValue,
+} from '../lib/extra/storage/bitecs.js'
 import EchoD, {
     // Context as EchoDContext,
     // Options as EchoDOptions,
@@ -45,6 +49,8 @@ export const createBitECSEchoD = (options = {}, Handler = EchoD, actions = EchoD
     {},
     // options,
     {
+        getGroupedValue: defaultGetGroupedValue,
+        setGroupedValue: defaultSetGroupedValue,
         ...(options || {}),
         types: {
             asset: String,

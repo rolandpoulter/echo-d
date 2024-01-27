@@ -2,16 +2,34 @@ import {
     Storage,
     StorageOptions,
     StorageProps,
-    Components
+    Components,
+    Types
 } from '../../storage';
 
-import { paginate } from '../../utils';
+import { paginate, now } from '../../utils';
+
+interface WorldOptions {
+    defs: any[];
+    [key: string]: any;
+}
 
 const {
     // System,
     // Type,
     World
-} = await import('@lastolivegames/becsy');
+} = await import('@lastolivegames/becsy/index.js');
+
+export function defaultGetGroupedValue (value: any | any[], i: number, types: Types, key: string): any {
+    const type = types[key]
+    if (Array.isArray(type)) {
+        return value.slice(i * type[1], (i + 1) * type[1])
+    }
+    return value[i]
+}
+
+export function defaultSetGroupedValue (value: any, _types: Types, _key: string): any {
+    return value;
+}
 
 export class BecsyStorage extends Storage {
     declare eids: Map<string, any>;
@@ -19,6 +37,8 @@ export class BecsyStorage extends Storage {
     declare actors: Map<string, any> & string[];
     declare entities: Map<string, any> & string[];
     declare components: Map<string, any> & { [key: string]: any };
+
+    declare worldOptions: any;
 
     constructor(storage: BecsyStorage | StorageProps, options: StorageOptions) {
         super({
@@ -29,13 +49,34 @@ export class BecsyStorage extends Storage {
             // inputs: new Map(),
             inputs: null,
         }, options);
-        const {
+        
+        let {
             // types,
             // indexes,
             worldOptions
         } = options
 
-        this.world = storage?.world || World.create(worldOptions);
+        worldOptions = worldOptions || { defs: [] }
+
+        if (worldOptions && !(worldOptions as WorldOptions).defs) {
+            (worldOptions as WorldOptions).defs = []
+        }
+
+        // if (!((worldOptions as WorldOptions).defs as any[]).length) {
+        //      for (let component of this.components.values()) {
+        //         if (!component) {
+        //             continue
+        //         }
+        //         if ((component as any) instanceof Map) {
+        //             continue
+        //         }
+        //         (worldOptions as WorldOptions).defs.push(component)
+        //     }
+        // }
+
+        this.worldOptions = worldOptions;
+
+        this.world = storage?.world || World.create(this.worldOptions);
         this.eids = storage?.eids || new Map();
 
         // for (let key in this.types) {
@@ -257,7 +298,7 @@ export class BecsyStorage extends Storage {
         return false
     }
 
-    storeInput(id: string, input: any, tick: number = Date.now()) {
+    storeInput(id: string, input: any, tick: number = now()) {
         return super.storeInput(id, input, tick);
     }
 }

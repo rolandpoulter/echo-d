@@ -27,7 +27,7 @@ export const ActorActionsFactory = (Parent: any = Object): any => class ActorAct
    */
   actorInput (payload: any[] | InputPayload, context: Context, options: Options | any) {
     options = Options.ensure(options, this)
-    const { skipPending, getActorId, compressStringsAsInts } = options
+    const { getActorId, compressStringsAsInts } = options
 
     let input
     let tick = 0
@@ -49,7 +49,7 @@ export const ActorActionsFactory = (Parent: any = Object): any => class ActorAct
 
     if (!input?.id) { input.id = id }
 
-    context.actorInput(id, input, tick, skipPending)
+    context.actorInput(id, input, tick, options)
   }
 
   /**
@@ -129,7 +129,7 @@ export const ActorActionsFactory = (Parent: any = Object): any => class ActorAct
 
     id = getActorId(id, context)
     if (id === undefined || id === null || id === '') { return }
-
+        
     if (compressStringsAsInts) {
       id = extractSymbol(id, context, options)
       if (id === '') { return }

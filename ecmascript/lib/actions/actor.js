@@ -16,12 +16,12 @@ export const ActorActionsFactory = (Parent = Object) => class ActorActions exten
      */
     actorInput(payload, context, options) {
         options = Options.ensure(options, this);
-        const { skipPending, getActorId, compressStringsAsInts } = options;
+        const { getActorId, compressStringsAsInts } = options;
         let input;
         let tick = 0;
         if (Array.isArray(payload)) {
             input = payload[0];
-            tick = payload[1];
+            tick = payload[1] || 0;
         }
         else {
             input = payload;
@@ -39,7 +39,7 @@ export const ActorActionsFactory = (Parent = Object) => class ActorActions exten
         if (!input?.id) {
             input.id = id;
         }
-        context.actorInput(id, input, tick, skipPending);
+        context.actorInput(id, input, tick, options);
     }
     /**
      * Retrieves actors from the current context and sends them to the responder.

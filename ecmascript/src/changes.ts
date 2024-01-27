@@ -37,9 +37,11 @@ export class Changes {
    * @param {string} id - The ID of the component to be changed.
    * @param {string} key - The key of the property to be changed.
    * @param {any} newValue - The new value of the property.
+   * @param {any} prevValue - The previous value of the property.
+   * @returns {Promise<any[]>} The new value.
    */
-  changeComponent (id: string, key: string, newValue: any): void {
-    return this.upsertComponent(id, key, newValue)
+  changeComponent (id: string, key: string, newValue: any, prevValue: any): Promise<any[]> {
+    return this.upsertComponent(id, key, newValue, prevValue)
   }
 
   /**
@@ -47,10 +49,17 @@ export class Changes {
    *
    * @param {string} id - The ID of the component.
    * @param {string} key - The key of the property.
+   * @param {any} storedValue - The stored value.
    * @returns {Record<string, any>} The diffs.
    */
-  getValue (id: string, key: string): Record<string, any> {
-    return this.diffs[id]?.[key]
+  getValue (id: string, key: string, storedValue: any): Record<string, any> {
+    const diffedValue = this.diffs[id]?.[key]
+
+    if (diffedValue === undefined || diffedValue === null) {
+      return storedValue
+    }
+
+    return diffedValue
   }
 
   /**
@@ -70,15 +79,20 @@ export class Changes {
    * @param {string} id - The ID of the component to be updated or inserted.
    * @param {string} key - The key of the property to be updated or inserted.
    * @param {any} newValue - The new value of the property.
-   * @returns {any} The new value.
+   * @param {any} _prevValue - The previous value of the property.
+   * @returns {Promise<any[]>} The new value.
    */
-  upsertComponent (id: string, key: string, newValue: any): void {
+  upsertComponent (id: string, key: string, newValue: any, _prevValue: any): Promise<any[]> {
     this.diffs[id] = this.diffs[id] || {}
-    const context = this.context
-    const components = context.components
-    const currentScope = components[id]
+    const currentScope = this.context.store.fetchComponents(id)
+    if (currentScope === undefined || currentScope === null) {
+      this.diffs[id][key] = newValue
+      this.context.store.storeComponent(id, key, newValue)
+      return newValue
+    }
     let diffObject = this.diffs[id]
-    const recursiveDiff = (key: string, diff: any, scope: any, nextVal: any): [any, any] => {
+    const recursiveDiff = (key: string, diff: any, scope: any, currVal: any): [any, any] => {
+      let nextVal = currVal
       if (!scope) {
         return [diff, nextVal]
       }
@@ -95,7 +109,7 @@ export class Changes {
           const v1 = scope[key]
           const v2 = nextVal
           const d = v2 - v1
-          scope[key] = v2
+          // scope[key] = v2
           diff[key] = d
           break
         }
@@ -103,24 +117,36 @@ export class Changes {
           diff = diff[key]
           scope = scope[key]
           for (let i = 0; i < nextVal.length; i += 1) {
+            // if (nextVal[i] === undefined || nextVal[i] === null) {
+            //   nextVal[i] = []
+            // }
             recursiveDiff(i.toString(), diff, scope, nextVal[i])
           }
           break
         case 'object':
           diff = diff[key]
           scope = scope[key]
-          for (const k of Object.keys(nextVal)) {
+          for (const k in nextVal) {
+            // if (nextVal[k] === undefined || nextVal[k] === null) {
+            //   nextVal[k] = {}
+            // }
             recursiveDiff(k, diff, scope, nextVal[k])
           }
           break
+        case 'string':
+          // TODO: append with deletes?
+        case 'boolean':
         default:
           diff[key] = nextVal
       }
       diff = diff[key]
       nextVal = nextVal[key]
-      return [diff, nextVal]
+      return [diff, currVal]
     }
+    
     [diffObject, newValue] = recursiveDiff(key, diffObject, currentScope, newValue)
+    this.context.store.storeComponent(id, key, newValue)
+    
     return newValue
   }
 }

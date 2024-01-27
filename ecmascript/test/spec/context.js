@@ -4,7 +4,13 @@ export default function contextSpec(echo, { describe, it, expect, mock, spy }) {
     describe('Context', () => {
         const { Context, Options, Storage } = echo;
 
-        const noPending = { created: { actors: {}, components: {}, entities: [], inputs: {} }, removed: { actors: {}, components: {}, entities: [] }, updated: { components: {} }, symbols: [] };
+        const noPending = {
+            created: { actors: {}, components: {}, entities: [], inputs: {} },
+            removed: { actors: {}, components: {}, entities: [] },
+            updated: { components: {} },
+            symbols: [],
+            isDiffed: false
+        };
 
         // The 'ensure' static method returns an instance of 'Context' if the provided context is already an instance of 'Context'.
         it('should return the same instance of Context if the provided context is already an instance of Context', () => {
@@ -318,6 +324,7 @@ export default function contextSpec(echo, { describe, it, expect, mock, spy }) {
                 removed: { actors: {}, components: {}, entities: [] },
                 updated: { components: {} },
                 symbols: [],
+                isDiffed: false
             });
         });
 
@@ -347,6 +354,7 @@ export default function contextSpec(echo, { describe, it, expect, mock, spy }) {
                 },
                 updated: { components: {} },
                 symbols: [],
+                isDiffed: false
             });
         });
 
@@ -379,6 +387,7 @@ export default function contextSpec(echo, { describe, it, expect, mock, spy }) {
                 removed: { actors: {}, components: {}, entities: [] },
                 updated: { components: {} },
                 symbols: [],
+                isDiffed: false
             });
         });
 
@@ -424,6 +433,7 @@ export default function contextSpec(echo, { describe, it, expect, mock, spy }) {
                 removed: { actors: {}, components: {}, entities: [] },
                 updated: { components: {} },
                 symbols: [],
+                isDiffed: false
             });
         });
     });

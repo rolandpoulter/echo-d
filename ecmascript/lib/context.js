@@ -4,7 +4,7 @@ import { Ordered } from './ordered.js';
 import { Pending } from './pending.js';
 import { Symbols } from './symbols.js';
 import { Storage } from './storage.js';
-import { combineValues } from './utils.js';
+import { combineValues, now } from './utils.js';
 import { allActions } from './node.js';
 /**
  * The Context class provides methods for managing the context.
@@ -71,7 +71,7 @@ export class Context {
             this.pending = null;
         }
         else {
-            this.pending = pending || new Pending();
+            this.pending = pending || new Pending(isDiffed);
         }
         this.events = events;
         this.store = store || new _Storage(store, {
@@ -258,21 +258,22 @@ export class Context {
     /**
      * Changes a component with the given id, key, value, and options.
      *
-     * @param {string | string[]} id - The id of the component to change.
+     * @param {string | string[] | Uint32Array} id - The id of the component to change.
      * @param {string} key - The key of the component to change.
      * @param {any | any[]} value - The value to change in the component.
      * @param {number} tick - The tick value for the component. Defaults to 0.
      * @param {Options} options - The options for changing the component.
      */
     changeComponent(id, key, value, tick = 0, options) {
-        const { skipPending, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
-        if (Array.isArray(id)) {
+        const { actions, skipPending, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
+        if (Array.isArray(id) || id instanceof Uint32Array) {
             if (!isGroupedComponents) {
                 throw new Error('Cannot change grouped components without isGroupedComponents option');
             }
             const noUpdateOptions = options.extend({ onUpdate: null });
             for (let i = 0; i < id.length; i++) {
-                this.changeComponent(id[i], key, getGroupedValue(value, i, types, key), tick, noUpdateOptions);
+                const val = getGroupedValue(value, i, types, key);
+                actions.changeComponent([id[i], key, val, tick], this, noUpdateOptions);
             }
             if (onUpdate) {
                 onUpdate();
@@ -284,7 +285,7 @@ export class Context {
         if (this.order) {
             const isValidOrder = this.order.changeComponent(id, key, tick);
             if (!isValidOrder && !this.changes) {
-                // return
+                return;
             }
         }
         let nextValue;
@@ -292,10 +293,11 @@ export class Context {
             nextValue = value;
         }
         else {
+            // nextValue = value
             [/* combined */ , nextValue] = combineValues(currentValue, value);
         }
         if (this.changes) {
-            this.changes.changeComponent(id, key, nextValue);
+            this.changes.changeComponent(id, key, nextValue, value);
         }
         else {
             this.store.storeComponent(id, key, nextValue);
@@ -313,21 +315,22 @@ export class Context {
     /**
      * Upserts a component with the given id, key, value, and options.
      *
-     * @param {string} id[] - The id of the component to upsert.
+     * @param {string | string[] | Uint32Array} id - The id of the component to upsert.
      * @param {string} key - The key of the component to upsert.
-     * @param {any} value - The value to upsert in the component.
+     * @param {any | any[]} value - The value to upsert in the component.
      * @param {number} tick - The tick value for the component. Defaults to 0.
      * @param {Options} options - The options for upserting the component.
      */
     upsertComponent(id, key, value, tick = 0, options) {
-        const { skipPending, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
-        if (Array.isArray(id)) {
+        const { actions, skipPending, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
+        if (Array.isArray(id) || id instanceof Uint32Array) {
             if (!isGroupedComponents) {
                 throw new Error('Cannot upsert grouped components without isGroupedComponents option');
             }
             const noUpdateOptions = options.extend({ onUpdate: null });
             for (let i = 0; i < id.length; i++) {
-                this.upsertComponent(id[i], key, getGroupedValue(value, i, types, key), tick, noUpdateOptions);
+                const val = getGroupedValue(value, i, types, key);
+                actions.upsertComponent([id[i], key, val, tick], this, noUpdateOptions);
             }
             if (onUpdate) {
                 onUpdate();
@@ -344,7 +347,7 @@ export class Context {
                 }
             }
             if (this.changes) {
-                this.changes.upsertComponent(id, key, value);
+                this.changes.upsertComponent(id, key, value, null);
             }
             else {
                 this.store.storeComponent(id, key, value);
@@ -395,8 +398,8 @@ export class Context {
             skipPending: !isComponentRelay,
             onUpdate: null
         });
-        for (const id of Object.keys(payload ?? {})) {
-            for (const key of Object.keys(payload[id])) {
+        for (const id in (payload ?? {})) {
+            for (const key in payload[id]) {
                 const value = payload[id][key];
                 const nextPayload = [id, key, value];
                 actions.upsertComponent(nextPayload, this, nextOptions);
@@ -433,10 +436,11 @@ export class Context {
      * @param {Options} options - The options for handling the actor input.
      */
     actorInput(id, input, tick = 0, options) {
-        const { skipPending, onUpdate } = options;
+        const { skipPending, enableRollback, onUpdate } = options;
+        tick = enableRollback ? tick || now() : 0;
         const newindex = this.store.storeInput(id, input, tick);
         if (!skipPending && this.pending) {
-            this.pending.actorInput(id, newindex, tick);
+            this.pending.actorInput(id, newindex);
         }
         if (this.events) {
             this.events.emit('actorInput', id, input, newindex, tick);

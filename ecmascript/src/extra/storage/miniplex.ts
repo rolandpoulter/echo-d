@@ -2,15 +2,28 @@ import {
     Storage,
     StorageOptions,
     StorageProps,
-    Components
+    Components,
+    Types
 } from '../../storage';
 
-import { paginate } from '../../utils';
+import { paginate, now } from '../../utils';
 import { InputPayload } from '../../actions/actor';
 
 const {
     World,
 } = await import('miniplex/dist/miniplex.cjs.js');
+
+export function defaultGetGroupedValue (value: any | any[], i: number, types: Types, key: string): any {
+    const type = types[key]
+    if (Array.isArray(type)) {
+        return value.slice(i * type[1], (i + 1) * type[1])
+    }
+    return value[i]
+}
+
+export function defaultSetGroupedValue (value: any, _types: Types, _key: string): any {
+    return value;
+}
 
 export class MiniplexStorage extends Storage {
     declare world: any;
@@ -18,6 +31,8 @@ export class MiniplexStorage extends Storage {
     declare entities: Map<string, any> & string[];
     declare components: Map<string, any> & { [key: string]: any };
     // declare inputs: Map<string, any> & string[];
+
+    declare worldOptions: any;
 
     constructor(storage: MiniplexStorage | StorageProps, options: StorageOptions) {
         super({
@@ -34,7 +49,8 @@ export class MiniplexStorage extends Storage {
             worldOptions = [] as any[],
         } = options;
 
-        this.world = storage?.world || new World(worldOptions as string[]);
+        this.worldOptions = worldOptions;
+        this.world = storage?.world || new World();
     }
 
     destroyActor(id: string): boolean {
@@ -190,7 +206,7 @@ export class MiniplexStorage extends Storage {
         return false
     }
 
-    storeInput(id: string, input: InputPayload, tick: number = Date.now()) {
+    storeInput(id: string, input: InputPayload, tick: number = now()) {
         return super.storeInput(id, input, tick);
     }
 }

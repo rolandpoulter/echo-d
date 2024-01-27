@@ -1,5 +1,5 @@
 #!/bin/bash
 
-./script/test-sys-bun.sh
-./script/test-sys-deno.sh
-./script/test-sys-node.sh
+./script/test-sys-bun.sh 1
+./script/test-sys-deno.sh 1
+./script/test-sys-node.sh 1

@@ -1,6 +1,10 @@
 import { Storage } from '../../storage.js';
 import { ArrayTypes } from '../../types.js';
-import { paginate } from '../../utils.js';
+import { paginate, now } from '../../utils.js';
+// interface WorldOptions {
+//     defs: any[];
+//     [key: string]: any;
+// }
 const { createWorld, 
 // Types,
 defineComponent, removeComponent, removeEntity,
@@ -9,6 +13,16 @@ defineComponent, removeComponent, removeEntity,
 // addComponent,
 // pipe,
  } = await import('bitecs');
+export function defaultGetGroupedValue(value, i, types, key) {
+    const type = types[key];
+    if (Array.isArray(type)) {
+        return value.slice(i * type[1], (i + 1) * type[1]);
+    }
+    return value[i];
+}
+export function defaultSetGroupedValue(value, _types, _key) {
+    return value;
+}
 export class BitECSStorage extends Storage {
     constructor(storage, options) {
         super({
@@ -19,12 +33,6 @@ export class BitECSStorage extends Storage {
             // inputs: new Map(),
             inputs: null,
         }, options);
-        const { 
-        // types,
-        // indexes,
-        worldOptions } = options;
-        this.world = storage?.world || createWorld(worldOptions);
-        this.eids = storage?.eids || new Map();
         for (let key in this.types) {
             const type = this.types[key];
             if (typeof type[0] === 'string') {
@@ -39,6 +47,32 @@ export class BitECSStorage extends Storage {
                         break;
                 }
         }
+        let { 
+        // types,
+        // indexes,
+        worldOptions, } = options;
+        /*
+        worldOptions = worldOptions || { defs: [] }
+
+        if (worldOptions && !(worldOptions as WorldOptions).defs) {
+            (worldOptions as WorldOptions).defs = []
+        }
+
+        if (!((worldOptions as WorldOptions).defs as any[]).length) {
+             for (let component of this.components.values()) {
+                if (!component) {
+                    continue
+                }
+                if ((component as any) instanceof Map) {
+                    continue
+                }
+                (worldOptions as WorldOptions).defs.push(component)
+            }
+        }
+        */
+        this.worldOptions = worldOptions;
+        this.world = storage?.world || createWorld(); // worldOptions);
+        this.eids = storage?.eids || new Map();
         /*
         for (let key in this.actors) {
             this.eids.set(key, addEntity(this.world));
@@ -229,7 +263,7 @@ export class BitECSStorage extends Storage {
         }
         return false;
     }
-    storeInput(id, input, tick = Date.now()) {
+    storeInput(id, input, tick = now()) {
         return super.storeInput(id, input, tick);
     }
 }

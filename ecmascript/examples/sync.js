@@ -68,7 +68,7 @@ export function update(echo, ecsList, responder) {
 }
 
 export default function syncExample(echo, ecsList, options = {}) {
-    const echo = this
+    // const echo = this
 
     if (options.beforeSetup) {
         options.beforeSetup(echo, ecsList)

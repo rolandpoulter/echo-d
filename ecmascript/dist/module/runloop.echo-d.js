@@ -12,6 +12,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   createRunLoop: () => (/* binding */ createRunLoop)
 /* harmony export */ });
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./lib/utils.js");
+
 function createRunLoop(props = {
     updateFrequency: 1000 / 50,
     setImmediate: typeof setImmediate === 'function' ? setImmediate : setTimeout,
@@ -19,17 +21,19 @@ function createRunLoop(props = {
 }) {
     const { updateFrequency, setImmediate, events, fn, } = props;
     let lastFrameTime = null;
-    function nextCycle(nf = nextFrame, state = getState(), start = Date.now(), now = Date.now()) {
+    function nextCycle(nf = nextFrame, state = getState(), start = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__.now)(), n = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__.now)()) {
         if (lastFrameTime === null) {
-            lastFrameTime = now;
+            lastFrameTime = n;
         }
-        const delta = now - lastFrameTime;
-        lastFrameTime = now;
+        const delta = n - lastFrameTime;
+        lastFrameTime = n;
         state.start = start;
-        return setImmediate(() => nf(state, start, now - start, delta), 0);
+        if (typeof setImmediate === 'function') {
+            return setImmediate(() => nf(state, start, n - start, delta), 0);
+        }
     }
     let lastEmitDelta = null;
-    function nextFrame(state = getState(), start = Date.now(), timestamp = 0, delta = 0) {
+    function nextFrame(state = getState(), start = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__.now)(), timestamp = 0, delta = 0) {
         if (lastEmitDelta === null) {
             lastEmitDelta = 0;
         }
@@ -44,7 +48,7 @@ function createRunLoop(props = {
         }
         lastEmitDelta += delta;
         if (!state.stop) {
-            state.pendingFrame = nextCycle(nextFrame, state, start, Date.now());
+            state.pendingFrame = nextCycle(nextFrame, state, start, (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__.now)());
         }
         return state;
     }

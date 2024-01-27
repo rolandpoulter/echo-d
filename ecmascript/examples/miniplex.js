@@ -1,6 +1,10 @@
 // import { World } from 'miniplex'
-import { MiniplexStorage } from '../lib/extra/storage/miniplex.js'
 import { getWorld } from './echo.js';
+import {
+    MiniplexStorage,
+    defaultGetGroupedValue,
+    defaultSetGroupedValue,
+} from '../lib/extra/storage/miniplex.js'
 import EchoD, {
     // Context as EchoDContext,
     // Options as EchoDOptions,
@@ -30,10 +34,16 @@ export const createMiniplexEchoD = (options, Handler = EchoD, actions = EchoDNod
     // echoDOptions,
     {},
     // echoDContext,
-    options,
+    {
+        getGroupedValue: defaultGetGroupedValue,
+        setGroupedValue: defaultSetGroupedValue,
+        ...(options || {}),
+    },
     actions,
     MiniplexStorage
 )
+
+export const Handler = EchoD
 
 export function miniplexExample() {
     const echo = createMiniplexEchoD()

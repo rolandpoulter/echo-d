@@ -20,15 +20,26 @@ return (Object(typeof window !== "undefined" ? window : typeof global !== "undef
 __webpack_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   MiniplexStorage: () => (/* binding */ MiniplexStorage)
+/* harmony export */   MiniplexStorage: () => (/* binding */ MiniplexStorage),
+/* harmony export */   defaultGetGroupedValue: () => (/* binding */ defaultGetGroupedValue),
+/* harmony export */   defaultSetGroupedValue: () => (/* binding */ defaultSetGroupedValue)
 /* harmony export */ });
 /* harmony import */ var _storage_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../storage.js */ "./lib/storage.js");
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../utils.js */ "./lib/utils.js");
 
 
-const { World, } = await __webpack_require__.e(/*! import() */ "vendors-node_modules_miniplex_dist_miniplex_cjs_js").then(__webpack_require__.t.bind(__webpack_require__, /*! miniplex/dist/miniplex.cjs.js */ "./node_modules/miniplex/dist/miniplex.cjs.js", 19));
+const { World, } = await __webpack_require__.e(/*! import() */ "vendors-node_modules_deno_miniplex_2_0_0_node_modules_miniplex_dist_miniplex_cjs_js").then(__webpack_require__.t.bind(__webpack_require__, /*! miniplex/dist/miniplex.cjs.js */ "./node_modules/.deno/miniplex@2.0.0/node_modules/miniplex/dist/miniplex.cjs.js", 19));
+function defaultGetGroupedValue(value, i, types, key) {
+    const type = types[key];
+    if (Array.isArray(type)) {
+        return value.slice(i * type[1], (i + 1) * type[1]);
+    }
+    return value[i];
+}
+function defaultSetGroupedValue(value, _types, _key) {
+    return value;
+}
 class MiniplexStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
-    // declare inputs: Map<string, any> & string[];
     constructor(storage, options) {
         super({
             ...(storage || {}),
@@ -40,7 +51,8 @@ class MiniplexStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
             inputs: null,
         }, options);
         const { worldOptions = [], } = options;
-        this.world = storage?.world || new World(worldOptions);
+        this.worldOptions = worldOptions;
+        this.world = storage?.world || new World();
     }
     destroyActor(id) {
         return this.destroyId(this.actors, id);
@@ -178,7 +190,7 @@ class MiniplexStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
         }
         return false;
     }
-    storeInput(id, input, tick = Date.now()) {
+    storeInput(id, input, tick = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.now)()) {
         return super.storeInput(id, input, tick);
     }
 }

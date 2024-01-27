@@ -56,8 +56,8 @@ export function filterSystems (
     lowercase: boolean = true
 ) {
     return systems.filter(system => {
-        const name = system.name
-        return names.includes(lowercase ? name.toLowerCase() : name)
+        const name = system.name || system.constructor.name || ''
+        return names.includes(lowercase && name ? name.toLowerCase() : name)
     })
 }
 

@@ -11,7 +11,9 @@ export const modules = {
 __webpack_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   BitECSStorage: () => (/* binding */ BitECSStorage)
+/* harmony export */   BitECSStorage: () => (/* binding */ BitECSStorage),
+/* harmony export */   defaultGetGroupedValue: () => (/* binding */ defaultGetGroupedValue),
+/* harmony export */   defaultSetGroupedValue: () => (/* binding */ defaultSetGroupedValue)
 /* harmony export */ });
 /* harmony import */ var _storage_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../storage.js */ "./lib/storage.js");
 /* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../types.js */ "./lib/types.js");
@@ -19,6 +21,10 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+// interface WorldOptions {
+//     defs: any[];
+//     [key: string]: any;
+// }
 const { createWorld, 
 // Types,
 defineComponent, removeComponent, removeEntity,
@@ -26,7 +32,17 @@ defineComponent, removeComponent, removeEntity,
 // addEntity,
 // addComponent,
 // pipe,
- } = await Promise.resolve(/*! import() */).then(__webpack_require__.bind(__webpack_require__, /*! bitecs */ "./node_modules/bitecs/dist/index.mjs"));
+ } = await Promise.resolve(/*! import() */).then(__webpack_require__.bind(__webpack_require__, /*! bitecs */ "./node_modules/.deno/bitecs@0.3.40/node_modules/bitecs/dist/index.mjs"));
+function defaultGetGroupedValue(value, i, types, key) {
+    const type = types[key];
+    if (Array.isArray(type)) {
+        return value.slice(i * type[1], (i + 1) * type[1]);
+    }
+    return value[i];
+}
+function defaultSetGroupedValue(value, _types, _key) {
+    return value;
+}
 class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
     constructor(storage, options) {
         super({
@@ -37,12 +53,6 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
             // inputs: new Map(),
             inputs: null,
         }, options);
-        const { 
-        // types,
-        // indexes,
-        worldOptions } = options;
-        this.world = storage?.world || createWorld(worldOptions);
-        this.eids = storage?.eids || new Map();
         for (let key in this.types) {
             const type = this.types[key];
             if (typeof type[0] === 'string') {
@@ -57,6 +67,32 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
                         break;
                 }
         }
+        let { 
+        // types,
+        // indexes,
+        worldOptions, } = options;
+        /*
+        worldOptions = worldOptions || { defs: [] }
+
+        if (worldOptions && !(worldOptions as WorldOptions).defs) {
+            (worldOptions as WorldOptions).defs = []
+        }
+
+        if (!((worldOptions as WorldOptions).defs as any[]).length) {
+             for (let component of this.components.values()) {
+                if (!component) {
+                    continue
+                }
+                if ((component as any) instanceof Map) {
+                    continue
+                }
+                (worldOptions as WorldOptions).defs.push(component)
+            }
+        }
+        */
+        this.worldOptions = worldOptions;
+        this.world = storage?.world || createWorld(); // worldOptions);
+        this.eids = storage?.eids || new Map();
         /*
         for (let key in this.actors) {
             this.eids.set(key, addEntity(this.world));
@@ -247,7 +283,7 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
         }
         return false;
     }
-    storeInput(id, input, tick = Date.now()) {
+    storeInput(id, input, tick = (0,_utils_js__WEBPACK_IMPORTED_MODULE_2__.now)()) {
         return super.storeInput(id, input, tick);
     }
 }
@@ -257,10 +293,10 @@ __webpack_async_result__();
 
 /***/ }),
 
-/***/ "./node_modules/bitecs/dist/index.mjs":
-/*!********************************************!*\
-  !*** ./node_modules/bitecs/dist/index.mjs ***!
-  \********************************************/
+/***/ "./node_modules/.deno/bitecs@0.3.40/node_modules/bitecs/dist/index.mjs":
+/*!*****************************************************************************!*\
+  !*** ./node_modules/.deno/bitecs@0.3.40/node_modules/bitecs/dist/index.mjs ***!
+  \*****************************************************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -1336,6 +1372,8 @@ __webpack_require__.C(__webpack_chunk_0__);
 var __webpack_exports__ = __webpack_exec__("./lib/extra/storage/bitecs.js");
 __webpack_exports__ = await __webpack_exports__;
 var __webpack_exports__BitECSStorage = __webpack_exports__.BitECSStorage;
-export { __webpack_exports__BitECSStorage as BitECSStorage };
+var __webpack_exports__defaultGetGroupedValue = __webpack_exports__.defaultGetGroupedValue;
+var __webpack_exports__defaultSetGroupedValue = __webpack_exports__.defaultSetGroupedValue;
+export { __webpack_exports__BitECSStorage as BitECSStorage, __webpack_exports__defaultGetGroupedValue as defaultGetGroupedValue, __webpack_exports__defaultSetGroupedValue as defaultSetGroupedValue };
 
 //# sourceMappingURL=bitecs.echo-d.js.map

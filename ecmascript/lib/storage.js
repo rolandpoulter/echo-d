@@ -1,14 +1,14 @@
 import { SortedIndex } from './indexes/sorted.js';
 import { SpatialIndex } from './indexes/spatial.js';
 import { ComponentsIndex } from './indexes/components.js';
-import { ArrayTypes } from './types.js';
+import { BasicTypes, ArrayTypes } from './types.js';
 import { binarySearch } from './utils.js';
 import { paginate } from './utils.js';
 export * from './emitter.js';
 /**
  * The Indexes interface represents a mapping from keys to any array.
  */
-export const TypeMap = {
+export const IndexMap = {
     sorted: SortedIndex,
     spatial: SpatialIndex,
 };
@@ -42,10 +42,10 @@ export class Storage {
         for (let key in types) {
             let TypeCtor = types[key];
             if (Array.isArray(TypeCtor)) {
-                TypeCtor = ArrayTypes.get(TypeCtor[0]);
+                TypeCtor = BasicTypes.get(TypeCtor[0]) || ArrayTypes.get(TypeCtor[0]);
             }
             else if (typeof TypeCtor === 'string') {
-                TypeCtor = ArrayTypes.get(TypeCtor);
+                TypeCtor = BasicTypes.get(TypeCtor) || ArrayTypes.get(TypeCtor);
             }
             if (typeof TypeCtor === 'function') {
                 if (TypeCtor) {
@@ -57,7 +57,7 @@ export class Storage {
         this.indexes = {};
         for (let key in indexes) {
             const { type } = indexes[key];
-            const IndexCtor = TypeMap[type];
+            const IndexCtor = IndexMap[type];
             if (IndexCtor) {
                 this.indexes[key] = {
                     actors: new IndexCtor([], indexes[key]),
@@ -128,6 +128,7 @@ export class Storage {
      * @returns {Components} The fetched components container.
      */
     fetchComponents(id) {
+        this.components[id] = this.components[id] || {};
         return this.components[id];
     }
     /**
@@ -142,6 +143,30 @@ export class Storage {
         return this.components[id][key];
     }
     /**
+     * Fetches an actors inputs
+     *
+     * @param {string} id - The ID of the actor.
+     * @returns {InputPayload} The fetched inputs.
+     */
+    fetchInputs(id) {
+        return this.inputs[id];
+    }
+    /**
+     * Fetches an actors input
+     *
+     * @param {string} id - The ID of the actor.
+     * @param {number} index - The index of the input.
+     * @returns {InputPayload} The fetched inputs.
+     */
+    fetchInput(id, index) {
+        this.inputs[id] = this.inputs[id] || [];
+        const input = this.inputs[id][index];
+        if (Array.isArray(input)) {
+            return [{ ...input[0], id }, input[1]];
+        }
+        return { ...input, id };
+    }
+    /**
      * Gets the actors.
      *
      * @param {any} query - The query to use.
@@ -151,7 +176,7 @@ export class Storage {
     getActors(query = null, pageSize = Infinity) {
         if (query !== null) {
             let results = {};
-            for (let key of Object.keys(query)) {
+            for (let key in query) {
                 const index = this.indexes[key];
                 if (index) {
                     const result = index.actors.query(query[key]);
@@ -201,7 +226,7 @@ export class Storage {
     getEntities(query = null, pageSize = Infinity) {
         if (query !== null) {
             let results = {};
-            for (let key of Object.keys(query)) {
+            for (let key in query) {
                 const index = this.indexes[key];
                 if (index) {
                     const result = index.entities.query(query[key]);
@@ -366,6 +391,9 @@ export class Storage {
         const inputs = this.inputs;
         inputs[id] = inputs[id] || [];
         const newindex = inputs[id].length;
+        if (input.id === id) {
+            delete input.id;
+        }
         inputs[id].push(tick ? [input, tick] : input);
         return newindex;
     }

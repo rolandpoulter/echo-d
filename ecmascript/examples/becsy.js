@@ -1,6 +1,14 @@
-import {System, Type, World} from '@lastolivegames/becsy';
-import { BecsyStorage } from '../lib/extra/storage/becsy.js'
+import {
+    System,
+    Type,
+    World
+} from '@lastolivegames/becsy/index.js';
 import { getWorld } from './echo.js';
+import {
+    BecsyStorage,
+    defaultGetGroupedValue,
+    defaultSetGroupedValue,
+} from '../lib/extra/storage/becsy.js'
 import EchoD, {
     // Context as EchoDContext,
     // Options as EchoDOptions,
@@ -64,6 +72,8 @@ export const createBecsyEchoD = (options = {}, Handler = EchoD, actions = EchoDN
     {},
     // options,
     {
+        getGroupedValue: defaultGetGroupedValue,
+        setGroupedValue: defaultSetGroupedValue,
         ...(options || {}),
         types: {
             asset: String,

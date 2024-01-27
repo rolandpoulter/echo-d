@@ -1,4 +1,4 @@
 #!/bin/bash
 
-./script/test-sys.sh
-./script/test-web.sh
+./script/test-sys.sh 1
+./script/test-web.sh 1

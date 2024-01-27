@@ -47,9 +47,9 @@ export default function pendingSpec(echo, { describe, it, expect, mock, spy }) {
         // Adds an actor input to the created inputs state with a tick value.
         it('should add an actor input to the created inputs state with a tick value', () => {
             const pending = new Pending();
-            pending.actorInput('actor1', 0, 1);
+            pending.actorInput('actor1', 0);
             expect(pending.created.inputs).toEqual({
-                actor1: [[0, 1]]
+                actor1: [0]
             });
         });
 

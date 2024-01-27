@@ -2,6 +2,7 @@ import { Context } from './context'
 import { Options, OptionsProps } from './options'
 import { Storage } from './storage'
 import { updater } from './updater'
+import { now } from './utils'
 
 /**
  * The Message interface represents a message with an action and a payload.
@@ -48,6 +49,7 @@ export function getActionHandler (context: Context, options: Options | any) {
       }
     }
 
+    // Assign the action to the handler function.
     handler.action = action
 
     return handler
@@ -87,6 +89,7 @@ export function manyHandler (message: Message | any[], context: Context, options
   const actionHandler = getActionHandler(context, options)
 
   const iterator = (payload: any[], handler: any, offset = 0) => {
+    // Use the action from the handler Function
     const action = handler.action
     let payloadSize = batchActionPayloadSizes[action] || 1
     if (payloadSize && typeof payloadSize === 'object') {
@@ -100,7 +103,8 @@ export function manyHandler (message: Message | any[], context: Context, options
     }
 
     for (let i = offset; i < payload.length; i += payloadSize) {
-      if (batchActionPayloadSizes === 1) {
+      // Call the handler function with the payload
+      if (payloadSize === 1) {
         handler(payload[i], context, options)
       } else if (batchActionPayloadSizes) {
         handler(payload.slice(i, i + payloadSize), context, options)
@@ -180,8 +184,9 @@ export class Handler {
    * 
    * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
    * @param {number} tick - The tick for updating.
+   * @returns {Promise<any[]>} A promise that resolves with updated batch of messages.
    */
-  updater (extendOptions: OptionsProps | any, tick: number = Date.now()): Promise<void> {
+  updater (extendOptions: OptionsProps | any, tick: number = now()): Promise<any[]> {
     return updater(this.context,
       extendOptions ? this.options.extend(extendOptions) : this.options,
       tick)
@@ -215,7 +220,7 @@ export class Handler {
    * @param {number} tick - The tick for updating.
    * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
    */
-  actorInput (id: string, input: any, tick: number = Date.now(), extendOptions: OptionsProps | any) {
+  actorInput (id: string, input: any, tick: number = now(), extendOptions: OptionsProps | any) {
     return this.context.actorInput(id, input, tick, extendOptions ? this.options.extend(extendOptions) : this.options)
   }
 
@@ -248,7 +253,7 @@ export class Handler {
    * @param {number} tick - The tick for updating.
    * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
    */
-  upsertComponent (id: string, key: string, value: any, tick: number = Date.now(), extendOptions: OptionsProps | any) {
+  upsertComponent (id: string, key: string, value: any, tick: number = now(), extendOptions: OptionsProps | any) {
     return this.context.upsertComponent(id, key, value, tick, extendOptions ? this.options.extend(extendOptions) : this.options)
   }
 
@@ -261,7 +266,7 @@ export class Handler {
    * @param {number} tick - The tick for updating.
    * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
    */
-  changeComponent (id: string, key: string, value: any, tick: number = Date.now(), extendOptions: OptionsProps | any) {
+  changeComponent (id: string, key: string, value: any, tick: number = now(), extendOptions: OptionsProps | any) {
     return this.context.changeComponent(id, key, value, tick, extendOptions ? this.options.extend(extendOptions) : this.options)
   }
 

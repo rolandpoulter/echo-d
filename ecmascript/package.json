@@ -42,7 +42,7 @@
     "compile": "npm run precompile && npm run patch-storage-bitecs",
     "precompile": "tsc --build . && tsc-alias",
     "patch-storage-bitecs": "sed -i.bak 's/bitecs.js/bitecs/g' lib/extra/storage/bitecs.js && rm lib/extra/storage/bitecs.js.bak",
-    "pack-dev": "webpack",
+    "pack-dev": "webpack --config webpack.config.js",
     "pack-mod": "webpack --config webpack.module.js",
     "pack-prod": "webpack --config webpack.prod.js",
     "pack-test": "webpack --config webpack.test.js",

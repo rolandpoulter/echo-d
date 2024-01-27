@@ -20,7 +20,9 @@ return (Object(typeof window !== "undefined" ? window : typeof global !== "undef
 __webpack_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   BecsyStorage: () => (/* binding */ BecsyStorage)
+/* harmony export */   BecsyStorage: () => (/* binding */ BecsyStorage),
+/* harmony export */   defaultGetGroupedValue: () => (/* binding */ defaultGetGroupedValue),
+/* harmony export */   defaultSetGroupedValue: () => (/* binding */ defaultSetGroupedValue)
 /* harmony export */ });
 /* harmony import */ var _storage_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../storage.js */ "./lib/storage.js");
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../utils.js */ "./lib/utils.js");
@@ -29,7 +31,17 @@ __webpack_require__.r(__webpack_exports__);
 const { 
 // System,
 // Type,
-World } = await __webpack_require__.e(/*! import() */ "vendors-node_modules_lastolivegames_becsy_index_js").then(__webpack_require__.bind(__webpack_require__, /*! @lastolivegames/becsy */ "./node_modules/@lastolivegames/becsy/index.js"));
+World } = await __webpack_require__.e(/*! import() */ "vendors-node_modules_deno_lastolivegames_becsy_0_15_5_node_modules_lastolivegames_becsy_index_js").then(__webpack_require__.bind(__webpack_require__, /*! @lastolivegames/becsy/index.js */ "./node_modules/.deno/@lastolivegames+becsy@0.15.5/node_modules/@lastolivegames/becsy/index.js"));
+function defaultGetGroupedValue(value, i, types, key) {
+    const type = types[key];
+    if (Array.isArray(type)) {
+        return value.slice(i * type[1], (i + 1) * type[1]);
+    }
+    return value[i];
+}
+function defaultSetGroupedValue(value, _types, _key) {
+    return value;
+}
 class BecsyStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
     constructor(storage, options) {
         super({
@@ -40,11 +52,27 @@ class BecsyStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
             // inputs: new Map(),
             inputs: null,
         }, options);
-        const { 
+        let { 
         // types,
         // indexes,
         worldOptions } = options;
-        this.world = storage?.world || World.create(worldOptions);
+        worldOptions = worldOptions || { defs: [] };
+        if (worldOptions && !worldOptions.defs) {
+            worldOptions.defs = [];
+        }
+        // if (!((worldOptions as WorldOptions).defs as any[]).length) {
+        //      for (let component of this.components.values()) {
+        //         if (!component) {
+        //             continue
+        //         }
+        //         if ((component as any) instanceof Map) {
+        //             continue
+        //         }
+        //         (worldOptions as WorldOptions).defs.push(component)
+        //     }
+        // }
+        this.worldOptions = worldOptions;
+        this.world = storage?.world || World.create(this.worldOptions);
         this.eids = storage?.eids || new Map();
         // for (let key in this.types) {
         //     const type = this.types[key];
@@ -248,7 +276,7 @@ class BecsyStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
         }
         return false;
     }
-    storeInput(id, input, tick = Date.now()) {
+    storeInput(id, input, tick = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.now)()) {
         return super.storeInput(id, input, tick);
     }
 }

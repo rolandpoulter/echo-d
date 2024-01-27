@@ -1,29 +1,32 @@
 import { Options } from './options.js';
 import { ensureSymbolIndex, recursiveSymbolIndexesEnsured } from './symbols.js';
 import { ArrayTypes } from './types.js';
+import { now } from './utils.js';
 /**
  * The updater function updates the context based on the provided options.
  *
  * @param {Context} context - The current context.
  * @param {Options | any} options - The options for updating the context.
  * @param {number} tick - The current tick.
+ * @returns {Promise<any[]>} A promise that resolves to an array of arrays, where each sub-array represents a batch of updates. This is only relevant if the `batched` option is enabled.
  */
-export async function updater(context, options, tick = Date.now()) {
+export async function updater(context, options, tick = now()) {
     options = options instanceof Options ? options : new Options(options);
-    const { responder, enumDefaultSymbols, compressStringsAsInts, enableRollback, isOrdered, isDiffed, isGroupedComponents, types, setGroupedValue, updateOptions } = options;
+    const { responder, enumDefaultSymbols, compressStringsAsInts, enableRollback, isOrdered, isDiffed, isGroupedComponents, isAsyncStorage, types, setGroupedValue, updateOptions } = options;
     const { batched, batchSize, mask, type, validKeys } = updateOptions;
     if (!context.pending) {
-        return;
+        return [];
     }
     /**
      * An array of arrays, where each sub-array represents a batch of updates.
-     */
+    */
     const batch = [];
     /**
      * An array representing the current batch of updates.
-     */
+    */
     let batchBlock = [];
     const { created = {}, removed = {}, symbols = [], updated = {} } = context.pending;
+    const store = context.store;
     /**
      * Merges the current batch block into the batch array.
      *
@@ -68,16 +71,15 @@ export async function updater(context, options, tick = Date.now()) {
         }
         return symbol;
     };
-    const upsertComponents = async (pendingComponents = {}) => {
-        const store = context.store;
+    const upsertComponents = async (pendingComponents = {}, state) => {
         const groups = isGroupedComponents ? {} : null;
-        for (const id of Object.keys(pendingComponents)) {
-            const components = store.fetchComponents(id);
+        for (const id in (pendingComponents ?? {})) {
+            const components = isAsyncStorage ? await store.fetchComponents(id) : store.fetchComponents(id);
             if (!components) {
                 break;
             }
             const updatedComponents = pendingComponents ? pendingComponents[id] : {};
-            for (const key of Object.keys(updatedComponents[id] ?? {})) {
+            for (const key in (updatedComponents ?? {})) {
                 if (validKeys && !validKeys[key]) {
                     break;
                 }
@@ -86,20 +88,14 @@ export async function updater(context, options, tick = Date.now()) {
                     group = groups[key] = groups[key] ?? {
                         key,
                         ids: [],
+                        intIds: true,
                         values: [],
                         ticks: []
                     };
                 }
-                let value;
-                if (isDiffed && context.changes) {
-                    value = context.changes.getValue(id, key);
-                }
-                else {
-                    // TODO: support async fetchComponent
-                    value = store.fetchComponent(id, key);
-                    if (value instanceof Promise) {
-                        value = await value;
-                    }
+                let value = isAsyncStorage ? await store.fetchComponent(id, key) : store.fetchComponent(id, key);
+                if (isDiffed && context.changes && (state === 'updated' || !true)) {
+                    value = context.changes.getValue(id, key, value);
                 }
                 if (compressStringsAsInts) {
                     value = recursiveSymbolIndexesEnsured(key, value, context, options);
@@ -108,7 +104,10 @@ export async function updater(context, options, tick = Date.now()) {
                 const nkey = ensureSymbol(key);
                 if (groups) {
                     group.ids.push(nid);
-                    group.values.push(setGroupedValue(value, types, key));
+                    if (nid === id) {
+                        group.intIds = false;
+                    }
+                    group.values = group.values.concat(setGroupedValue(value, types, key));
                     if (isOrdered) {
                         group.ticks.push(isDiffed ? -tick : tick);
                     }
@@ -128,9 +127,9 @@ export async function updater(context, options, tick = Date.now()) {
             // delete pendingComponents[id];
         }
         if (groups) {
-            for (const key of Object.keys(groups)) {
+            for (const key in groups) {
                 const group = groups[key];
-                const bufferIds = compressStringsAsInts ? new Uint32Array(group.ids) : group.ids;
+                const bufferIds = compressStringsAsInts && group.intIds ? new Uint32Array(group.ids) : group.ids;
                 const type = types[key] ?? null;
                 const Type = type ? ArrayTypes.get(Array.isArray(type) ? type[0] : type) : null;
                 const bufferValues = Type ? new Type(group.values) : group.values;
@@ -176,7 +175,7 @@ export async function updater(context, options, tick = Date.now()) {
      * queues a message to spawn each actor, merges the batch of messages, and then clears the `created.actors` array.
      */
     if (!mask || !mask.actors) {
-        for (const id of Object.keys(created.actors ?? {})) {
+        for (const id in (created.actors ?? {})) {
             const nid = ensureSymbol(id);
             queueMessage(enumDefaultSymbols.spawnActor, nid);
         }
@@ -202,7 +201,7 @@ export async function updater(context, options, tick = Date.now()) {
      * queues a message to remove each component, merges the batch of messages, and then clears the `removed.components` object.
      */
     if (!mask || !mask.actors) {
-        for (const id of Object.keys(removed.actors ?? {})) {
+        for (const id in (removed.actors ?? {})) {
             const nid = ensureSymbol(id);
             queueMessage(enumDefaultSymbols.removeActor, nid);
         }
@@ -215,13 +214,13 @@ export async function updater(context, options, tick = Date.now()) {
      * queues a message to remove each component, merges the batch of messages, and then clears the `removed.components` object.
      */
     if (!mask || !mask.components) {
-        for (const id of Object.keys(removed.components ?? {})) {
+        for (const id in (removed.components ?? {})) {
             const components = removed?.components ? removed.components[id] : null;
             if (!components) {
                 break;
             }
             const nid = ensureSymbol(id);
-            for (const key of Object.keys(components)) {
+            for (const key in components) {
                 if (validKeys && !validKeys[key]) {
                     break;
                 }
@@ -240,7 +239,7 @@ export async function updater(context, options, tick = Date.now()) {
      * queues a message to create each component, merges the batch of messages, and then clears the `created.components` object.
      */
     if (!mask || !mask.components) {
-        const promise = upsertComponents(created.components);
+        const promise = upsertComponents(created.components, 'created');
         created.components = {};
         await promise;
     }
@@ -250,7 +249,7 @@ export async function updater(context, options, tick = Date.now()) {
      * queues a message to update each component, merges the batch of messages, and then clears the `updated.components` object.
      */
     if (!mask || !mask.components) {
-        const promise = upsertComponents(updated.components);
+        const promise = upsertComponents(updated.components, 'updated');
         updated.components = {};
         await promise;
     }
@@ -260,14 +259,16 @@ export async function updater(context, options, tick = Date.now()) {
      * queues a message to create each input, merges the batch of messages, and then clears the `created.inputs` object.
      */
     if (!mask || !mask.inputs) {
-        for (const id of Object.keys(created.inputs ?? {})) {
+        for (const id in (created.inputs ?? {})) {
             // const nid = ensureSymbol(id)
-            const createdInputs = created?.inputs ? created.inputs[id] : [];
-            for (const index of (createdInputs ?? [])) {
-                const payload = createdInputs ? createdInputs[index] : null;
-                const input = payload;
-                // const input = { ...payload, id };
-                queueMessage(enumDefaultSymbols.actorInput, enableRollback ? [input, tick] : input);
+            const createdInputs = created?.inputs ? (created.inputs[id] ?? []) : [];
+            for (let i = 0; i < createdInputs.length; i += 1) {
+                const index = createdInputs[i];
+                const payload = isAsyncStorage ? await store.fetchInput(id, index) : store.fetchInput(id, index);
+                const isTuple = Array.isArray(payload);
+                const input = isTuple ? payload[0] : payload;
+                const tick_ = isTuple ? payload[1] : tick;
+                queueMessage(enumDefaultSymbols.actorInput, isTuple || enableRollback ? [input, tick_] : input);
             }
             // delete created.inputs[id];
         }
@@ -286,7 +287,7 @@ export async function updater(context, options, tick = Date.now()) {
             }
             else {
                 const message = [enumDefaultSymbols.mergeSymbol, symbolOp];
-                responder(message, type);
+                await responder(message, type);
             }
             if (batchBlock.length >= batchSize && batchBlock.length) {
                 batch.unshift([enumDefaultSymbols.mergeSymbol].concat(batchBlock));
@@ -308,7 +309,7 @@ export async function updater(context, options, tick = Date.now()) {
         for (let i = 0; i < batch.length; i += 1) {
             const batchSlice = batch[i];
             if (batchSlice) {
-                responder([enumDefaultSymbols.batch, batchSlice]);
+                await responder([enumDefaultSymbols.batch, batchSlice]);
                 // if (batchSlice.length > 1) {
                 //   responder([enumDefaultSymbols.batch].concat(batchSlice))
                 // } else {
@@ -317,5 +318,6 @@ export async function updater(context, options, tick = Date.now()) {
             }
         }
     }
+    return batch;
 }
 export default updater;

@@ -36,7 +36,7 @@ export function gameExample(
     
     const loop = Loop.loopExample(executeAndUpdate, events)
 
-    loop.start()
+    // loop.start()
 
     return {
         events,

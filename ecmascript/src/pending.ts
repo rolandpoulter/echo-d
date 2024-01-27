@@ -56,11 +56,12 @@ export class Pending {
   declare updated: UpdatedState;
   declare created: CreatedState;
   declare symbols: (number | [InputPayload, number])[];
+  declare isDiffed: boolean;
 
   /**
    * Constructs a new Pending object and resets its state.
    */
-  constructor () {
+  constructor (isDiffed: boolean = false) {
     this.created = {
       actors: {},
       components: {},
@@ -76,6 +77,7 @@ export class Pending {
       components: {}
     }
     this.symbols = []
+    this.isDiffed = isDiffed
   }
 
   /**
@@ -83,11 +85,10 @@ export class Pending {
    *
    * @param {string} id - The ID of the actor.
    * @param {number} newindex - The index of the new input.
-   * @param {number} tick - The tick of the new input.
    */
-  actorInput (id: string, newindex: number, tick: number = 0): void {
+  actorInput (id: string, newindex: number): void {
     this.created.inputs[id] = this.created.inputs[id] || []
-    this.created.inputs[id].push(tick ? [newindex, tick] : newindex)
+    this.created.inputs[id].push(newindex)
   }
 
   /**
@@ -165,6 +166,16 @@ export class Pending {
   upsertComponent (pendingType: string, id: string, key: string): void {
     const pending = pendingType === 'created' ? this.created : this.updated
     if (pending) {
+      if (
+        // !this.isDiffed // Diffed updates need to be created.
+        // &&
+        pendingType === 'updated'
+        && this.created.components[id]
+        && this.created.components[id][key]
+      ) {
+        // Skip updating a component that was created and updated in the same tick.
+        return;
+      }
       pending.components[id] = pending.components[id] || {}
       pending.components[id][key] = true
     }

@@ -33,12 +33,12 @@ const ActorActionsFactory = (Parent = Object) => class ActorActions extends Pare
      */
     actorInput(payload, context, options) {
         options = _options_js__WEBPACK_IMPORTED_MODULE_0__.Options.ensure(options, this);
-        const { skipPending, getActorId, compressStringsAsInts } = options;
+        const { getActorId, compressStringsAsInts } = options;
         let input;
         let tick = 0;
         if (Array.isArray(payload)) {
             input = payload[0];
-            tick = payload[1];
+            tick = payload[1] || 0;
         }
         else {
             input = payload;
@@ -56,7 +56,7 @@ const ActorActionsFactory = (Parent = Object) => class ActorActions extends Pare
         if (!input?.id) {
             input.id = id;
         }
-        context.actorInput(id, input, tick, skipPending);
+        context.actorInput(id, input, tick, options);
     }
     /**
      * Retrieves actors from the current context and sends them to the responder.
@@ -787,19 +787,26 @@ class Changes {
      * @param {string} id - The ID of the component to be changed.
      * @param {string} key - The key of the property to be changed.
      * @param {any} newValue - The new value of the property.
+     * @param {any} prevValue - The previous value of the property.
+     * @returns {Promise<any[]>} The new value.
      */
-    changeComponent(id, key, newValue) {
-        return this.upsertComponent(id, key, newValue);
+    changeComponent(id, key, newValue, prevValue) {
+        return this.upsertComponent(id, key, newValue, prevValue);
     }
     /**
      * Retrieves the changes of a value.
      *
      * @param {string} id - The ID of the component.
      * @param {string} key - The key of the property.
+     * @param {any} storedValue - The stored value.
      * @returns {Record<string, any>} The diffs.
      */
-    getValue(id, key) {
-        return this.diffs[id]?.[key];
+    getValue(id, key, storedValue) {
+        const diffedValue = this.diffs[id]?.[key];
+        if (diffedValue === undefined || diffedValue === null) {
+            return storedValue;
+        }
+        return diffedValue;
     }
     /**
      * Resets the changes to a new set of changes or an empty object if no changes are provided.
@@ -817,15 +824,20 @@ class Changes {
      * @param {string} id - The ID of the component to be updated or inserted.
      * @param {string} key - The key of the property to be updated or inserted.
      * @param {any} newValue - The new value of the property.
-     * @returns {any} The new value.
+     * @param {any} _prevValue - The previous value of the property.
+     * @returns {Promise<any[]>} The new value.
      */
-    upsertComponent(id, key, newValue) {
+    upsertComponent(id, key, newValue, _prevValue) {
         this.diffs[id] = this.diffs[id] || {};
-        const context = this.context;
-        const components = context.components;
-        const currentScope = components[id];
+        const currentScope = this.context.store.fetchComponents(id);
+        if (currentScope === undefined || currentScope === null) {
+            this.diffs[id][key] = newValue;
+            this.context.store.storeComponent(id, key, newValue);
+            return newValue;
+        }
         let diffObject = this.diffs[id];
-        const recursiveDiff = (key, diff, scope, nextVal) => {
+        const recursiveDiff = (key, diff, scope, currVal) => {
+            let nextVal = currVal;
             if (!scope) {
                 return [diff, nextVal];
             }
@@ -842,7 +854,7 @@ class Changes {
                     const v1 = scope[key];
                     const v2 = nextVal;
                     const d = v2 - v1;
-                    scope[key] = v2;
+                    // scope[key] = v2
                     diff[key] = d;
                     break;
                 }
@@ -850,24 +862,34 @@ class Changes {
                     diff = diff[key];
                     scope = scope[key];
                     for (let i = 0; i < nextVal.length; i += 1) {
+                        // if (nextVal[i] === undefined || nextVal[i] === null) {
+                        //   nextVal[i] = []
+                        // }
                         recursiveDiff(i.toString(), diff, scope, nextVal[i]);
                     }
                     break;
                 case 'object':
                     diff = diff[key];
                     scope = scope[key];
-                    for (const k of Object.keys(nextVal)) {
+                    for (const k in nextVal) {
+                        // if (nextVal[k] === undefined || nextVal[k] === null) {
+                        //   nextVal[k] = {}
+                        // }
                         recursiveDiff(k, diff, scope, nextVal[k]);
                     }
                     break;
+                case 'string':
+                // TODO: append with deletes?
+                case 'boolean':
                 default:
                     diff[key] = nextVal;
             }
             diff = diff[key];
             nextVal = nextVal[key];
-            return [diff, nextVal];
+            return [diff, currVal];
         };
         [diffObject, newValue] = recursiveDiff(key, diffObject, currentScope, newValue);
+        this.context.store.storeComponent(id, key, newValue);
         return newValue;
     }
 }
@@ -1072,12 +1094,13 @@ const defaultOptions = {
     types: {
         asset: 'str',
         collider: 'str',
-        color: 'str',
+        color: ['ui8', 4],
         hidden: 'bool',
         position: ['f32', 3],
         rotation: ['f32', 3],
         velocity: ['f32', 3],
         spin: ['f32', 3],
+        size: ['f32', 3],
     }
 };
 /**
@@ -1099,13 +1122,15 @@ const defaultUpdateOptions = {
  * An object that maps keys to their validity.
  */
 const defaultValidKeys = {
+    asset: true,
     collider: true,
     color: true,
     hidden: true,
     position: true,
     rotation: true,
     velocity: true,
-    spin: true
+    spin: true,
+    size: true,
 };
 /**
  * A responder function that does nothing and returns nothing.
@@ -1244,7 +1269,7 @@ class Context {
             this.pending = null;
         }
         else {
-            this.pending = pending || new _pending_js__WEBPACK_IMPORTED_MODULE_3__.Pending();
+            this.pending = pending || new _pending_js__WEBPACK_IMPORTED_MODULE_3__.Pending(isDiffed);
         }
         this.events = events;
         this.store = store || new _Storage(store, {
@@ -1431,21 +1456,22 @@ class Context {
     /**
      * Changes a component with the given id, key, value, and options.
      *
-     * @param {string | string[]} id - The id of the component to change.
+     * @param {string | string[] | Uint32Array} id - The id of the component to change.
      * @param {string} key - The key of the component to change.
      * @param {any | any[]} value - The value to change in the component.
      * @param {number} tick - The tick value for the component. Defaults to 0.
      * @param {Options} options - The options for changing the component.
      */
     changeComponent(id, key, value, tick = 0, options) {
-        const { skipPending, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
-        if (Array.isArray(id)) {
+        const { actions, skipPending, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
+        if (Array.isArray(id) || id instanceof Uint32Array) {
             if (!isGroupedComponents) {
                 throw new Error('Cannot change grouped components without isGroupedComponents option');
             }
             const noUpdateOptions = options.extend({ onUpdate: null });
             for (let i = 0; i < id.length; i++) {
-                this.changeComponent(id[i], key, getGroupedValue(value, i, types, key), tick, noUpdateOptions);
+                const val = getGroupedValue(value, i, types, key);
+                actions.changeComponent([id[i], key, val, tick], this, noUpdateOptions);
             }
             if (onUpdate) {
                 onUpdate();
@@ -1457,7 +1483,7 @@ class Context {
         if (this.order) {
             const isValidOrder = this.order.changeComponent(id, key, tick);
             if (!isValidOrder && !this.changes) {
-                // return
+                return;
             }
         }
         let nextValue;
@@ -1465,10 +1491,11 @@ class Context {
             nextValue = value;
         }
         else {
+            // nextValue = value
             [/* combined */ , nextValue] = (0,_utils_js__WEBPACK_IMPORTED_MODULE_6__.combineValues)(currentValue, value);
         }
         if (this.changes) {
-            this.changes.changeComponent(id, key, nextValue);
+            this.changes.changeComponent(id, key, nextValue, value);
         }
         else {
             this.store.storeComponent(id, key, nextValue);
@@ -1486,21 +1513,22 @@ class Context {
     /**
      * Upserts a component with the given id, key, value, and options.
      *
-     * @param {string} id[] - The id of the component to upsert.
+     * @param {string | string[] | Uint32Array} id - The id of the component to upsert.
      * @param {string} key - The key of the component to upsert.
-     * @param {any} value - The value to upsert in the component.
+     * @param {any | any[]} value - The value to upsert in the component.
      * @param {number} tick - The tick value for the component. Defaults to 0.
      * @param {Options} options - The options for upserting the component.
      */
     upsertComponent(id, key, value, tick = 0, options) {
-        const { skipPending, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
-        if (Array.isArray(id)) {
+        const { actions, skipPending, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
+        if (Array.isArray(id) || id instanceof Uint32Array) {
             if (!isGroupedComponents) {
                 throw new Error('Cannot upsert grouped components without isGroupedComponents option');
             }
             const noUpdateOptions = options.extend({ onUpdate: null });
             for (let i = 0; i < id.length; i++) {
-                this.upsertComponent(id[i], key, getGroupedValue(value, i, types, key), tick, noUpdateOptions);
+                const val = getGroupedValue(value, i, types, key);
+                actions.upsertComponent([id[i], key, val, tick], this, noUpdateOptions);
             }
             if (onUpdate) {
                 onUpdate();
@@ -1517,7 +1545,7 @@ class Context {
                 }
             }
             if (this.changes) {
-                this.changes.upsertComponent(id, key, value);
+                this.changes.upsertComponent(id, key, value, null);
             }
             else {
                 this.store.storeComponent(id, key, value);
@@ -1568,8 +1596,8 @@ class Context {
             skipPending: !isComponentRelay,
             onUpdate: null
         });
-        for (const id of Object.keys(payload ?? {})) {
-            for (const key of Object.keys(payload[id])) {
+        for (const id in (payload ?? {})) {
+            for (const key in payload[id]) {
                 const value = payload[id][key];
                 const nextPayload = [id, key, value];
                 actions.upsertComponent(nextPayload, this, nextOptions);
@@ -1606,10 +1634,11 @@ class Context {
      * @param {Options} options - The options for handling the actor input.
      */
     actorInput(id, input, tick = 0, options) {
-        const { skipPending, onUpdate } = options;
+        const { skipPending, enableRollback, onUpdate } = options;
+        tick = enableRollback ? tick || (0,_utils_js__WEBPACK_IMPORTED_MODULE_6__.now)() : 0;
         const newindex = this.store.storeInput(id, input, tick);
         if (!skipPending && this.pending) {
-            this.pending.actorInput(id, newindex, tick);
+            this.pending.actorInput(id, newindex);
         }
         if (this.events) {
             this.events.emit('actorInput', id, input, newindex, tick);
@@ -1863,6 +1892,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _options_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./options.js */ "./lib/options.js");
 /* harmony import */ var _storage_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./storage.js */ "./lib/storage.js");
 /* harmony import */ var _updater_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./updater.js */ "./lib/updater.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./utils.js */ "./lib/utils.js");
+
 
 
 
@@ -1896,6 +1927,7 @@ function getActionHandler(context, options) {
                 actions[action](payload, context, options);
             }
         };
+        // Assign the action to the handler function.
         handler.action = action;
         return handler;
     };
@@ -1930,6 +1962,7 @@ function manyHandler(message, context, options) {
     const { batchActionPayloadSizes, isOrdered, enableRollback } = options;
     const actionHandler = getActionHandler(context, options);
     const iterator = (payload, handler, offset = 0) => {
+        // Use the action from the handler Function
         const action = handler.action;
         let payloadSize = batchActionPayloadSizes[action] || 1;
         if (payloadSize && typeof payloadSize === 'object') {
@@ -1944,7 +1977,8 @@ function manyHandler(message, context, options) {
             }
         }
         for (let i = offset; i < payload.length; i += payloadSize) {
-            if (batchActionPayloadSizes === 1) {
+            // Call the handler function with the payload
+            if (payloadSize === 1) {
                 handler(payload[i], context, options);
             }
             else if (batchActionPayloadSizes) {
@@ -2017,8 +2051,9 @@ class Handler {
      *
      * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
      * @param {number} tick - The tick for updating.
+     * @returns {Promise<any[]>} A promise that resolves with updated batch of messages.
      */
-    updater(extendOptions, tick = Date.now()) {
+    updater(extendOptions, tick = (0,_utils_js__WEBPACK_IMPORTED_MODULE_4__.now)()) {
         return (0,_updater_js__WEBPACK_IMPORTED_MODULE_3__.updater)(this.context, extendOptions ? this.options.extend(extendOptions) : this.options, tick);
     }
     /**
@@ -2047,7 +2082,7 @@ class Handler {
      * @param {number} tick - The tick for updating.
      * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
      */
-    actorInput(id, input, tick = Date.now(), extendOptions) {
+    actorInput(id, input, tick = (0,_utils_js__WEBPACK_IMPORTED_MODULE_4__.now)(), extendOptions) {
         return this.context.actorInput(id, input, tick, extendOptions ? this.options.extend(extendOptions) : this.options);
     }
     /**
@@ -2077,7 +2112,7 @@ class Handler {
      * @param {number} tick - The tick for updating.
      * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
      */
-    upsertComponent(id, key, value, tick = Date.now(), extendOptions) {
+    upsertComponent(id, key, value, tick = (0,_utils_js__WEBPACK_IMPORTED_MODULE_4__.now)(), extendOptions) {
         return this.context.upsertComponent(id, key, value, tick, extendOptions ? this.options.extend(extendOptions) : this.options);
     }
     /**
@@ -2089,7 +2124,7 @@ class Handler {
      * @param {number} tick - The tick for updating.
      * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
      */
-    changeComponent(id, key, value, tick = Date.now(), extendOptions) {
+    changeComponent(id, key, value, tick = (0,_utils_js__WEBPACK_IMPORTED_MODULE_4__.now)(), extendOptions) {
         return this.context.changeComponent(id, key, value, tick, extendOptions ? this.options.extend(extendOptions) : this.options);
     }
     /**
@@ -2990,6 +3025,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   Ordered: () => (/* binding */ Ordered),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./utils.js */ "./lib/utils.js");
+
 /**
  * The Ordered class represents a collection of tick values.
  *
@@ -3037,12 +3074,13 @@ class Ordered {
         if (isNaN(tick)) {
             return false;
         }
+        this.order = this.order || {};
         this.order[id] = this.order[id] || {};
         switch (typeof this.order[id][key]) {
             case 'number':
-                if (isFinite(this.order[id][key]) && this.order[id][key] < tick) {
+                if (isFinite(this.order[id][key]) && this.order[id][key] <= tick) {
                     const threshold = 0;
-                    if (tick > (Date.now() + threshold)) {
+                    if (tick > ((0,_utils_js__WEBPACK_IMPORTED_MODULE_0__.now)() + threshold)) {
                         return false;
                     }
                     this.order[id][key] = tick;
@@ -3083,7 +3121,7 @@ class Pending {
     /**
      * Constructs a new Pending object and resets its state.
      */
-    constructor() {
+    constructor(isDiffed = false) {
         this.created = {
             actors: {},
             components: {},
@@ -3099,17 +3137,17 @@ class Pending {
             components: {}
         };
         this.symbols = [];
+        this.isDiffed = isDiffed;
     }
     /**
      * Adds an actor input to the created inputs state.
      *
      * @param {string} id - The ID of the actor.
      * @param {number} newindex - The index of the new input.
-     * @param {number} tick - The tick of the new input.
      */
-    actorInput(id, newindex, tick = 0) {
+    actorInput(id, newindex) {
         this.created.inputs[id] = this.created.inputs[id] || [];
-        this.created.inputs[id].push(tick ? [newindex, tick] : newindex);
+        this.created.inputs[id].push(newindex);
     }
     /**
      * Changes a component in the specified pending state.
@@ -3179,6 +3217,15 @@ class Pending {
     upsertComponent(pendingType, id, key) {
         const pending = pendingType === 'created' ? this.created : this.updated;
         if (pending) {
+            if (
+            // !this.isDiffed // Diffed updates need to be created.
+            // &&
+            pendingType === 'updated'
+                && this.created.components[id]
+                && this.created.components[id][key]) {
+                // Skip updating a component that was created and updated in the same tick.
+                return;
+            }
             pending.components[id] = pending.components[id] || {};
             pending.components[id][key] = true;
         }
@@ -3225,8 +3272,8 @@ class Pending {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Emitter: () => (/* reexport safe */ _emitter_js__WEBPACK_IMPORTED_MODULE_5__.Emitter),
-/* harmony export */   Storage: () => (/* binding */ Storage),
-/* harmony export */   TypeMap: () => (/* binding */ TypeMap)
+/* harmony export */   IndexMap: () => (/* binding */ IndexMap),
+/* harmony export */   Storage: () => (/* binding */ Storage)
 /* harmony export */ });
 /* harmony import */ var _indexes_sorted_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./indexes/sorted.js */ "./lib/indexes/sorted.js");
 /* harmony import */ var _indexes_spatial_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./indexes/spatial.js */ "./lib/indexes/spatial.js");
@@ -3244,7 +3291,7 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * The Indexes interface represents a mapping from keys to any array.
  */
-const TypeMap = {
+const IndexMap = {
     sorted: _indexes_sorted_js__WEBPACK_IMPORTED_MODULE_0__.SortedIndex,
     spatial: _indexes_spatial_js__WEBPACK_IMPORTED_MODULE_1__.SpatialIndex,
 };
@@ -3278,10 +3325,10 @@ class Storage {
         for (let key in types) {
             let TypeCtor = types[key];
             if (Array.isArray(TypeCtor)) {
-                TypeCtor = _types_js__WEBPACK_IMPORTED_MODULE_3__.ArrayTypes.get(TypeCtor[0]);
+                TypeCtor = _types_js__WEBPACK_IMPORTED_MODULE_3__.BasicTypes.get(TypeCtor[0]) || _types_js__WEBPACK_IMPORTED_MODULE_3__.ArrayTypes.get(TypeCtor[0]);
             }
             else if (typeof TypeCtor === 'string') {
-                TypeCtor = _types_js__WEBPACK_IMPORTED_MODULE_3__.ArrayTypes.get(TypeCtor);
+                TypeCtor = _types_js__WEBPACK_IMPORTED_MODULE_3__.BasicTypes.get(TypeCtor) || _types_js__WEBPACK_IMPORTED_MODULE_3__.ArrayTypes.get(TypeCtor);
             }
             if (typeof TypeCtor === 'function') {
                 if (TypeCtor) {
@@ -3293,7 +3340,7 @@ class Storage {
         this.indexes = {};
         for (let key in indexes) {
             const { type } = indexes[key];
-            const IndexCtor = TypeMap[type];
+            const IndexCtor = IndexMap[type];
             if (IndexCtor) {
                 this.indexes[key] = {
                     actors: new IndexCtor([], indexes[key]),
@@ -3364,6 +3411,7 @@ class Storage {
      * @returns {Components} The fetched components container.
      */
     fetchComponents(id) {
+        this.components[id] = this.components[id] || {};
         return this.components[id];
     }
     /**
@@ -3378,6 +3426,30 @@ class Storage {
         return this.components[id][key];
     }
     /**
+     * Fetches an actors inputs
+     *
+     * @param {string} id - The ID of the actor.
+     * @returns {InputPayload} The fetched inputs.
+     */
+    fetchInputs(id) {
+        return this.inputs[id];
+    }
+    /**
+     * Fetches an actors input
+     *
+     * @param {string} id - The ID of the actor.
+     * @param {number} index - The index of the input.
+     * @returns {InputPayload} The fetched inputs.
+     */
+    fetchInput(id, index) {
+        this.inputs[id] = this.inputs[id] || [];
+        const input = this.inputs[id][index];
+        if (Array.isArray(input)) {
+            return [{ ...input[0], id }, input[1]];
+        }
+        return { ...input, id };
+    }
+    /**
      * Gets the actors.
      *
      * @param {any} query - The query to use.
@@ -3387,7 +3459,7 @@ class Storage {
     getActors(query = null, pageSize = Infinity) {
         if (query !== null) {
             let results = {};
-            for (let key of Object.keys(query)) {
+            for (let key in query) {
                 const index = this.indexes[key];
                 if (index) {
                     const result = index.actors.query(query[key]);
@@ -3437,7 +3509,7 @@ class Storage {
     getEntities(query = null, pageSize = Infinity) {
         if (query !== null) {
             let results = {};
-            for (let key of Object.keys(query)) {
+            for (let key in query) {
                 const index = this.indexes[key];
                 if (index) {
                     const result = index.entities.query(query[key]);
@@ -3602,6 +3674,9 @@ class Storage {
         const inputs = this.inputs;
         inputs[id] = inputs[id] || [];
         const newindex = inputs[id].length;
+        if (input.id === id) {
+            delete input.id;
+        }
         inputs[id].push(tick ? [input, tick] : input);
         return newindex;
     }
@@ -3837,7 +3912,7 @@ function recursiveSymbolExtraction(key, value, context, options) {
                         break;
                     }
                     case 'object':
-                        for (const key of Object.keys(value)) {
+                        for (const key in value) {
                             value[key] = recursiveFix(value[key]);
                         }
                         break;
@@ -3876,7 +3951,7 @@ function recursiveSymbolIndexesEnsured(key, value, context, options) {
                         break;
                     }
                     case 'object':
-                        for (const key of Object.keys(value)) {
+                        for (const key in value) {
                             value[key] = recursiveFix(value[key]);
                         }
                         break;
@@ -3900,12 +3975,21 @@ function recursiveSymbolIndexesEnsured(key, value, context, options) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   ArrayTypes: () => (/* binding */ ArrayTypes)
+/* harmony export */   ArrayTypes: () => (/* binding */ ArrayTypes),
+/* harmony export */   BasicTypes: () => (/* binding */ BasicTypes)
 /* harmony export */ });
-const ArrayTypes = new Map([
+const BasicTypes = new Map([
     // ['eid', Uint32Array],
     // ['sid', Uint32Array],
     // ['sym', String],
+    ['str', String],
+    ['num', Number],
+    ['bool', Boolean],
+    ['map', Map],
+    ['set', Set],
+    ['arr', Array],
+]);
+const ArrayTypes = new Map([
     ['i8', Int8Array],
     ['ui8', Uint8Array],
     ['ui8c', Uint8ClampedArray],
@@ -3915,12 +3999,6 @@ const ArrayTypes = new Map([
     ['ui32', Uint32Array],
     ['f32', Float32Array],
     ['f64', Float64Array],
-    // ['str', String],
-    // ['num', Number],
-    // ['bool', Boolean],
-    // ['map', Map],
-    // ['set', Set],
-    // ['arr', Array],
 ]);
 
 
@@ -3940,6 +4018,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _options_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./options.js */ "./lib/options.js");
 /* harmony import */ var _symbols_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./symbols.js */ "./lib/symbols.js");
 /* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./types.js */ "./lib/types.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./utils.js */ "./lib/utils.js");
+
 
 
 
@@ -3949,23 +4029,25 @@ __webpack_require__.r(__webpack_exports__);
  * @param {Context} context - The current context.
  * @param {Options | any} options - The options for updating the context.
  * @param {number} tick - The current tick.
+ * @returns {Promise<any[]>} A promise that resolves to an array of arrays, where each sub-array represents a batch of updates. This is only relevant if the `batched` option is enabled.
  */
-async function updater(context, options, tick = Date.now()) {
+async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_MODULE_3__.now)()) {
     options = options instanceof _options_js__WEBPACK_IMPORTED_MODULE_0__.Options ? options : new _options_js__WEBPACK_IMPORTED_MODULE_0__.Options(options);
-    const { responder, enumDefaultSymbols, compressStringsAsInts, enableRollback, isOrdered, isDiffed, isGroupedComponents, types, setGroupedValue, updateOptions } = options;
+    const { responder, enumDefaultSymbols, compressStringsAsInts, enableRollback, isOrdered, isDiffed, isGroupedComponents, isAsyncStorage, types, setGroupedValue, updateOptions } = options;
     const { batched, batchSize, mask, type, validKeys } = updateOptions;
     if (!context.pending) {
-        return;
+        return [];
     }
     /**
      * An array of arrays, where each sub-array represents a batch of updates.
-     */
+    */
     const batch = [];
     /**
      * An array representing the current batch of updates.
-     */
+    */
     let batchBlock = [];
     const { created = {}, removed = {}, symbols = [], updated = {} } = context.pending;
+    const store = context.store;
     /**
      * Merges the current batch block into the batch array.
      *
@@ -4010,16 +4092,15 @@ async function updater(context, options, tick = Date.now()) {
         }
         return symbol;
     };
-    const upsertComponents = async (pendingComponents = {}) => {
-        const store = context.store;
+    const upsertComponents = async (pendingComponents = {}, state) => {
         const groups = isGroupedComponents ? {} : null;
-        for (const id of Object.keys(pendingComponents)) {
-            const components = store.fetchComponents(id);
+        for (const id in (pendingComponents ?? {})) {
+            const components = isAsyncStorage ? await store.fetchComponents(id) : store.fetchComponents(id);
             if (!components) {
                 break;
             }
             const updatedComponents = pendingComponents ? pendingComponents[id] : {};
-            for (const key of Object.keys(updatedComponents[id] ?? {})) {
+            for (const key in (updatedComponents ?? {})) {
                 if (validKeys && !validKeys[key]) {
                     break;
                 }
@@ -4028,20 +4109,14 @@ async function updater(context, options, tick = Date.now()) {
                     group = groups[key] = groups[key] ?? {
                         key,
                         ids: [],
+                        intIds: true,
                         values: [],
                         ticks: []
                     };
                 }
-                let value;
-                if (isDiffed && context.changes) {
-                    value = context.changes.getValue(id, key);
-                }
-                else {
-                    // TODO: support async fetchComponent
-                    value = store.fetchComponent(id, key);
-                    if (value instanceof Promise) {
-                        value = await value;
-                    }
+                let value = isAsyncStorage ? await store.fetchComponent(id, key) : store.fetchComponent(id, key);
+                if (isDiffed && context.changes && (state === 'updated' || !true)) {
+                    value = context.changes.getValue(id, key, value);
                 }
                 if (compressStringsAsInts) {
                     value = (0,_symbols_js__WEBPACK_IMPORTED_MODULE_1__.recursiveSymbolIndexesEnsured)(key, value, context, options);
@@ -4050,7 +4125,10 @@ async function updater(context, options, tick = Date.now()) {
                 const nkey = ensureSymbol(key);
                 if (groups) {
                     group.ids.push(nid);
-                    group.values.push(setGroupedValue(value, types, key));
+                    if (nid === id) {
+                        group.intIds = false;
+                    }
+                    group.values = group.values.concat(setGroupedValue(value, types, key));
                     if (isOrdered) {
                         group.ticks.push(isDiffed ? -tick : tick);
                     }
@@ -4070,9 +4148,9 @@ async function updater(context, options, tick = Date.now()) {
             // delete pendingComponents[id];
         }
         if (groups) {
-            for (const key of Object.keys(groups)) {
+            for (const key in groups) {
                 const group = groups[key];
-                const bufferIds = compressStringsAsInts ? new Uint32Array(group.ids) : group.ids;
+                const bufferIds = compressStringsAsInts && group.intIds ? new Uint32Array(group.ids) : group.ids;
                 const type = types[key] ?? null;
                 const Type = type ? _types_js__WEBPACK_IMPORTED_MODULE_2__.ArrayTypes.get(Array.isArray(type) ? type[0] : type) : null;
                 const bufferValues = Type ? new Type(group.values) : group.values;
@@ -4118,7 +4196,7 @@ async function updater(context, options, tick = Date.now()) {
      * queues a message to spawn each actor, merges the batch of messages, and then clears the `created.actors` array.
      */
     if (!mask || !mask.actors) {
-        for (const id of Object.keys(created.actors ?? {})) {
+        for (const id in (created.actors ?? {})) {
             const nid = ensureSymbol(id);
             queueMessage(enumDefaultSymbols.spawnActor, nid);
         }
@@ -4144,7 +4222,7 @@ async function updater(context, options, tick = Date.now()) {
      * queues a message to remove each component, merges the batch of messages, and then clears the `removed.components` object.
      */
     if (!mask || !mask.actors) {
-        for (const id of Object.keys(removed.actors ?? {})) {
+        for (const id in (removed.actors ?? {})) {
             const nid = ensureSymbol(id);
             queueMessage(enumDefaultSymbols.removeActor, nid);
         }
@@ -4157,13 +4235,13 @@ async function updater(context, options, tick = Date.now()) {
      * queues a message to remove each component, merges the batch of messages, and then clears the `removed.components` object.
      */
     if (!mask || !mask.components) {
-        for (const id of Object.keys(removed.components ?? {})) {
+        for (const id in (removed.components ?? {})) {
             const components = removed?.components ? removed.components[id] : null;
             if (!components) {
                 break;
             }
             const nid = ensureSymbol(id);
-            for (const key of Object.keys(components)) {
+            for (const key in components) {
                 if (validKeys && !validKeys[key]) {
                     break;
                 }
@@ -4182,7 +4260,7 @@ async function updater(context, options, tick = Date.now()) {
      * queues a message to create each component, merges the batch of messages, and then clears the `created.components` object.
      */
     if (!mask || !mask.components) {
-        const promise = upsertComponents(created.components);
+        const promise = upsertComponents(created.components, 'created');
         created.components = {};
         await promise;
     }
@@ -4192,7 +4270,7 @@ async function updater(context, options, tick = Date.now()) {
      * queues a message to update each component, merges the batch of messages, and then clears the `updated.components` object.
      */
     if (!mask || !mask.components) {
-        const promise = upsertComponents(updated.components);
+        const promise = upsertComponents(updated.components, 'updated');
         updated.components = {};
         await promise;
     }
@@ -4202,14 +4280,16 @@ async function updater(context, options, tick = Date.now()) {
      * queues a message to create each input, merges the batch of messages, and then clears the `created.inputs` object.
      */
     if (!mask || !mask.inputs) {
-        for (const id of Object.keys(created.inputs ?? {})) {
+        for (const id in (created.inputs ?? {})) {
             // const nid = ensureSymbol(id)
-            const createdInputs = created?.inputs ? created.inputs[id] : [];
-            for (const index of (createdInputs ?? [])) {
-                const payload = createdInputs ? createdInputs[index] : null;
-                const input = payload;
-                // const input = { ...payload, id };
-                queueMessage(enumDefaultSymbols.actorInput, enableRollback ? [input, tick] : input);
+            const createdInputs = created?.inputs ? (created.inputs[id] ?? []) : [];
+            for (let i = 0; i < createdInputs.length; i += 1) {
+                const index = createdInputs[i];
+                const payload = isAsyncStorage ? await store.fetchInput(id, index) : store.fetchInput(id, index);
+                const isTuple = Array.isArray(payload);
+                const input = isTuple ? payload[0] : payload;
+                const tick_ = isTuple ? payload[1] : tick;
+                queueMessage(enumDefaultSymbols.actorInput, isTuple || enableRollback ? [input, tick_] : input);
             }
             // delete created.inputs[id];
         }
@@ -4228,7 +4308,7 @@ async function updater(context, options, tick = Date.now()) {
             }
             else {
                 const message = [enumDefaultSymbols.mergeSymbol, symbolOp];
-                responder(message, type);
+                await responder(message, type);
             }
             if (batchBlock.length >= batchSize && batchBlock.length) {
                 batch.unshift([enumDefaultSymbols.mergeSymbol].concat(batchBlock));
@@ -4250,7 +4330,7 @@ async function updater(context, options, tick = Date.now()) {
         for (let i = 0; i < batch.length; i += 1) {
             const batchSlice = batch[i];
             if (batchSlice) {
-                responder([enumDefaultSymbols.batch, batchSlice]);
+                await responder([enumDefaultSymbols.batch, batchSlice]);
                 // if (batchSlice.length > 1) {
                 //   responder([enumDefaultSymbols.batch].concat(batchSlice))
                 // } else {
@@ -4259,6 +4339,7 @@ async function updater(context, options, tick = Date.now()) {
             }
         }
     }
+    return batch;
 }
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (updater);
 
@@ -4280,12 +4361,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   differenceSets: () => (/* binding */ differenceSets),
 /* harmony export */   intersectionSets: () => (/* binding */ intersectionSets),
 /* harmony export */   messageTuple: () => (/* binding */ messageTuple),
+/* harmony export */   now: () => (/* binding */ now),
 /* harmony export */   paginate: () => (/* binding */ paginate),
 /* harmony export */   recursiveCombination: () => (/* binding */ recursiveCombination),
 /* harmony export */   typeOf: () => (/* binding */ typeOf),
 /* harmony export */   unionSetOrArray: () => (/* binding */ unionSetOrArray),
 /* harmony export */   unionSets: () => (/* binding */ unionSets)
 /* harmony export */ });
+/**
+ * @returns {number} The current time in milliseconds.
+ */
+function now() {
+    return performance.timeOrigin + performance.now();
+}
 /**
  * Creates a union of multiple sets or arrays.
  *
@@ -4452,6 +4540,9 @@ function paginate(array, pageSize) {
         page.push(v);
         i++;
     }
+    if (page.length > 0) {
+        pages.push(page);
+    }
     return pages;
 }
 /**
@@ -4522,7 +4613,7 @@ function recursiveCombination(objA, objB) {
             }
             const newObj = {};
             let combined = true;
-            for (const k of Object.keys(objB)) {
+            for (const k in objB) {
                 const [c, value] = recursiveCombination(objA[k], objB[k]);
                 if (c === false) {
                     combined = false;
@@ -4705,6 +4796,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   Actions: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.Actions),
 /* harmony export */   Actor: () => (/* reexport module object */ _actions_actor_js__WEBPACK_IMPORTED_MODULE_18__),
 /* harmony export */   ArrayTypes: () => (/* reexport safe */ _types_js__WEBPACK_IMPORTED_MODULE_13__.ArrayTypes),
+/* harmony export */   BasicTypes: () => (/* reexport safe */ _types_js__WEBPACK_IMPORTED_MODULE_13__.BasicTypes),
 /* harmony export */   Changes: () => (/* reexport safe */ _changes_js__WEBPACK_IMPORTED_MODULE_4__.Changes),
 /* harmony export */   Client: () => (/* reexport module object */ _client_js__WEBPACK_IMPORTED_MODULE_17__),
 /* harmony export */   CommonComponents: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.CommonComponents),
@@ -4716,6 +4808,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   Entitity: () => (/* reexport module object */ _actions_entity_js__WEBPACK_IMPORTED_MODULE_21__),
 /* harmony export */   Handler: () => (/* reexport safe */ _handler_js__WEBPACK_IMPORTED_MODULE_7__.Handler),
 /* harmony export */   Index: () => (/* reexport safe */ _indexes_index_js__WEBPACK_IMPORTED_MODULE_1__.Index),
+/* harmony export */   IndexMap: () => (/* reexport safe */ _storage_js__WEBPACK_IMPORTED_MODULE_11__.IndexMap),
 /* harmony export */   Node: () => (/* reexport module object */ _node_js__WEBPACK_IMPORTED_MODULE_16__),
 /* harmony export */   Options: () => (/* reexport safe */ _options_js__WEBPACK_IMPORTED_MODULE_8__.Options),
 /* harmony export */   Ordered: () => (/* reexport safe */ _ordered_js__WEBPACK_IMPORTED_MODULE_9__.Ordered),
@@ -4725,7 +4818,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   Storage: () => (/* reexport safe */ _storage_js__WEBPACK_IMPORTED_MODULE_11__.Storage),
 /* harmony export */   Symbol: () => (/* reexport module object */ _actions_symbol_js__WEBPACK_IMPORTED_MODULE_22__),
 /* harmony export */   Symbols: () => (/* reexport safe */ _symbols_js__WEBPACK_IMPORTED_MODULE_12__.Symbols),
-/* harmony export */   TypeMap: () => (/* reexport safe */ _storage_js__WEBPACK_IMPORTED_MODULE_11__.TypeMap),
 /* harmony export */   batchActionPayloadSizes: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.batchActionPayloadSizes),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
 /* harmony export */   defaultGetActorId: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultGetActorId),
@@ -4880,6 +4972,7 @@ __webpack_require__.r(__webpack_exports__);
 var __webpack_exports__Actions = __webpack_exports__.Actions;
 var __webpack_exports__Actor = __webpack_exports__.Actor;
 var __webpack_exports__ArrayTypes = __webpack_exports__.ArrayTypes;
+var __webpack_exports__BasicTypes = __webpack_exports__.BasicTypes;
 var __webpack_exports__Changes = __webpack_exports__.Changes;
 var __webpack_exports__Client = __webpack_exports__.Client;
 var __webpack_exports__CommonComponents = __webpack_exports__.CommonComponents;
@@ -4891,6 +4984,7 @@ var __webpack_exports__Emitter = __webpack_exports__.Emitter;
 var __webpack_exports__Entitity = __webpack_exports__.Entitity;
 var __webpack_exports__Handler = __webpack_exports__.Handler;
 var __webpack_exports__Index = __webpack_exports__.Index;
+var __webpack_exports__IndexMap = __webpack_exports__.IndexMap;
 var __webpack_exports__Node = __webpack_exports__.Node;
 var __webpack_exports__Options = __webpack_exports__.Options;
 var __webpack_exports__Ordered = __webpack_exports__.Ordered;
@@ -4900,7 +4994,6 @@ var __webpack_exports__SpatialIndex = __webpack_exports__.SpatialIndex;
 var __webpack_exports__Storage = __webpack_exports__.Storage;
 var __webpack_exports__Symbol = __webpack_exports__.Symbol;
 var __webpack_exports__Symbols = __webpack_exports__.Symbols;
-var __webpack_exports__TypeMap = __webpack_exports__.TypeMap;
 var __webpack_exports__batchActionPayloadSizes = __webpack_exports__.batchActionPayloadSizes;
 var __webpack_exports__default = __webpack_exports__["default"];
 var __webpack_exports__defaultGetActorId = __webpack_exports__.defaultGetActorId;
@@ -4925,6 +5018,6 @@ var __webpack_exports__recursiveSymbolIndexesEnsured = __webpack_exports__.recur
 var __webpack_exports__updater = __webpack_exports__.updater;
 var __webpack_exports__utils = __webpack_exports__.utils;
 var __webpack_exports__voidResponder = __webpack_exports__.voidResponder;
-export { __webpack_exports__Actions as Actions, __webpack_exports__Actor as Actor, __webpack_exports__ArrayTypes as ArrayTypes, __webpack_exports__Changes as Changes, __webpack_exports__Client as Client, __webpack_exports__CommonComponents as CommonComponents, __webpack_exports__Component as Component, __webpack_exports__Context as Context, __webpack_exports__Core as Core, __webpack_exports__DefaultSymbols as DefaultSymbols, __webpack_exports__Emitter as Emitter, __webpack_exports__Entitity as Entitity, __webpack_exports__Handler as Handler, __webpack_exports__Index as Index, __webpack_exports__Node as Node, __webpack_exports__Options as Options, __webpack_exports__Ordered as Ordered, __webpack_exports__Pending as Pending, __webpack_exports__SortedIndex as SortedIndex, __webpack_exports__SpatialIndex as SpatialIndex, __webpack_exports__Storage as Storage, __webpack_exports__Symbol as Symbol, __webpack_exports__Symbols as Symbols, __webpack_exports__TypeMap as TypeMap, __webpack_exports__batchActionPayloadSizes as batchActionPayloadSizes, __webpack_exports__default as default, __webpack_exports__defaultGetActorId as defaultGetActorId, __webpack_exports__defaultGetGroupedValue as defaultGetGroupedValue, __webpack_exports__defaultOptions as defaultOptions, __webpack_exports__defaultSetGroupedValue as defaultSetGroupedValue, __webpack_exports__defaultUpdateOptions as defaultUpdateOptions, __webpack_exports__defaultValidKeys as defaultValidKeys, __webpack_exports__ensureSymbolIndex as ensureSymbolIndex, __webpack_exports__enumActions as enumActions, __webpack_exports__enumCommonComponents as enumCommonComponents, __webpack_exports__enumDefaultSymbols as enumDefaultSymbols, __webpack_exports__extractSymbol as extractSymbol, __webpack_exports__getActionHandler as getActionHandler, __webpack_exports__getSymbolAction as getSymbolAction, __webpack_exports__handler as handler, __webpack_exports__manyHandler as manyHandler, __webpack_exports__oneHandler as oneHandler, __webpack_exports__padEnum as padEnum, __webpack_exports__recursiveSymbolExtraction as recursiveSymbolExtraction, __webpack_exports__recursiveSymbolIndexesEnsured as recursiveSymbolIndexesEnsured, __webpack_exports__updater as updater, __webpack_exports__utils as utils, __webpack_exports__voidResponder as voidResponder };
+export { __webpack_exports__Actions as Actions, __webpack_exports__Actor as Actor, __webpack_exports__ArrayTypes as ArrayTypes, __webpack_exports__BasicTypes as BasicTypes, __webpack_exports__Changes as Changes, __webpack_exports__Client as Client, __webpack_exports__CommonComponents as CommonComponents, __webpack_exports__Component as Component, __webpack_exports__Context as Context, __webpack_exports__Core as Core, __webpack_exports__DefaultSymbols as DefaultSymbols, __webpack_exports__Emitter as Emitter, __webpack_exports__Entitity as Entitity, __webpack_exports__Handler as Handler, __webpack_exports__Index as Index, __webpack_exports__IndexMap as IndexMap, __webpack_exports__Node as Node, __webpack_exports__Options as Options, __webpack_exports__Ordered as Ordered, __webpack_exports__Pending as Pending, __webpack_exports__SortedIndex as SortedIndex, __webpack_exports__SpatialIndex as SpatialIndex, __webpack_exports__Storage as Storage, __webpack_exports__Symbol as Symbol, __webpack_exports__Symbols as Symbols, __webpack_exports__batchActionPayloadSizes as batchActionPayloadSizes, __webpack_exports__default as default, __webpack_exports__defaultGetActorId as defaultGetActorId, __webpack_exports__defaultGetGroupedValue as defaultGetGroupedValue, __webpack_exports__defaultOptions as defaultOptions, __webpack_exports__defaultSetGroupedValue as defaultSetGroupedValue, __webpack_exports__defaultUpdateOptions as defaultUpdateOptions, __webpack_exports__defaultValidKeys as defaultValidKeys, __webpack_exports__ensureSymbolIndex as ensureSymbolIndex, __webpack_exports__enumActions as enumActions, __webpack_exports__enumCommonComponents as enumCommonComponents, __webpack_exports__enumDefaultSymbols as enumDefaultSymbols, __webpack_exports__extractSymbol as extractSymbol, __webpack_exports__getActionHandler as getActionHandler, __webpack_exports__getSymbolAction as getSymbolAction, __webpack_exports__handler as handler, __webpack_exports__manyHandler as manyHandler, __webpack_exports__oneHandler as oneHandler, __webpack_exports__padEnum as padEnum, __webpack_exports__recursiveSymbolExtraction as recursiveSymbolExtraction, __webpack_exports__recursiveSymbolIndexesEnsured as recursiveSymbolIndexesEnsured, __webpack_exports__updater as updater, __webpack_exports__utils as utils, __webpack_exports__voidResponder as voidResponder };
 
 //# sourceMappingURL=lib.echo-d.js.map

@@ -1,8 +1,17 @@
 import { Storage } from '../../storage.js';
-import { paginate } from '../../utils.js';
+import { paginate, now } from '../../utils.js';
 const { World, } = await import('miniplex/dist/miniplex.cjs.js');
+export function defaultGetGroupedValue(value, i, types, key) {
+    const type = types[key];
+    if (Array.isArray(type)) {
+        return value.slice(i * type[1], (i + 1) * type[1]);
+    }
+    return value[i];
+}
+export function defaultSetGroupedValue(value, _types, _key) {
+    return value;
+}
 export class MiniplexStorage extends Storage {
-    // declare inputs: Map<string, any> & string[];
     constructor(storage, options) {
         super({
             ...(storage || {}),
@@ -14,7 +23,8 @@ export class MiniplexStorage extends Storage {
             inputs: null,
         }, options);
         const { worldOptions = [], } = options;
-        this.world = storage?.world || new World(worldOptions);
+        this.worldOptions = worldOptions;
+        this.world = storage?.world || new World();
     }
     destroyActor(id) {
         return this.destroyId(this.actors, id);
@@ -152,7 +162,7 @@ export class MiniplexStorage extends Storage {
         }
         return false;
     }
-    storeInput(id, input, tick = Date.now()) {
+    storeInput(id, input, tick = now()) {
         return super.storeInput(id, input, tick);
     }
 }

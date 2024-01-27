@@ -1,3 +1,5 @@
+import { now } from './utils'
+
 /**
  * The OrderedData interface represents a mapping from keys to tick values.
  */
@@ -58,12 +60,13 @@ export class Ordered {
     if (isNaN(tick)) {
       return false
     }
+    this.order = this.order || {}
     this.order[id] = this.order[id] || {}
     switch (typeof this.order[id][key]) {
       case 'number':
-        if (isFinite(this.order[id][key]) && this.order[id][key] < tick) {
+        if (isFinite(this.order[id][key]) && this.order[id][key] <= tick) {
           const threshold = 0
-          if (tick > (Date.now() + threshold)) {
+          if (tick > (now() + threshold)) {
             return false
           }
           this.order[id][key] = tick
