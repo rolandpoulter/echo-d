@@ -11,9 +11,7 @@ export const modules = {
 __webpack_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   BitECSStorage: () => (/* binding */ BitECSStorage),
-/* harmony export */   defaultGetGroupedValue: () => (/* binding */ defaultGetGroupedValue),
-/* harmony export */   defaultSetGroupedValue: () => (/* binding */ defaultSetGroupedValue)
+/* harmony export */   BitECSStorage: () => (/* binding */ BitECSStorage)
 /* harmony export */ });
 /* harmony import */ var bitecs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! bitecs */ "./node_modules/.deno/bitecs@0.3.40/node_modules/bitecs/dist/index.mjs");
 /* harmony import */ var _storage_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../storage.js */ "./lib/storage.js");
@@ -27,24 +25,18 @@ __webpack_require__.r(__webpack_exports__);
 //     defs: any[];
 //     [key: string]: any;
 // }
+const bitecs = await Promise.resolve(/*! import() */).then(__webpack_require__.bind(__webpack_require__, /*! bitecs */ "./node_modules/.deno/bitecs@0.3.40/node_modules/bitecs/dist/index.mjs"));
 const { createWorld, 
 // Types,
 defineComponent, removeComponent, removeEntity, 
 // defineQuery,
-entityExists, addEntity, addComponent, getEntityComponents,
+entityExists, addEntity, addComponent, 
+// getEntityComponents,
+resetWorld, deleteWorld,
 // pipe,
- } = await Promise.resolve(/*! import() */).then(__webpack_require__.bind(__webpack_require__, /*! bitecs */ "./node_modules/.deno/bitecs@0.3.40/node_modules/bitecs/dist/index.mjs"));
-function defaultGetGroupedValue(value, i, types, key) {
-    const type = types[key];
-    if (Array.isArray(type)) {
-        return value.slice(i * type[1], (i + 1) * type[1]);
-    }
-    return value[i];
-}
-function defaultSetGroupedValue(value, _types, _key) {
-    return value;
-}
+ } = bitecs;
 class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_1__.Storage {
+    // declare eids: Map<string, any>;
     constructor(storage, options) {
         super({
             ...(storage || {}),
@@ -71,30 +63,12 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_1__.Storage {
         let { 
         // types,
         // indexes,
-        worldOptions, } = options;
-        /*
-        worldOptions = worldOptions || { defs: [] }
-
-        if (worldOptions && !(worldOptions as WorldOptions).defs) {
-            (worldOptions as WorldOptions).defs = []
-        }
-
-        if (!((worldOptions as WorldOptions).defs as any[]).length) {
-             for (let component of this.components.values()) {
-                if (!component) {
-                    continue
-                }
-                if ((component as any) instanceof Map) {
-                    continue
-                }
-                (worldOptions as WorldOptions).defs.push(component)
-            }
-        }
-        */
+        worldOptions, world, } = options;
         this.worldOptions = worldOptions;
-        this.world = storage?.world || createWorld(); // worldOptions);
-        this.eids = storage?.eids || new Map();
+        this.world = world || createWorld(); // worldOptions);
         /*
+        this.eids = storage?.eids || new Map();
+        
         for (let key in this.actors) {
             this.eids.set(key, addEntity(this.world));
         }
@@ -110,26 +84,34 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_1__.Storage {
         }
         */
     }
+    cleanup(reset = false) {
+        resetWorld(this.world);
+        deleteWorld(this.world);
+        if (reset && bitecs.resetGlobals) {
+            bitecs.resetGlobals();
+        }
+    }
+    derefEntityId(id) {
+        if (this.actors.has(id)) {
+            return this.actors.get(id);
+        }
+        if (this.entities.has(id)) {
+            return this.entities.get(id);
+        }
+        return;
+    }
     destroyActor(id) {
         return this.destroyId(this.actors, id);
     }
     destroyComponent(id, key) {
-        const eid = this.getEID(id);
+        const eid = this.derefEntityId(id);
         const Component = this.components.get(key);
         if ((eid === undefined || eid === null) || !Component) {
             return;
         }
         const updateIndexes = () => {
-            const prevValue = this.fetchComponentProcess(id, key, Component, eid);
-            if (this.indexes[key]) {
-                const index = this.indexes[key];
-                if (this.isActor(id)) {
-                    index.actors.remove(id, prevValue);
-                }
-                else {
-                    index.entities.remove(id, prevValue);
-                }
-            }
+            const prevValue = this.findComponentProcess(id, key, Component, eid);
+            this.removeComponentsIndex(id, key, prevValue);
         };
         if (Component instanceof Map) {
             if (Component.has(eid)) {
@@ -162,20 +144,21 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_1__.Storage {
         }
         return false;
     }
-    fetchComponents(id) {
-        const eid = this.getEID(id);
+    findComponents(id) {
+        const eid = this.derefEntityId(id);
         if (eid !== null && eid !== undefined) {
             return;
         }
         return eid;
     }
-    fetchComponent(id, key) {
-        return this.fetchComponentProcess(id, key, undefined, undefined);
+    findComponent(id, key) {
+        const _ = undefined;
+        return this.findComponentProcess(id, key, _, _);
     }
-    fetchComponentProcess(id, key, Component, eid) {
-        eid = (eid === undefined || eid === null) ? this.getEID(id) : eid;
+    findComponentProcess(id, key, eid, Component) {
+        eid = (eid === undefined || eid === null) ? this.derefEntityId(id) : eid;
         Component = Component || this.components.get(key);
-        if ((eid !== null && eid !== undefined) || !Component) {
+        if (eid === null || eid === undefined || !Component) {
             return;
         }
         if (Component instanceof Map) {
@@ -218,46 +201,19 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_1__.Storage {
             ];
         }
         const pages = (0,_utils_js__WEBPACK_IMPORTED_MODULE_3__.paginate)(ids, pageSize);
-        const compEntries = this.components.entries();
-        const compLookup = new Map();
-        for (let [key, value] of compEntries) {
-            compLookup.set(value, key);
-        }
+        const _ = undefined;
         return pages.map((page) => {
             const components = {};
             for (let id of page) {
-                const eid = this.getEID(id);
+                const eid = this.derefEntityId(id);
                 if (eid === undefined || eid === null) {
                     continue;
                 }
                 const entity = {};
-                const compList = getEntityComponents(this.world, eid);
-                compList.forEach((Component) => {
-                    const key = compLookup.get(Component);
-                    if (!key) {
-                        return;
-                    }
-                    // TODO: fix this
-                    // const val = this.fetchComponentProcess(id, key, Component, eid)
-                    let val;
-                    if (Component instanceof Map) {
-                        val = Component.get(eid);
-                    }
-                    else {
-                        const type = this.types[key];
-                        const schema = type[3];
-                        const Type = _types_js__WEBPACK_IMPORTED_MODULE_2__.ArrayTypes.get(type[0]);
-                        const size = type[1];
-                        const value = new Type(size);
-                        let i = 0;
-                        for (let prop in schema) {
-                            value[i] = Component[prop][eid];
-                            i++;
-                        }
-                        val = value;
-                    }
-                    entity[key] = val;
-                });
+                const compList = this.componentsIndex.get(id);
+                for (let key of compList) {
+                    entity[key] = this.findComponentProcess(id, key, eid, _);
+                }
                 components[id] = entity;
             }
             return components;
@@ -272,15 +228,6 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_1__.Storage {
     }
     getInputs(query = null, pageSize) {
         return super.getInputs(query, pageSize);
-    }
-    getEID(id) {
-        if (this.actors.has(id)) {
-            return this.actors.get(id);
-        }
-        if (this.entities.has(id)) {
-            return this.entities.get(id);
-        }
-        return;
     }
     isActor(id) {
         return this.actors.has(id);
@@ -304,16 +251,14 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_1__.Storage {
         return this.storeId(this.actors, id);
     }
     storeComponent(id, key, value) {
-        let entity = this.getEID(id);
+        let entity = this.derefEntityId(id);
         if (entity !== null && entity !== undefined) {
             if (!entityExists(this.world, entity)) {
                 entity = addEntity(this.world);
                 if (this.isActor(id)) {
-                    // this.actors.delete(id);
                     this.actors.set(id, entity);
                 }
                 else {
-                    // this.entities.delete(id);
                     this.entities.set(id, entity);
                 }
             }
@@ -324,7 +269,7 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_1__.Storage {
             if (!(0,bitecs__WEBPACK_IMPORTED_MODULE_0__.hasComponent)(this.world, Component, entity)) {
                 addComponent(this.world, Component, entity);
             }
-            let prevValue = []; // TODO: fix this
+            let prevValue = []; // TODO: create an array or object based on the type
             if (Component instanceof Map) {
                 prevValue = Component.get(entity);
                 Component.set(entity, value);
@@ -339,18 +284,7 @@ class BitECSStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_1__.Storage {
                     i++;
                 }
             }
-            // this.world.reindex(entity)
-            if (this.indexes[key]) {
-                const index = this.indexes[key];
-                if (this.isActor(id)) {
-                    index.actors.remove(id, prevValue);
-                    index.actors.set(id, value);
-                }
-                else {
-                    index.entities.remove(id, prevValue);
-                    index.entities.set(id, value);
-                }
-            }
+            this.updateComponentsIndex(id, key, prevValue, value);
         }
     }
     storeEntity(id) {
@@ -1460,8 +1394,6 @@ __webpack_require__.C(__webpack_chunk_0__);
 var __webpack_exports__ = __webpack_exec__("./lib/extra/storage/bitecs.js");
 __webpack_exports__ = await __webpack_exports__;
 var __webpack_exports__BitECSStorage = __webpack_exports__.BitECSStorage;
-var __webpack_exports__defaultGetGroupedValue = __webpack_exports__.defaultGetGroupedValue;
-var __webpack_exports__defaultSetGroupedValue = __webpack_exports__.defaultSetGroupedValue;
-export { __webpack_exports__BitECSStorage as BitECSStorage, __webpack_exports__defaultGetGroupedValue as defaultGetGroupedValue, __webpack_exports__defaultSetGroupedValue as defaultSetGroupedValue };
+export { __webpack_exports__BitECSStorage as BitECSStorage };
 
 //# sourceMappingURL=bitecs.echo-d.js.map

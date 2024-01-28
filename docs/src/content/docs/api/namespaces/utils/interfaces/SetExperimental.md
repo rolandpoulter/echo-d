@@ -45,7 +45,7 @@ docs/node\_modules/typescript/lib/lib.es2015.symbol.wellknown.d.ts:145
 
 #### Source
 
-ecmascript/src/utils.ts:31
+ecmascript/src/utils.ts:67
 
 ***
 
@@ -63,7 +63,7 @@ ecmascript/src/utils.ts:31
 
 #### Source
 
-ecmascript/src/utils.ts:32
+ecmascript/src/utils.ts:68
 
 ***
 
@@ -95,7 +95,7 @@ docs/node\_modules/typescript/lib/lib.es2015.collection.d.ts:112
 
 #### Source
 
-ecmascript/src/utils.ts:30
+ecmascript/src/utils.ts:66
 
 ## Methods
 

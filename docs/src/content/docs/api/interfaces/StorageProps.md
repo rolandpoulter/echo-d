@@ -19,7 +19,7 @@ The StorageProps interface represents the properties of a store.
 
 #### Source
 
-ecmascript/src/storage.ts:16
+ecmascript/src/storage/interface.ts:43
 
 ***
 
@@ -29,7 +29,7 @@ ecmascript/src/storage.ts:16
 
 #### Source
 
-ecmascript/src/storage.ts:18
+ecmascript/src/storage/interface.ts:45
 
 ***
 
@@ -39,7 +39,7 @@ ecmascript/src/storage.ts:18
 
 #### Source
 
-ecmascript/src/storage.ts:17
+ecmascript/src/storage/interface.ts:44
 
 ***
 
@@ -49,7 +49,7 @@ ecmascript/src/storage.ts:17
 
 #### Source
 
-ecmascript/src/storage.ts:19
+ecmascript/src/storage/interface.ts:46
 
 ***
 

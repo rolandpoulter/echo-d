@@ -4,7 +4,7 @@ import {
     StorageOptions,
     StorageProps,
     Components, 
-    Types
+    // Types
 } from '../../storage';
 
 import { ArrayTypes } from '../../types';
@@ -14,6 +14,8 @@ import { paginate } from '../../utils';
 //     defs: any[];
 //     [key: string]: any;
 // }
+
+const bitecs = await import('bitecs')
 
 const {
     createWorld,
@@ -25,30 +27,21 @@ const {
     entityExists,
     addEntity,
     addComponent,
-    getEntityComponents,
+    // getEntityComponents,
+    resetWorld,
+    deleteWorld,
     // pipe,
-} = await import('bitecs')
-
-export function defaultGetGroupedValue (value: any | any[], i: number, types: Types, key: string): any {
-    const type = types[key]
-    if (Array.isArray(type)) {
-        return value.slice(i * type[1], (i + 1) * type[1])
-    }
-    return value[i]
-}
-
-export function defaultSetGroupedValue (value: any, _types: Types, _key: string): any {
-    return value;
-}
+} = bitecs;
 
 export class BitECSStorage extends Storage {
-    declare eids: Map<string, any>;
-    declare world: any;
     declare actors: Map<string, any> & string[];
     declare entities: Map<string, any> & string[];
     declare components: Map<string, any> & { [key: string]: any };
-
+    
     declare worldOptions: any;
+    declare world: any;
+    
+    // declare eids: Map<string, any>;
 
     constructor(storage: BitECSStorage | StorageProps, options: StorageOptions) {
         super({
@@ -77,33 +70,15 @@ export class BitECSStorage extends Storage {
             // types,
             // indexes,
             worldOptions,
+            world,
         } = options
 
-        /*
-        worldOptions = worldOptions || { defs: [] }
-
-        if (worldOptions && !(worldOptions as WorldOptions).defs) {
-            (worldOptions as WorldOptions).defs = []
-        }
-
-        if (!((worldOptions as WorldOptions).defs as any[]).length) {
-             for (let component of this.components.values()) {
-                if (!component) {
-                    continue
-                }
-                if ((component as any) instanceof Map) {
-                    continue
-                }
-                (worldOptions as WorldOptions).defs.push(component)
-            }
-        }
-        */
-
         this.worldOptions = worldOptions;
-        this.world = storage?.world || createWorld(); // worldOptions);
-        this.eids = storage?.eids || new Map();
+        this.world = world || createWorld(); // worldOptions);
 
         /*
+        this.eids = storage?.eids || new Map();
+        
         for (let key in this.actors) {
             this.eids.set(key, addEntity(this.world));
         }
@@ -120,26 +95,38 @@ export class BitECSStorage extends Storage {
         */
     }
 
+    cleanup(reset: boolean = false) {
+        resetWorld(this.world);
+        deleteWorld(this.world);
+
+        if (reset && (bitecs as any).resetGlobals) {
+            (bitecs as any).resetGlobals()
+        }
+    }
+
+    derefEntityId(id: string) {
+        if (this.actors.has(id)) {
+            return this.actors.get(id)
+        }
+        if (this.entities.has(id)) {
+            return this.entities.get(id)
+        }
+        return;
+    }
+
     destroyActor(id: string): boolean {
         return this.destroyId(this.actors, id);
     }
 
     destroyComponent(id: string, key: string) {
-        const eid = this.getEID(id);
+        const eid = this.derefEntityId(id);
         const Component = this.components.get(key);
         if ((eid === undefined || eid === null) || !Component) {
             return;
         }
         const updateIndexes = () => {
-            const prevValue = this.fetchComponentProcess(id, key, Component, eid)
-            if (this.indexes[key]) {
-                const index = this.indexes[key]
-                if (this.isActor(id)) {
-                    index.actors.remove(id, prevValue)
-                } else {
-                    index.entities.remove(id, prevValue)
-                }
-            }
+            const prevValue = this.findComponentProcess(id, key, Component, eid)
+            this.removeComponentsIndex(id, key, prevValue);
         }
         if (Component instanceof Map) {
             if (Component.has(eid)) {
@@ -174,22 +161,23 @@ export class BitECSStorage extends Storage {
         return false
     }
 
-    fetchComponents(id: string) {
-        const eid = this.getEID(id);
+    findComponents(id: string) {
+        const eid = this.derefEntityId(id);
         if (eid !== null && eid !== undefined) {
             return;
         }
         return eid
     }
 
-    fetchComponent(id: string, key: string) {
-        return this.fetchComponentProcess(id, key, undefined, undefined);
+    findComponent(id: string, key: string) {
+        const _ = undefined;
+        return this.findComponentProcess(id, key, _, _);
     }
 
-    fetchComponentProcess(id: string, key: string, Component: any, eid: any) {
-        eid = (eid === undefined || eid === null) ? this.getEID(id) : eid;
+    findComponentProcess(id: string, key: string, eid: any, Component: any) {
+        eid = (eid === undefined || eid === null) ? this.derefEntityId(id) : eid;
         Component = Component || this.components.get(key);
-        if ((eid !== null && eid !== undefined) || !Component) {
+        if (eid === null || eid === undefined || !Component) {
             return;
         }
         if (Component instanceof Map) {
@@ -217,7 +205,7 @@ export class BitECSStorage extends Storage {
         return paginate(actors, pageSize)
     }
 
-    getComponents(query: any = null, pageSize: number) {
+    getComponents(query: any = null, pageSize: number): any[] {
         // const queryKeys = Object.keys(query);
         // const entities = this.world.with(...queryKeys);
         let ids
@@ -232,45 +220,19 @@ export class BitECSStorage extends Storage {
             ]
         }
         const pages = paginate(ids, pageSize)
-        const compEntries = this.components.entries()
-        const compLookup = new Map<string, any>()
-        for (let [key, value] of compEntries) {
-            compLookup.set(value, key)
-        }
+        const _ = undefined;
         return pages.map((page) => {
             const components: { [key: string]: any } = {}
             for (let id of page) {
-                const eid = this.getEID(id);
+                const eid = this.derefEntityId(id);
                 if (eid === undefined || eid === null) {
                     continue
                 }
                 const entity = {} as { [key: string]: any }
-                const compList = getEntityComponents(this.world, eid)
-                compList.forEach((Component: any) => {
-                    const key = compLookup.get(Component)
-                    if (!key) {
-                        return
-                    }
-                    // TODO: fix this
-                    // const val = this.fetchComponentProcess(id, key, Component, eid)
-                    let val;
-                    if (Component instanceof Map) {
-                        val = Component.get(eid);
-                    } else {
-                        const type = this.types[key];
-                        const schema = type[3]
-                        const Type = ArrayTypes.get(type[0])
-                        const size = type[1]
-                        const value = new Type(size)
-                        let i = 0
-                        for (let prop in schema) {
-                            value[i] = Component[prop][eid]
-                            i++
-                        }
-                        val = value
-                    }
-                    entity[key] = val
-                })
+                const compList: string[] = this.componentsIndex.get(id)
+                for (let key of compList) {
+                    entity[key] = this.findComponentProcess(id, key, eid, _)
+                }
                 components[id] = entity
             }
             return components
@@ -287,16 +249,6 @@ export class BitECSStorage extends Storage {
 
     getInputs(query: any = null, pageSize: number) {
         return super.getInputs(query, pageSize);
-    }
-
-    getEID(id: string) {
-        if (this.actors.has(id)) {
-            return this.actors.get(id)
-        }
-        if (this.entities.has(id)) {
-            return this.entities.get(id)
-        }
-        return;
     }
 
     isActor(id: string) {
@@ -328,15 +280,13 @@ export class BitECSStorage extends Storage {
     }
 
     storeComponent(id: string, key: string, value: any) {
-        let entity = this.getEID(id);
+        let entity = this.derefEntityId(id);
         if (entity !== null && entity !== undefined) {
             if (!entityExists(this.world, entity)) {
                 entity = addEntity(this.world)
                 if (this.isActor(id)) {
-                    // this.actors.delete(id);
                     this.actors.set(id, entity);
                 } else {
-                    // this.entities.delete(id);
                     this.entities.set(id, entity);
                 }
             }
@@ -351,7 +301,7 @@ export class BitECSStorage extends Storage {
                 addComponent(this.world, Component, entity);
             }
             
-            let prevValue = []; // TODO: fix this
+            let prevValue = []; // TODO: create an array or object based on the type
             if (Component instanceof Map) {
                 prevValue = Component.get(entity)
                 Component.set(entity, value)
@@ -366,17 +316,7 @@ export class BitECSStorage extends Storage {
                 }
             }
           
-            // this.world.reindex(entity)
-            if (this.indexes[key]) {
-                const index = this.indexes[key]
-                if (this.isActor(id)) {
-                    index.actors.remove(id, prevValue)
-                    index.actors.set(id, value)
-                } else {
-                    index.entities.remove(id, prevValue)
-                    index.entities.set(id, value)
-                }
-            }
+            this.updateComponentsIndex(id, key, prevValue, value);
         }
     }
 

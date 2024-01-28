@@ -1,6 +1,4 @@
-export default function emitterSpec(echo, { describe, it, expect, mock, spy }) {
-    // const xit = (n) => { console.log('skip:', n) };
-
+export default function emitterSpec(echo, { describe, it, expect, mock, spy, xit, xdescribe }) {
     describe('Emitter', () => {
         const { Emitter } = echo;
 
@@ -17,6 +15,7 @@ export default function emitterSpec(echo, { describe, it, expect, mock, spy }) {
             const handler = mock();
             emitter.emitTo(handler);
             expect(emitter.handlers).toContain(handler);
+            emitter.done();
         });
 
         // Emitter can emit a value to all its handlers using emit method.
@@ -27,6 +26,7 @@ export default function emitterSpec(echo, { describe, it, expect, mock, spy }) {
             emitter.emitTo(handler1);
             emitter.emitTo(handler2);
             emitter.emit('Hello, world!');
+            emitter.done();
             expect(handler1).toHaveBeenCalledWith('Hello, world!');
             expect(handler2).toHaveBeenCalledWith('Hello, world!');
         });
@@ -37,6 +37,7 @@ export default function emitterSpec(echo, { describe, it, expect, mock, spy }) {
             const handler = null;
             emitter.emitTo(handler);
             expect(emitter.handlers).toContain(handler);
+            emitter.done();
         });
 
         // Emitter can emit a null value to all its handlers using emit method.
@@ -47,6 +48,7 @@ export default function emitterSpec(echo, { describe, it, expect, mock, spy }) {
             emitter.emitTo(handler1);
             emitter.emitTo(handler2);
             emitter.emit(null);
+            emitter.done();
             expect(handler1).toHaveBeenCalledWith(null);
             expect(handler2).toHaveBeenCalledWith(null);
         });
@@ -58,6 +60,7 @@ export default function emitterSpec(echo, { describe, it, expect, mock, spy }) {
             const returnedHandler = emitter.emitTo(handler);
             expect(emitter.handlers).toContain(handler);
             emitter.handlers = emitter.handlers.filter(h => h !== returnedHandler);
+            emitter.done();
             expect(emitter.handlers).not.toContain(handler);
         });
     });

@@ -10,7 +10,15 @@ describe('echo', () => {
         expect(echo).toBeDefined();
     })
     
-    const specOptions = { describe, it: test, expect, mock: jest.fn, spy: jest.spyOn }
+    const specOptions = {
+        describe,
+        it: test,
+        expect,
+        mock: jest.fn,
+        spy: jest.spyOn,
+        xdescribe,
+        xit,
+    }
     
     spec(echo, specOptions)
     example(echo, specOptions)

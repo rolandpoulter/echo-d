@@ -49,7 +49,9 @@
     "pack": "npm run pack-dev && npm run pack-prod && npm run pack-mod",
     "test": "npm run build && npm run test-node && npm run test-web",
     "test-web": "npm run pack-test && node --experimental-vm-modules node_modules/jest/bin/jest.js -c jest.config.web.js",
-    "test-node": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test-node": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test-coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js -c jest.config.coverage.js",
+    "test-cov": "npm run build && npm run test-coverage"
   },
   "babel": {
     "env": {

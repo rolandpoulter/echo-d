@@ -198,7 +198,7 @@ export class Handler {
    * @param {string} id - The ID of the actor to spawn.
    * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
    */
-  spawnActor (id: string, extendOptions: OptionsProps | any) {
+  spawnActor (id: string, extendOptions: OptionsProps | any): Promise<boolean> | boolean {
     return this.context.spawnActor(id, extendOptions ? this.options.extend(extendOptions) : this.options)
   }
   
@@ -208,7 +208,7 @@ export class Handler {
    * @param {string} id - The ID of the actor to despawn.
    * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
    */
-  removeActor (id: string, extendOptions: OptionsProps | any) {
+  removeActor (id: string, extendOptions: OptionsProps | any): Promise<boolean> | boolean {
     return this.context.removeActor(id, extendOptions ? this.options.extend(extendOptions) : this.options)
   }
 
@@ -220,7 +220,7 @@ export class Handler {
    * @param {number} tick - The tick for updating.
    * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
    */
-  actorInput (id: string, input: any, tick: number = now(), extendOptions: OptionsProps | any) {
+  actorInput (id: string, input: any, tick: number = now(), extendOptions: OptionsProps | any): Promise<number> | number {
     return this.context.actorInput(id, input, tick, extendOptions ? this.options.extend(extendOptions) : this.options)
   }
 
@@ -230,7 +230,7 @@ export class Handler {
    * @param {string} id - The ID of the entity to create.
    * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
    */
-  createEntity (id: string, extendOptions: OptionsProps | any) {
+  createEntity (id: string, extendOptions: OptionsProps | any): Promise<boolean> | boolean {
     return this.context.createEntity(id, extendOptions ? this.options.extend(extendOptions) : this.options)
   }
 
@@ -240,7 +240,7 @@ export class Handler {
    * @param {string} id - The ID of the entity to remove.
    * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
    */
-  removeEntity (id: string, extendOptions: OptionsProps | any) {
+  removeEntity (id: string, extendOptions: OptionsProps | any): Promise<boolean> | boolean {
     return this.context.removeEntity(id, extendOptions ? this.options.extend(extendOptions) : this.options)
   }
 
@@ -253,7 +253,7 @@ export class Handler {
    * @param {number} tick - The tick for updating.
    * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
    */
-  upsertComponent (id: string, key: string, value: any, tick: number = now(), extendOptions: OptionsProps | any) {
+  upsertComponent (id: string, key: string, value: any, tick: number = now(), extendOptions: OptionsProps | any): Promise<any> | void {
     return this.context.upsertComponent(id, key, value, tick, extendOptions ? this.options.extend(extendOptions) : this.options)
   }
 
@@ -266,7 +266,7 @@ export class Handler {
    * @param {number} tick - The tick for updating.
    * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
    */
-  changeComponent (id: string, key: string, value: any, tick: number = now(), extendOptions: OptionsProps | any) {
+  changeComponent (id: string, key: string, value: any, tick: number = now(), extendOptions: OptionsProps | any): Promise<any> | void {
     return this.context.changeComponent(id, key, value, tick, extendOptions ? this.options.extend(extendOptions) : this.options)
   }
 
@@ -277,7 +277,7 @@ export class Handler {
    * @param {string} key - The key of the component to remove.
    * @param {Options | any} extendOptions - Custom options to extend the options for the handler.
    */
-  removeComponent (id: string, key: any, extendOptions: OptionsProps | any) {
+  removeComponent (id: string, key: any, extendOptions: OptionsProps | any): Promise<boolean> | boolean {
     return this.context.removeComponent(id, key, extendOptions ? this.options.extend(extendOptions) : this.options)
   }
 

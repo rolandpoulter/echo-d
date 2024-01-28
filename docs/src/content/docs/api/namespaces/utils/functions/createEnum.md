@@ -27,7 +27,7 @@ The created enum.
 
 ## Source
 
-ecmascript/src/utils.ts:145
+ecmascript/src/utils.ts:181
 
 ***
 

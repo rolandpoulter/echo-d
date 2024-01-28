@@ -1,6 +1,4 @@
-export default function symbolsSpec(echo, { describe, it, expect, mock, spy }) {
-    const xit = (n) => { console.log('skip:', n) };
-
+export default function symbolsSpec(echo, { describe, it, expect, mock, spy, xit, xdescribe }) {
     describe('Symbols', () => {
         const { Symbols } = echo;
 

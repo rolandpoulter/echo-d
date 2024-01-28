@@ -1,8 +1,6 @@
-export default function (echo, extras, { describe, it, expect, mock, spy }) {
-    const xit = (n) => { console.log('skip:', n) };
-
+export default function (echo, extras, { describe, it, expect, mock, spy, xit, xdescribe }) {
     const gameExample = extras.game.gameExample
-
+    
     describe('game example', () => {
         // Creates an instance of EventEmitter
         it('should create an instance of EventEmitter', () => {

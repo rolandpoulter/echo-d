@@ -1,6 +1,4 @@
-export default function (echo, { describe, it, expect, mock, spy }) {
-    // const xit = (n) => { console.log('skip:', n) };
-
+export default function (echo, { describe, it, expect, mock, spy, xit, xdescribe }) {
     describe('symbol actions', () => {
         
     });

@@ -74,7 +74,7 @@ export async function updater(context, options, tick = now()) {
     const upsertComponents = async (pendingComponents = {}, state) => {
         const groups = isGroupedComponents ? {} : null;
         for (const id in (pendingComponents ?? {})) {
-            const components = isAsyncStorage ? await store.fetchComponents(id) : store.fetchComponents(id);
+            const components = isAsyncStorage ? await store.findComponents(id) : store.findComponents(id);
             if (!components) {
                 break;
             }
@@ -95,7 +95,7 @@ export async function updater(context, options, tick = now()) {
                         ticks: new Uint32Array(0),
                     };
                 }
-                let value = isAsyncStorage ? await store.fetchComponent(id, key) : store.fetchComponent(id, key);
+                let value = isAsyncStorage ? await store.findComponent(id, key) : store.findComponent(id, key);
                 if (isDiffed && context.changes && (state === 'updated' || !true)) {
                     value = context.changes.getValue(id, key, value);
                 }
@@ -270,7 +270,7 @@ export async function updater(context, options, tick = now()) {
             const createdInputs = created?.inputs ? (created.inputs[id] ?? []) : [];
             for (let i = 0; i < createdInputs.length; i += 1) {
                 const index = createdInputs[i];
-                const payload = isAsyncStorage ? await store.fetchInput(id, index) : store.fetchInput(id, index);
+                const payload = isAsyncStorage ? await store.findInput(id, index) : store.findInput(id, index);
                 const isTuple = Array.isArray(payload);
                 const input = isTuple ? payload[0] : payload;
                 const tick_ = isTuple ? payload[1] : tick;

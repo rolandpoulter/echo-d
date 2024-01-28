@@ -1,6 +1,4 @@
-export default function (echo, extras, { describe, it, expect, mock, spy }) {
-    const xit = (n) => { console.log('skip:', n) };
-
+export default function (echo, extras, { describe, it, expect, mock, spy, xit, xdescribe }) {
     const EchoD = extras.echo.Handler;
     const echoExample = extras.echo.echoExample
     // console.log('extras.echo', extras.echo)
@@ -352,7 +350,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
             await basicEchoOtherExchange(echo, other);
         });
 
-        it('should be able to broadcast updates with isDiffed', async () => {
+        it('should be able to broadcast updates with isDiffed with upserts', async () => {
             const options = {
                 isDiffed: true
             }
@@ -361,7 +359,20 @@ export default function (echo, extras, { describe, it, expect, mock, spy }) {
             const { echo: other } = echoExample(options)
             
             await basicEchoOtherExchange(echo, other, {
-                // changes: true, // TODO: fix this
+                // log: true,
+            });
+        });
+
+        xit('should be able to broadcast updates with isDiffed with changes', async () => {
+            const options = {
+                isDiffed: true
+            }
+            
+            const { echo } = echoExample(options);
+            const { echo: other } = echoExample(options)
+            
+            await basicEchoOtherExchange(echo, other, {
+                changes: true, // TODO: fix this
                 // log: true,
             });
         });

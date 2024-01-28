@@ -11,6 +11,10 @@ An object that maps keys to their validity.
 
 ## Type declaration
 
+### asset
+
+> **asset**: `boolean` = `true`
+
 ### collider
 
 > **collider**: `boolean` = `true`
@@ -31,6 +35,10 @@ An object that maps keys to their validity.
 
 > **rotation**: `boolean` = `true`
 
+### size
+
+> **size**: `boolean` = `true`
+
 ### spin
 
 > **spin**: `boolean` = `true`
@@ -41,7 +49,7 @@ An object that maps keys to their validity.
 
 ## Source
 
-ecmascript/src/constants.ts:143
+ecmascript/src/constants.ts:144
 
 ***
 

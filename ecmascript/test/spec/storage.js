@@ -1,6 +1,4 @@
-export default function storageSpec(echo, { describe, it, expect, mock, spy }) {
-    const xit = (n) => { console.log('skip:', n) };
-
+export default function storageSpec(echo, { describe, it, expect, mock, spy, xit, xdescribe }) {
     describe('Storage', () => {
         const { Storage } = echo;
 
@@ -72,9 +70,9 @@ export default function storageSpec(echo, { describe, it, expect, mock, spy }) {
                 components
             });
 
-            expect(storage.fetchComponent('actor1', 'component1')).toEqual('value1');
-            expect(storage.fetchComponent('actor2', 'component2')).toEqual('value4');
-            expect(storage.fetchComponent('actor3', 'component1')).toEqual('value5');
+            expect(storage.findComponent('actor1', 'component1')).toEqual('value1');
+            expect(storage.findComponent('actor2', 'component2')).toEqual('value4');
+            expect(storage.findComponent('actor3', 'component1')).toEqual('value5');
         });
 
         // gets the actors

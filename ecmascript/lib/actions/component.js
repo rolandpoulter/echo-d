@@ -40,7 +40,7 @@ export const ComponentActionsFactory = (Parent = Object) => class ComponentActio
                 }
             }
         }
-        context.changeComponent(id, key, value, tick, options);
+        return context.changeComponent(id, key, value, tick, options);
     }
     /**
      * Retrieves components from the current context and sends them to the responder.
@@ -67,7 +67,7 @@ export const ComponentActionsFactory = (Parent = Object) => class ComponentActio
         };
         const ctxComponents = context.getComponents(enableQuerying ? payload : null, pageSize);
         if (isAsyncStorage) {
-            ctxComponents.emitTo(sendComponents);
+            ctxComponents.emitTo(sendComponents, true);
         }
         else {
             sendComponents(ctxComponents);
@@ -144,7 +144,7 @@ export const ComponentActionsFactory = (Parent = Object) => class ComponentActio
                 }
             }
         }
-        context.upsertComponent(id, key, value, tick, options);
+        return context.upsertComponent(id, key, value, tick, options);
     }
 };
 /**

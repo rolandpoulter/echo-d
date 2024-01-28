@@ -1,6 +1,4 @@
-export default function contextSpec(echo, { describe, it, expect, mock, spy }) {
-    const xit = (n) => { console.log('skip:', n) };
-
+export default function contextSpec(echo, { describe, it, expect, mock, spy, xit, xdescribe }) {
     describe('Context', () => {
         const { Context, Options, Storage } = echo;
 
@@ -208,11 +206,11 @@ export default function contextSpec(echo, { describe, it, expect, mock, spy }) {
             const componentKey = 'position';
             const componentValue = { x: 0, y: 0 };
             const options = new Options({ skipPending: false, onUpdate: mock() });
+            
             context.createEntity(entityId, options);
-
             context.changeComponent(entityId, componentKey, componentValue, 0, options);
 
-            expect(context.store.fetchComponent(entityId, componentKey)).toEqual(componentValue);
+            expect(context.store.findComponent(entityId, componentKey)).toEqual(componentValue);
             expect(context.pending.created.components[entityId][componentKey]).toBeTruthy();
             expect(emit).toHaveBeenCalledWith('changeComponent', entityId, componentKey);
             expect(options.onUpdate).toHaveBeenCalled();
@@ -271,7 +269,7 @@ export default function contextSpec(echo, { describe, it, expect, mock, spy }) {
 
             context.upsertComponent(id, key, value, 0, new Options({}));
 
-            expect(context.store.fetchComponent(id, key)).toEqual(value);
+            expect(context.store.findComponent(id, key)).toEqual(value);
         });
 
         // can remove an existing component's value from the store
@@ -284,7 +282,7 @@ export default function contextSpec(echo, { describe, it, expect, mock, spy }) {
             context.upsertComponent(id, key, value, 0, new Options({}));
             context.removeComponent(id, key, new Options({}));
 
-            expect(context.store.fetchComponent(id, key)).toBeUndefined();
+            expect(context.store.findComponent(id, key)).toBeUndefined();
         });
 
         // can handle empty options when changing an existing component's value
@@ -296,7 +294,7 @@ export default function contextSpec(echo, { describe, it, expect, mock, spy }) {
 
             context.upsertComponent(id, key, value, 0, new Options({}));
 
-            expect(context.store.fetchComponent(id, key)).toEqual(value);
+            expect(context.store.findComponent(id, key)).toEqual(value);
         });
 
         // can handle empty options when upserting a new component's value
@@ -309,7 +307,7 @@ export default function contextSpec(echo, { describe, it, expect, mock, spy }) {
 
             context.upsertComponent(id, key, value, 0, options);
 
-            expect(context.store.fetchComponent(id, key)).toBe(value);
+            expect(context.store.findComponent(id, key)).toBe(value);
             expect(context.pending).toEqual({
                 created: {
                     actors: {},
@@ -336,11 +334,11 @@ export default function contextSpec(echo, { describe, it, expect, mock, spy }) {
             const value = 'John';
             const options = new Options({});
 
-            context.store.fetchComponent(id, key);
+            context.store.findComponent(id, key);
             context.store.storeComponent(id, key, value);
             context.removeComponent(id, key, options);
 
-            expect(context.store.fetchComponent(id, key)).toBeUndefined();
+            expect(context.store.findComponent(id, key)).toBeUndefined();
             expect(context.pending).toEqual({
                 created: { actors: {}, components: {}, entities: [], inputs: {} },
                 removed: {
@@ -405,7 +403,7 @@ export default function contextSpec(echo, { describe, it, expect, mock, spy }) {
                 }
             };
             const upsertComponent = mock((payload, context, options) => {
-                context.upsertComponent(payload[0], payload[1], payload[2], 0, options);
+                return context.upsertComponent(payload[0], payload[1], payload[2], 0, options);
             });
             context.mergeComponents(payload, new Options({
                 actions: {

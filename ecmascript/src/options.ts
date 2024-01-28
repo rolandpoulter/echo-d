@@ -31,6 +31,7 @@ import { UpdateOptions } from './updater'
  * @property {boolean} skipPending - A flag to skip pending actions.
  * @property {Object} types - An object containing the types.
  * @property {Function} setGroupedValue - A function to set the value in a group.
+ * @property {Object} storeOptions - An object containing the store options.
  * @property {Object} updateOptions - An object containing the valid keys for updates and any other options.
  * @property {any} worldOptions - An object containing the world options.
  */
@@ -63,6 +64,7 @@ export interface OptionsProps {
   skipPending?: boolean;
   types?: Object;
   setGroupedValue?: Function;
+  storeOptions?: Object;
   updateOptions?: UpdateOptions;
   worldOptions?: any;
   // [key: string]: any;
@@ -101,6 +103,7 @@ export class Options  {
   skipPending: boolean;
   types: Object;
   setGroupedValue: Function;
+  storeOptions: Object;
   updateOptions: UpdateOptions;
   worldOptions: any;
   // [key: string]: any;
@@ -149,6 +152,7 @@ export class Options  {
       skipPending = Constants.defaultOptions.skipPending,
       types = Constants.defaultOptions.types,
       setGroupedValue = Constants.defaultSetGroupedValue,
+      storeOptions = {},
       updateOptions: overridenUpdateOptions = {},
       worldOptions = null,
 
@@ -192,6 +196,7 @@ export class Options  {
     this.skipPending = skipPending
     this.types = types
     this.setGroupedValue = setGroupedValue
+    this.storeOptions = storeOptions
     this.updateOptions = updateOptions as UpdateOptions
     this.worldOptions = worldOptions
     // Object.assign(this, otherOptions)

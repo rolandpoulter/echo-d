@@ -2,8 +2,6 @@ import * as bitecs from 'bitecs'
 import { getWorld } from './echo.js';
 import {
     BitECSStorage,
-    defaultGetGroupedValue,
-    defaultSetGroupedValue,
 } from '../lib/extra/storage/bitecs.js'
 import EchoD, {
     // Context as EchoDContext,
@@ -56,8 +54,6 @@ export const createBitECSEchoD = (options = {}, Handler = EchoD, actions = EchoD
     {},
     // options,
     {
-        getGroupedValue: defaultGetGroupedValue,
-        setGroupedValue: defaultSetGroupedValue,
         ...(options || {}),
         types: {
             asset: String,
@@ -83,4 +79,4 @@ export function bitECSExample(options) {
     return { echo, world }
 }
 
-export default bitECSExample()
+export default bitECSExample

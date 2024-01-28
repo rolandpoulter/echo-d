@@ -27,7 +27,7 @@ The symbol action.
 
 ## Source
 
-ecmascript/src/handler.ts:24
+ecmascript/src/handler.ts:25
 
 ***
 

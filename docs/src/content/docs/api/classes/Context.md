@@ -35,7 +35,7 @@ The store.
 
 #### Source
 
-ecmascript/src/context.ts:73
+ecmascript/src/context.ts:75
 
 ## Properties
 
@@ -47,7 +47,7 @@ The changes.
 
 #### Source
 
-ecmascript/src/context.ts:46
+ecmascript/src/context.ts:48
 
 ***
 
@@ -59,7 +59,7 @@ The events.
 
 #### Source
 
-ecmascript/src/context.ts:43
+ecmascript/src/context.ts:45
 
 ***
 
@@ -71,7 +71,7 @@ The order.
 
 #### Source
 
-ecmascript/src/context.ts:45
+ecmascript/src/context.ts:47
 
 ***
 
@@ -83,19 +83,19 @@ The pending.
 
 #### Source
 
-ecmascript/src/context.ts:47
+ecmascript/src/context.ts:49
 
 ***
 
 ### store
 
-> **store**: [`Storage`](/api/classes/storage/)
+> **store**: [`Storage`](/api/classes/storage/) \| `AsyncStorage`
 
 The store.
 
 #### Source
 
-ecmascript/src/context.ts:44
+ecmascript/src/context.ts:46
 
 ***
 
@@ -105,7 +105,7 @@ ecmascript/src/context.ts:44
 
 #### Source
 
-ecmascript/src/context.ts:48
+ecmascript/src/context.ts:50
 
 ## Accessors
 
@@ -123,7 +123,7 @@ The actors from the store.
 
 #### Source
 
-ecmascript/src/context.ts:142
+ecmascript/src/context.ts:144
 
 ***
 
@@ -141,7 +141,7 @@ The components from the store.
 
 #### Source
 
-ecmascript/src/context.ts:326
+ecmascript/src/context.ts:328
 
 ***
 
@@ -159,7 +159,7 @@ The entities from the store.
 
 #### Source
 
-ecmascript/src/context.ts:234
+ecmascript/src/context.ts:236
 
 ***
 
@@ -177,7 +177,7 @@ The inputs from the store.
 
 #### Source
 
-ecmascript/src/context.ts:524
+ecmascript/src/context.ts:537
 
 ***
 
@@ -195,7 +195,7 @@ The enum of symbols.
 
 #### Source
 
-ecmascript/src/context.ts:579
+ecmascript/src/context.ts:602
 
 ***
 
@@ -213,7 +213,7 @@ The list of symbols.
 
 #### Source
 
-ecmascript/src/context.ts:570
+ecmascript/src/context.ts:593
 
 ## Methods
 
@@ -247,7 +247,7 @@ The options for handling the actor input.
 
 #### Source
 
-ecmascript/src/context.ts:547
+ecmascript/src/context.ts:560
 
 ***
 
@@ -275,7 +275,7 @@ The index of the added symbol or null if the symbol could not be added.
 
 #### Source
 
-ecmascript/src/context.ts:618
+ecmascript/src/context.ts:641
 
 ***
 
@@ -287,7 +287,7 @@ Changes a component with the given id, key, value, and options.
 
 #### Parameters
 
-• **id**: `string` \| `string`[]
+• **id**: `string` \| `Uint32Array` \| `string`[]
 
 The id of the component to change.
 
@@ -313,7 +313,7 @@ The options for changing the component.
 
 #### Source
 
-ecmascript/src/context.ts:350
+ecmascript/src/context.ts:352
 
 ***
 
@@ -339,7 +339,7 @@ The options for creating the entity.
 
 #### Source
 
-ecmascript/src/context.ts:255
+ecmascript/src/context.ts:257
 
 ***
 
@@ -371,7 +371,7 @@ The fetched symbol tuple.
 
 #### Source
 
-ecmascript/src/context.ts:660
+ecmascript/src/context.ts:683
 
 ***
 
@@ -399,7 +399,7 @@ The actors from the store.
 
 #### Source
 
-ecmascript/src/context.ts:153
+ecmascript/src/context.ts:155
 
 ***
 
@@ -427,7 +427,7 @@ The components from the store.
 
 #### Source
 
-ecmascript/src/context.ts:337
+ecmascript/src/context.ts:339
 
 ***
 
@@ -455,7 +455,7 @@ The entities from the store.
 
 #### Source
 
-ecmascript/src/context.ts:245
+ecmascript/src/context.ts:247
 
 ***
 
@@ -483,7 +483,7 @@ The inputs from the store.
 
 #### Source
 
-ecmascript/src/context.ts:535
+ecmascript/src/context.ts:548
 
 ***
 
@@ -511,7 +511,7 @@ The symbol.
 
 #### Source
 
-ecmascript/src/context.ts:599
+ecmascript/src/context.ts:622
 
 ***
 
@@ -537,7 +537,7 @@ The options for merging the actors.
 
 #### Source
 
-ecmascript/src/context.ts:213
+ecmascript/src/context.ts:215
 
 ***
 
@@ -563,7 +563,7 @@ The options for merging the components.
 
 #### Source
 
-ecmascript/src/context.ts:497
+ecmascript/src/context.ts:510
 
 ***
 
@@ -589,7 +589,7 @@ The options for merging the entities.
 
 #### Source
 
-ecmascript/src/context.ts:305
+ecmascript/src/context.ts:307
 
 ***
 
@@ -615,7 +615,7 @@ The options for merging the symbol.
 
 #### Source
 
-ecmascript/src/context.ts:695
+ecmascript/src/context.ts:718
 
 ***
 
@@ -641,7 +641,7 @@ The options for removing the actor.
 
 #### Source
 
-ecmascript/src/context.ts:188
+ecmascript/src/context.ts:190
 
 ***
 
@@ -671,7 +671,7 @@ The options for removing the component.
 
 #### Source
 
-ecmascript/src/context.ts:469
+ecmascript/src/context.ts:482
 
 ***
 
@@ -697,7 +697,7 @@ The options for removing the entity.
 
 #### Source
 
-ecmascript/src/context.ts:280
+ecmascript/src/context.ts:282
 
 ***
 
@@ -713,7 +713,7 @@ Resets the current frame state.
 
 #### Source
 
-ecmascript/src/context.ts:740
+ecmascript/src/context.ts:763
 
 ***
 
@@ -739,7 +739,7 @@ The options for resetting the symbols.
 
 #### Source
 
-ecmascript/src/context.ts:719
+ecmascript/src/context.ts:742
 
 ***
 
@@ -761,7 +761,7 @@ The symbols to set.
 
 #### Source
 
-ecmascript/src/context.ts:588
+ecmascript/src/context.ts:611
 
 ***
 
@@ -787,7 +787,7 @@ The options for spawning the actor.
 
 #### Source
 
-ecmascript/src/context.ts:163
+ecmascript/src/context.ts:165
 
 ***
 
@@ -799,7 +799,9 @@ Upserts a component with the given id, key, value, and options.
 
 #### Parameters
 
-• **id**: `string`
+• **id**: `string` \| `Uint32Array` \| `string`[]
+
+The id of the component to upsert.
 
 • **key**: `string`
 
@@ -823,7 +825,7 @@ The options for upserting the component.
 
 #### Source
 
-ecmascript/src/context.ts:413
+ecmascript/src/context.ts:421
 
 ***
 
@@ -855,7 +857,7 @@ The context.
 
 #### Source
 
-ecmascript/src/context.ts:58
+ecmascript/src/context.ts:60
 
 ***
 

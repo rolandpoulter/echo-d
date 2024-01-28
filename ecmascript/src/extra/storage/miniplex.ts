@@ -3,7 +3,7 @@ import {
     StorageOptions,
     StorageProps,
     Components,
-    Types
+    // Types
 } from '../../storage';
 
 import { paginate, now } from '../../utils';
@@ -13,26 +13,14 @@ const {
     World,
 } = await import('miniplex/dist/miniplex.cjs.js');
 
-export function defaultGetGroupedValue (value: any | any[], i: number, types: Types, key: string): any {
-    const type = types[key]
-    if (Array.isArray(type)) {
-        return value.slice(i * type[1], (i + 1) * type[1])
-    }
-    return value[i]
-}
-
-export function defaultSetGroupedValue (value: any, _types: Types, _key: string): any {
-    return value;
-}
-
 export class MiniplexStorage extends Storage {
-    declare world: any;
     declare actors: Map<string, any> & string[];
     declare entities: Map<string, any> & string[];
     declare components: Map<string, any> & { [key: string]: any };
     // declare inputs: Map<string, any> & string[];
-
+    
     declare worldOptions: any;
+    declare world: any;
 
     constructor(storage: MiniplexStorage | StorageProps, options: StorageOptions) {
         super({
@@ -47,10 +35,21 @@ export class MiniplexStorage extends Storage {
 
         const {
             worldOptions = [] as any[],
+            world = null,
         } = options;
 
         this.worldOptions = worldOptions;
-        this.world = storage?.world || new World();
+        this.world = world || new World();
+    }
+
+    derefEntity(id: string) {
+        if (this.actors.has(id)) {
+            return this.actors.get(id)
+        }
+        if (this.entities.has(id)) {
+            return this.entities.get(id)
+        }
+        return;
     }
 
     destroyActor(id: string): boolean {
@@ -58,21 +57,13 @@ export class MiniplexStorage extends Storage {
     }
 
     destroyComponent(id: string, key: string) {
-        const entity = this.actors.get(id) || this.entities.get(id);
+        const entity = this.derefEntity(id);
         if (entity) {
             const prevValue = entity[key]
             // delete entity[key]
             this.world.removeComponent(entity, key);
             // this.world.reindex(entity)
-            this.componentsIndex.remove(id, key);
-            if (this.indexes[key]) {
-                const index = this.indexes[key]
-                if (this.isActor(id)) {
-                    index.actors.remove(id, prevValue)
-                } else {
-                    index.entities.remove(id, prevValue)
-                }
-            }
+            this.removeComponentsIndex(id, key, prevValue);
         }
     }
 
@@ -90,15 +81,15 @@ export class MiniplexStorage extends Storage {
         return false
     }
 
-    fetchComponents(id: string) {
-        const entity = this.actors.get(id) || this.entities.get(id);
+    findComponents(id: string) {
+        const entity = this.derefEntity(id);
         if (entity) {
             return entity;
         }
     }
 
-    fetchComponent(id: string, key: string) {
-        const entity = this.actors.get(id) || this.entities.get(id);
+    findComponent(id: string, key: string) {
+        const entity = this.derefEntity(id);
         if (entity) {
             return entity[key];
         }
@@ -127,7 +118,7 @@ export class MiniplexStorage extends Storage {
         return pages.map((page) => {
             const components: { [key: string]: any } = {}
             for (let id of page) {
-                components[id] = this.actors.get(id) || this.entities.get(id)
+                components[id] = this.derefEntity(id)
             }
             return components
         })
@@ -174,21 +165,12 @@ export class MiniplexStorage extends Storage {
     }
 
     storeComponent(id: string, key: string, value: any) {
-        const entity = this.actors.get(id) || this.entities.get(id);
+        const entity = this.derefEntity(id);
         if (entity) {
             const prevValue = entity[key]
-            // entity[key] = value
             this.world.addComponent(entity, key, value);
             // this.world.reindex(entity)
-            this.componentsIndex.set(id, key);
-            if (this.indexes[key]) {
-                const index = this.indexes[key]
-                if (this.isActor(id)) {
-                    index.actors.store(id, value, prevValue)
-                } else {
-                    index.entities.store(id, value, prevValue)
-                }
-            }
+            this.updateComponentsIndex(id, key, prevValue, value);
         }
     }
 

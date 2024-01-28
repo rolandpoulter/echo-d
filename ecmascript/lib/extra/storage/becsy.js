@@ -1,20 +1,25 @@
-import { Storage } from '../../storage.js';
+import { AsyncStorage, } from '../../storage/async.js';
+import { ArrayTypes } from '../../types.js';
 import { paginate, now } from '../../utils.js';
 const { 
 // System,
 // Type,
 World } = await import('@lastolivegames/becsy/index.js');
-export function defaultGetGroupedValue(value, i, types, key) {
-    const type = types[key];
+/*
+export function defaultGetGroupedValue (value: any | any[], i: number, types: Types, key: string): any {
+    const type = types[key]
     if (Array.isArray(type)) {
-        return value.slice(i * type[1], (i + 1) * type[1]);
+        return value.slice(i * type[1], (i + 1) * type[1])
     }
-    return value[i];
+    return value[i]
 }
-export function defaultSetGroupedValue(value, _types, _key) {
+
+export function defaultSetGroupedValue (value: any, _types: Types, _key: string): any {
     return value;
 }
-export class BecsyStorage extends Storage {
+*/
+export class BecsyStorage extends AsyncStorage {
+    // declare eids: Map<string, any>;
     constructor(storage, options) {
         super({
             ...(storage || {}),
@@ -24,41 +29,45 @@ export class BecsyStorage extends Storage {
             // inputs: new Map(),
             inputs: null,
         }, options);
-        let { 
+        const { 
         // types,
         // indexes,
-        worldOptions } = options;
-        worldOptions = worldOptions || { defs: [] };
+        worldOptions = { defs: [] }, world = null, } = options;
+        for (let key in this.types) {
+            const type = this.types[key];
+            if (typeof type[0] === 'string') {
+                this.components.set(key, type[2]);
+            }
+            else
+                switch (type) {
+                    case Boolean:
+                    case Number:
+                    case String:
+                        this.components.set(key, new Map());
+                        break;
+                }
+        }
         if (worldOptions && !worldOptions.defs) {
             worldOptions.defs = [];
         }
         // if (!((worldOptions as WorldOptions).defs as any[]).length) {
-        //      for (let component of this.components.values()) {
-        //         if (!component) {
-        //             continue
-        //         }
-        //         if ((component as any) instanceof Map) {
-        //             continue
-        //         }
-        //         (worldOptions as WorldOptions).defs.push(component)
-        //     }
+        for (let component of this.components.values()) {
+            if (!component) {
+                continue;
+            }
+            if (component instanceof Map) {
+                continue;
+            }
+            if (worldOptions.defs.indexOf(component) === -1) {
+                worldOptions.defs.push(component);
+            }
+        }
         // }
         this.worldOptions = worldOptions;
-        this.world = storage?.world || World.create(this.worldOptions);
-        this.eids = storage?.eids || new Map();
-        // for (let key in this.types) {
-        //     const type = this.types[key];
-        //     if (typeof type[0] === 'string') {
-        //         this.components.set(key, defineComponent(type[2]));
-        //     } else switch (type) {
-        //         case Boolean:
-        //         case Number:
-        //         case String:
-        //             this.components.set(key, new Map());
-        //             break;
-        //     }
-        // }
+        this.world = world || World.create(this.worldOptions);
         /*
+        this.eids = storage?.eids || new Map();
+        
         for (let key in this.actors) {
             this.eids.set(key, addEntity(this.world));
         }
@@ -74,31 +83,42 @@ export class BecsyStorage extends Storage {
         }
         */
     }
-    destroyActor(id) {
+    async cleanup() {
+        const world = await this.world;
+        try {
+            world.__dispatcher.registry.releaseComponentTypes();
+            await world.terminate();
+        }
+        catch (err) {
+            // console.warn(err)
+        }
+    }
+    derefEntity(id) {
+        if (this.actors.has(id)) {
+            return this.actors.get(id);
+        }
+        if (this.entities.has(id)) {
+            return this.entities.get(id);
+        }
+        return;
+    }
+    async destroyActor(id) {
         return this.destroyId(this.actors, id);
     }
-    destroyComponent(id, key) {
-        const eid = this.actors.get(id) || this.entities.get(id);
+    async destroyComponent(id, key) {
+        const entity = this.derefEntity(id);
         const Component = this.components.get(key);
-        if (!eid || !Component) {
+        if (entity === null || entity === undefined || !Component) {
             return;
         }
         const updateIndexes = () => {
-            const prevValue = this.fetchComponent(id, key);
-            if (this.indexes[key]) {
-                const index = this.indexes[key];
-                if (this.isActor(id)) {
-                    index.actors.remove(id, prevValue);
-                }
-                else {
-                    index.entities.remove(id, prevValue);
-                }
-            }
+            const prevValue = this.findComponent(id, key);
+            this.removeComponentsIndex(id, key, prevValue);
         };
         if (Component instanceof Map) {
-            const entity = Component.get(eid);
+            const entity = Component.get(id);
             if (entity) {
-                Component.delete(eid);
+                Component.delete(id);
             }
             updateIndexes();
         }
@@ -107,56 +127,70 @@ export class BecsyStorage extends Storage {
             updateIndexes();
         }
     }
-    destroyEntity(id) {
+    async destroyEntity(id) {
         return this.destroyId(this.entities, id);
     }
-    destroyId(list, id) {
-        const eid = list.get(id);
-        if (eid) {
-            // removeEntity(this.world, eid);
+    async destroyId(list, id) {
+        const entity = list.get(id);
+        if (entity) {
+            entity.delete();
             list.delete(id);
             return true;
         }
         return false;
     }
-    fetchComponents(id) {
-        const eid = this.actors.get(id) || this.entities.get(id);
-        if (!eid) {
+    async findComponents(id) {
+        const entity = this.derefEntity(id);
+        if (entity === null || entity === undefined) {
             return;
         }
-        return eid;
+        return entity;
     }
-    fetchComponent(id, key) {
-        const eid = this.actors.get(id) || this.entities.get(id);
-        const Component = this.components.get(key);
-        if (!eid || !Component) {
+    findComponent(id, key) {
+        const _ = undefined;
+        return this.findComponentProcess(id, key, _, _);
+    }
+    findComponentProcess(id, key, entity, Component) {
+        entity = (entity === null || entity === undefined) ? this.derefEntity(id) : entity;
+        Component = Component || this.components.get(key);
+        if (entity === null || entity === undefined || !Component) {
             return;
         }
         if (Component instanceof Map) {
-            return Component.get(eid);
+            return Component.get(id);
         }
         else {
-            // const type = this.types[key];
-            // const schema = type[3]
-            // const Type = ArrayTypes.get(type[0])
-            // const size = type[1]
-            // const value = new Type(size)
-            // let i = 0
-            // for (let prop in schema) {
-            //     // value[i] = Component[prop][eid]
-            //     i++
-            // }
-            // return value
+            const type = this.types[key];
+            const schema = type[3];
+            const Type = ArrayTypes.get(type[0]);
+            const size = type[1];
+            const value = new Type(size);
+            const view = entity.has(Component) ? entity.read(Component) : undefined;
+            let i = 0;
+            if (view === null || view === undefined) {
+                return value;
+            }
+            for (let prop in schema) {
+                if (prop === '$val') {
+                    value.set(view);
+                    break;
+                }
+                value[i] = view[prop];
+                i++;
+            }
+            return value;
         }
     }
-    getActors(query, pageSize) {
+    getActors(query = null, pageSize) {
         if (query !== null) {
             return super.getActors(query, pageSize);
         }
         const actors = Array.from(this.actors.keys());
-        return paginate(actors, pageSize);
+        const pages = paginate(actors, pageSize);
+        return pages;
+        // return new Emitter<string[][]>(pages, true)
     }
-    getComponents(query, pageSize) {
+    getComponents(query = null, pageSize) {
         // const queryKeys = Object.keys(query);
         // const entities = this.world.with(...queryKeys);
         let ids;
@@ -164,27 +198,44 @@ export class BecsyStorage extends Storage {
             ids = query;
         }
         else {
-            const actors = Array.from(this.actors.keys());
-            const entities = Array.from(this.entities.keys());
-            ids = actors.concat(entities);
+            const actors = this.actors.keys();
+            const entities = this.entities.keys();
+            ids = [
+                ...actors,
+                ...entities
+            ];
         }
         const pages = paginate(ids, pageSize);
+        const _ = undefined;
         return pages.map((page) => {
             const components = {};
             for (let id of page) {
-                components[id] = this.actors.get(id) || this.entities.get(id);
+                const entity = this.derefEntity(id);
+                if (entity === null || entity === undefined) {
+                    continue;
+                }
+                const compList = this.componentsIndex.get(id);
+                const component = {};
+                for (let key of compList) {
+                    component[key] = this.findComponentProcess(id, key, entity, _);
+                }
+                components[id] = component;
             }
             return components;
         });
+        // return pages;
+        // return new Emitter<Components[]>(pages, true)
     }
-    getEntities(query, pageSize) {
+    getEntities(query = null, pageSize) {
         if (query !== null) {
             return super.getEntities(query, pageSize);
         }
-        const entities = Array.from(this.entities.keys());
-        return paginate(entities, pageSize);
+        const entities = this.entities.keys();
+        const pages = paginate(entities, pageSize);
+        return pages;
+        // return new Emitter<string[][]>(pages, true)
     }
-    getInputs(query, pageSize) {
+    getInputs(query = null, pageSize) {
         return super.getInputs(query, pageSize);
     }
     isActor(id) {
@@ -193,65 +244,73 @@ export class BecsyStorage extends Storage {
     isEntity(id) {
         return this.entities.has(id);
     }
-    setActors(actors) {
+    async setActors(actors) {
         return super.setActors(actors);
     }
-    setComponents(components) {
+    async setComponents(components) {
         return super.setComponents(components);
     }
-    setEntities(entities) {
+    async setEntities(entities) {
         return super.setEntities(entities);
     }
-    setInputs(inputs) {
+    async setInputs(inputs) {
         return super.setInputs(inputs);
     }
-    storeActor(id) {
-        return this.storeId(this.actors, id);
+    async storeActor(id) {
+        return await this.storeId(this.actors, id);
     }
-    storeComponent(id, key, value) {
-        const entity = this.actors.get(id) || this.entities.get(id);
-        if (entity) {
-            const prevValue = entity[key];
-            // entity[key] = value
-            const type = this.types[key];
-            const schema = type[3];
-            const component = {};
-            let i = 0;
-            for (let prop in schema) {
-                component[prop] = value[i];
-                i++;
+    async storeComponent(id, key, value) {
+        const entity = this.derefEntity(id);
+        if (entity !== null && entity !== undefined) {
+            const Component = this.components.get(key);
+            if (!Component) {
+                return;
             }
-            this.world.addComponent(entity, key, component);
-            // this.world.reindex(entity)
-            if (this.indexes[key]) {
-                const index = this.indexes[key];
-                if (this.isActor(id)) {
-                    index.actors.remove(id, prevValue);
-                    index.actors.set(id, value);
-                }
-                else {
-                    index.entities.remove(id, prevValue);
-                    index.entities.set(id, value);
-                }
+            if (!entity.has(Component)) {
+                entity.add(Component, {});
             }
+            let prevValue = [];
+            if (Component instanceof Map) {
+                prevValue = Component.get(id);
+                Component.set(id, value);
+            }
+            else {
+                // entity[key] = value
+                const type = this.types[key];
+                const schema = type[3];
+                const component = entity.write(Component);
+                let i = 0;
+                for (let prop in schema) {
+                    if (prop === '$val') {
+                        component.set(value);
+                        break;
+                    }
+                    component[prop] = value[i];
+                    i++;
+                }
+                // const world = await this.world;
+                // world.addComponent(entity, key, component);
+            }
+            await this.updateComponentsIndex(id, key, prevValue, value);
         }
     }
-    storeEntity(id) {
-        return this.storeId(this.entities, id);
+    async storeEntity(id) {
+        return await this.storeId(this.entities, id);
     }
-    storeId(list, id) {
+    async storeId(list, id) {
         let entity = list.get(id);
-        if (!entity) {
-            console.log('GOT HERE BABY', this.world);
-            entity = this.world.createEntity(
-            // entity
+        if (entity === null || entity === undefined) {
+            const world = await this.world;
+            const entity = world.__dispatcher.createEntity([] // (this.worldOptions.defaultComponents || this.worldOptions.defs)
             );
-            list.set(id, entity);
+            const reference = entity.__registry.holdEntity(entity.__id);
+            // const reference = entity.hold();
+            list.set(id, reference);
             return true;
         }
         return false;
     }
-    storeInput(id, input, tick = now()) {
+    async storeInput(id, input, tick = now()) {
         return super.storeInput(id, input, tick);
     }
 }

@@ -11,7 +11,7 @@ Split an array into pages
 
 ## Parameters
 
-• **array**: `any`[]
+• **array**: `any`[] \| `Iterable`\<`any`\>
 
 The array to be split into pages.
 
@@ -27,7 +27,7 @@ The array of pages.
 
 ## Source
 
-ecmascript/src/utils.ts:175
+ecmascript/src/utils.ts:211
 
 ***
 

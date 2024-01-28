@@ -75,7 +75,7 @@ export const ActorActionsFactory = (Parent: any = Object): any => class ActorAct
     const ctxActors = context.getActors(enableQuerying ? payload : null, pageSize)
 
     if (isAsyncStorage) {
-      (ctxActors as Emitter<string[][]>).emitTo(sendActors)
+      (ctxActors as Emitter<string[][]>).emitTo(sendActors, true)
     } else {
       sendActors(ctxActors as string[][])
     }

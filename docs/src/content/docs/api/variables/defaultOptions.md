@@ -93,7 +93,7 @@ Default options for the application.
 
 ### types.color
 
-> **types.color**: `string` = `'str'`
+> **types.color**: (`string` \| `number`)[]
 
 ### types.hidden
 
@@ -106,6 +106,10 @@ Default options for the application.
 ### types.rotation
 
 > **types.rotation**: (`string` \| `number`)[]
+
+### types.size
+
+> **types.size**: (`string` \| `number`)[]
 
 ### types.spin
 

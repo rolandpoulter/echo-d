@@ -44,7 +44,7 @@ export const ComponentActionsFactory = (Parent: any = Object): any => class Comp
       }
     }
 
-    context.changeComponent(id, key, value, tick, options)
+    return context.changeComponent(id, key, value, tick, options)
   }
 
   /**
@@ -75,7 +75,7 @@ export const ComponentActionsFactory = (Parent: any = Object): any => class Comp
     const ctxComponents = context.getComponents(enableQuerying ? payload : null, pageSize)
 
     if (isAsyncStorage) {
-      (ctxComponents as Emitter<Components[]>).emitTo(sendComponents)
+      (ctxComponents as Emitter<Components[]>).emitTo(sendComponents, true)
     } else {
       sendComponents(ctxComponents as Components[])
     }
@@ -150,7 +150,7 @@ export const ComponentActionsFactory = (Parent: any = Object): any => class Comp
       }
     }
 
-    context.upsertComponent(id, key, value, tick, options)
+    return context.upsertComponent(id, key, value, tick, options)
   }
 }
 

@@ -9,11 +9,15 @@ The Pending class represents a pending state with removed, updated, and created 
 
 ## Constructors
 
-### new Pending()
+### new Pending(isDiffed)
 
-> **new Pending**(): [`Pending`](/api/classes/pending/)
+> **new Pending**(`isDiffed`): [`Pending`](/api/classes/pending/)
 
 Constructs a new Pending object and resets its state.
+
+#### Parameters
+
+• **isDiffed**: `boolean`= `false`
 
 #### Returns
 
@@ -21,7 +25,7 @@ Constructs a new Pending object and resets its state.
 
 #### Source
 
-ecmascript/src/pending.ts:63
+ecmascript/src/pending.ts:64
 
 ## Properties
 
@@ -34,6 +38,16 @@ The created state.
 #### Source
 
 ecmascript/src/pending.ts:57
+
+***
+
+### isDiffed
+
+> **isDiffed**: `boolean`
+
+#### Source
+
+ecmascript/src/pending.ts:59
 
 ***
 
@@ -73,7 +87,7 @@ ecmascript/src/pending.ts:56
 
 ### actorInput()
 
-> **actorInput**(`id`, `newindex`, `tick`): `void`
+> **actorInput**(`id`, `newindex`): `void`
 
 Adds an actor input to the created inputs state.
 
@@ -87,17 +101,13 @@ The ID of the actor.
 
 The index of the new input.
 
-• **tick**: `number`= `0`
-
-The tick of the new input.
-
 #### Returns
 
 `void`
 
 #### Source
 
-ecmascript/src/pending.ts:88
+ecmascript/src/pending.ts:89
 
 ***
 
@@ -119,7 +129,7 @@ The symbol tuple to add.
 
 #### Source
 
-ecmascript/src/pending.ts:178
+ecmascript/src/pending.ts:189
 
 ***
 
@@ -149,7 +159,7 @@ The key of the component.
 
 #### Source
 
-ecmascript/src/pending.ts:100
+ecmascript/src/pending.ts:101
 
 ***
 
@@ -171,7 +181,7 @@ The ID of the entity to create.
 
 #### Source
 
-ecmascript/src/pending.ts:109
+ecmascript/src/pending.ts:110
 
 ***
 
@@ -193,7 +203,7 @@ The ID of the actor to remove.
 
 #### Source
 
-ecmascript/src/pending.ts:118
+ecmascript/src/pending.ts:119
 
 ***
 
@@ -219,7 +229,7 @@ The key of the component to remove.
 
 #### Source
 
-ecmascript/src/pending.ts:128
+ecmascript/src/pending.ts:129
 
 ***
 
@@ -241,7 +251,7 @@ The ID of the entity to remove.
 
 #### Source
 
-ecmascript/src/pending.ts:138
+ecmascript/src/pending.ts:139
 
 ***
 
@@ -265,7 +275,7 @@ The new array of symbols.
 
 #### Source
 
-ecmascript/src/pending.ts:187
+ecmascript/src/pending.ts:198
 
 ***
 
@@ -281,7 +291,7 @@ Resets the state of the Pending object.
 
 #### Source
 
-ecmascript/src/pending.ts:145
+ecmascript/src/pending.ts:146
 
 ***
 
@@ -303,7 +313,7 @@ The ID of the actor to spawn.
 
 #### Source
 
-ecmascript/src/pending.ts:154
+ecmascript/src/pending.ts:155
 
 ***
 
@@ -333,7 +343,7 @@ The key of the component.
 
 #### Source
 
-ecmascript/src/pending.ts:165
+ecmascript/src/pending.ts:166
 
 ***
 

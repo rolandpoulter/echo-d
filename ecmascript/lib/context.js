@@ -1,16 +1,18 @@
 import { Changes } from './changes.js';
+import { Emitter } from './emitter.js';
 import { Options } from './options.js';
 import { Ordered } from './ordered.js';
 import { Pending } from './pending.js';
 import { Symbols } from './symbols.js';
 import { Storage } from './storage.js';
+// import { StorageInterface } from './storage/interface'
 import { combineValues, now } from './utils.js';
 import { allActions } from './node.js';
 /**
  * The Context class provides methods for managing the context.
 *
 * @property {any} events - The events.
-* @property {Storage} store - The store.
+* @property {StorageInterface} store - The store.
 * @property {Ordered | null} order - The order.
 * @property {Changes | null} changes - The changes.
 * @property {Pending | null} pending - The pending.
@@ -42,7 +44,7 @@ export class Context {
         // ...otherProps
          } = context;
         options = Options.ensure(options, options?.actions || allActions);
-        const { isOrdered, isDiffed, isReadOnly, compressStringsAsInts, enableQuerying, enumDefaultSymbols, worldOptions, indexes, types, } = options;
+        const { isOrdered, isDiffed, isReadOnly, compressStringsAsInts, enableQuerying, enumDefaultSymbols, storeOptions, indexes, types, } = options;
         if (isOrdered) {
             this.order = new Ordered(order);
         }
@@ -74,10 +76,10 @@ export class Context {
             this.pending = pending || new Pending(isDiffed);
         }
         this.events = events;
-        this.store = store || new _Storage(store, {
+        this.store = store || new _Storage(undefined, {
+            ...(storeOptions || {}),
             types,
             indexes: enableQuerying ? indexes : null,
-            worldOptions
         });
         // Object.assign(this, otherProps)
     }
@@ -87,7 +89,11 @@ export class Context {
      * @returns The actors from the store.
      */
     get actors() {
-        return this.getActors(null, Infinity);
+        const actors = this.getActors(null, Infinity);
+        if (actors instanceof Emitter) {
+            return actors;
+        }
+        return actors[0];
     }
     /**
      * Gets the actors from the store with the given query.
@@ -106,9 +112,12 @@ export class Context {
      * @param {Options} options - The options for spawning the actor.
      */
     spawnActor(id, options) {
-        const { skipPending, onUpdate } = options;
-        const added = this.store.storeActor(id);
-        if (added) {
+        const { skipPending, isAsyncStorage, onUpdate } = options;
+        const addedOrPromise = this.store.storeActor(id);
+        const completeActorInput = (added) => {
+            if (!added) {
+                return;
+            }
             if (!skipPending && this.pending) {
                 this.pending.spawnActor(id);
             }
@@ -118,7 +127,13 @@ export class Context {
             if (onUpdate) {
                 onUpdate();
             }
+        };
+        if (isAsyncStorage && addedOrPromise instanceof Promise) {
+            addedOrPromise.then(completeActorInput);
+            return addedOrPromise;
         }
+        completeActorInput(addedOrPromise);
+        return addedOrPromise;
     }
     /**
      * Removes an actor with the given id and options.
@@ -127,19 +142,27 @@ export class Context {
      * @param {Options} options - The options for removing the actor.
      */
     removeActor(id, options) {
-        const { skipPending, onUpdate } = options;
-        const removed = this.store.destroyActor(id);
-        if (removed) {
-            if (!skipPending && this.pending) {
-                this.pending.removeActor(id);
+        const { skipPending, isAsyncStorage, onUpdate } = options;
+        const removedOrPromise = this.store.destroyActor(id);
+        const completeRemoveActor = (removed) => {
+            if (removed) {
+                if (!skipPending && this.pending) {
+                    this.pending.removeActor(id);
+                }
+                if (this.events) {
+                    this.events.emit('removeActor', id);
+                }
+                if (onUpdate) {
+                    onUpdate();
+                }
             }
-            if (this.events) {
-                this.events.emit('removeActor', id);
-            }
-            if (onUpdate) {
-                onUpdate();
-            }
+        };
+        if (isAsyncStorage && removedOrPromise instanceof Promise) {
+            removedOrPromise.then(completeRemoveActor);
+            return removedOrPromise;
         }
+        completeRemoveActor(removedOrPromise);
+        return removedOrPromise;
     }
     /**
      * Merges actors with the given payload and options.
@@ -148,16 +171,28 @@ export class Context {
      * @param {Options} options - The options for merging the actors.
      */
     mergeActors(payload, options) {
-        const { actions, onUpdate } = options;
+        const { actions, isAsyncStorage, onUpdate } = options;
         const nextOptions = options.extend({
             onUpdate: null
         });
+        const promises = [];
         for (const id of payload) {
-            actions.spawnActor(id, this, nextOptions);
+            const promise = actions.spawnActor(id, this, nextOptions);
+            if (isAsyncStorage && promise instanceof Promise) {
+                promises.push(promise);
+            }
         }
-        if (onUpdate) {
-            onUpdate();
+        const completeMergeActors = () => {
+            if (onUpdate) {
+                onUpdate();
+            }
+        };
+        if (isAsyncStorage && promises.length > 0) {
+            const all = promises.length ? Promise.all(promises) : Promise.resolve([]);
+            all.then(completeMergeActors);
+            return all;
         }
+        completeMergeActors();
     }
     /**
      * Gets the entities from the store.
@@ -165,7 +200,11 @@ export class Context {
      * @returns The entities from the store.
      */
     get entities() {
-        return this.getEntities(null, Infinity);
+        const entities = this.getEntities(null, Infinity);
+        if (entities instanceof Emitter) {
+            return entities;
+        }
+        return entities[0];
     }
     /**
      * Gets the entities from the store with the given query.
@@ -184,19 +223,27 @@ export class Context {
      * @param {Options} options - The options for creating the entity.
      */
     createEntity(id, options) {
-        const { skipPending, onUpdate } = options;
+        const { skipPending, isAsyncStorage, onUpdate } = options;
         const added = this.store.storeEntity(id);
-        if (added) {
-            if (!skipPending && this.pending) {
-                this.pending.createEntity(id);
+        const completeCreateEntity = (added) => {
+            if (added) {
+                if (!skipPending && this.pending) {
+                    this.pending.createEntity(id);
+                }
+                if (this.events) {
+                    this.events.emit('createEntity', id);
+                }
+                if (onUpdate) {
+                    onUpdate();
+                }
             }
-            if (this.events) {
-                this.events.emit('createEntity', id);
-            }
-            if (onUpdate) {
-                onUpdate();
-            }
+        };
+        if (isAsyncStorage && added instanceof Promise) {
+            added.then(completeCreateEntity);
+            return added;
         }
+        completeCreateEntity(added);
+        return added;
     }
     /**
      * Removes an entity with the given id and options.
@@ -205,19 +252,27 @@ export class Context {
      * @param {Options} options - The options for removing the entity.
      */
     removeEntity(id, options) {
-        const { skipPending, onUpdate } = options;
+        const { skipPending, isAsyncStorage, onUpdate } = options;
         const removed = this.store.destroyEntity(id);
-        if (removed) {
-            if (!skipPending && this.pending) {
-                this.pending.removeEntity(id);
+        const completeRemoveEntity = (removed) => {
+            if (removed) {
+                if (!skipPending && this.pending) {
+                    this.pending.removeEntity(id);
+                }
+                if (this.events) {
+                    this.events.emit('removeEntity', id);
+                }
+                if (onUpdate) {
+                    onUpdate();
+                }
             }
-            if (this.events) {
-                this.events.emit('removeEntity', id);
-            }
-            if (onUpdate) {
-                onUpdate();
-            }
+        };
+        if (isAsyncStorage && removed instanceof Promise) {
+            removed.then(completeRemoveEntity);
+            return removed;
         }
+        completeRemoveEntity(removed);
+        return removed;
     }
     /**
      * Merges entities with the given payload and options.
@@ -226,16 +281,28 @@ export class Context {
      * @param {Options} options - The options for merging the entities.
      */
     mergeEntities(payload, options) {
-        const { actions, onUpdate } = options;
+        const { actions, isAsyncStorage, onUpdate } = options;
         const nextOptions = options.extend({
             onUpdate: null
         });
+        const promises = [];
         for (const id of payload) {
-            actions.createEntity(id, this, nextOptions);
+            const promise = actions.createEntity(id, this, nextOptions);
+            if (isAsyncStorage && promise instanceof Promise) {
+                promises.push(promise);
+            }
         }
-        if (onUpdate) {
-            onUpdate();
+        const completeMergeEntities = () => {
+            if (onUpdate) {
+                onUpdate();
+            }
+        };
+        if (isAsyncStorage && promises.length > 0) {
+            const all = promises.length ? Promise.all(promises) : Promise.resolve([]);
+            all.then(completeMergeEntities);
+            return all;
         }
+        completeMergeEntities();
     }
     /**
      * Gets the components from the store.
@@ -243,7 +310,11 @@ export class Context {
      * @returns The components from the store.
      */
     get components() {
-        return this.getComponents(null, Infinity);
+        const components = this.getComponents(null, Infinity);
+        if (components instanceof Emitter) {
+            return components;
+        }
+        return components[0];
     }
     /**
      * Gets the components from the store with the given query.
@@ -265,52 +336,78 @@ export class Context {
      * @param {Options} options - The options for changing the component.
      */
     changeComponent(id, key, value, tick = 0, options) {
-        const { actions, skipPending, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
+        const { actions, skipPending, isAsyncStorage, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
+        const completeChangeComponentUpdate = () => {
+            if (onUpdate) {
+                onUpdate();
+            }
+        };
         if (Array.isArray(id) || id instanceof Uint32Array) {
             if (!isGroupedComponents) {
                 throw new Error('Cannot change grouped components without isGroupedComponents option');
             }
             const noUpdateOptions = options.extend({ onUpdate: null });
+            const promises = [];
             for (let i = 0; i < id.length; i++) {
                 const val = getGroupedValue(value, i, types, key);
-                actions.changeComponent([id[i], key, val, tick], this, noUpdateOptions);
+                const promise = actions.changeComponent([id[i], key, val, tick], this, noUpdateOptions);
+                if (isAsyncStorage && promise instanceof Promise) {
+                    promises.push(promise);
+                }
             }
-            if (onUpdate) {
-                onUpdate();
+            if (isAsyncStorage && promises.length > 0) {
+                const all = promises.length ? Promise.all(promises) : Promise.resolve([]);
+                all.then(completeChangeComponentUpdate);
+                return all;
             }
+            completeChangeComponentUpdate();
             return;
         }
-        const currentValue = this.store.fetchComponent(id, key);
-        const pendingType = typeof currentValue === 'undefined' ? 'created' : 'updated';
-        if (this.order) {
-            const isValidOrder = this.order.changeComponent(id, key, tick);
-            if (!isValidOrder && !this.changes) {
-                return;
+        const currentValueOrPromise = this.store.findComponent(id, key);
+        const completeChangeComponents = (currentValue) => {
+            const pendingType = typeof currentValue === 'undefined' ? 'created' : 'updated';
+            if (this.order) {
+                const isValidOrder = this.order.changeComponent(id, key, tick);
+                if (!isValidOrder && !this.changes) {
+                    return;
+                }
             }
+            let nextValue;
+            if (pendingType === 'created') {
+                nextValue = value;
+            }
+            else {
+                // nextValue = value
+                [/* combined */ , nextValue] = combineValues(currentValue, value);
+            }
+            let promise = null;
+            if (this.changes) {
+                promise = this.changes.changeComponent(id, key, nextValue, value, isAsyncStorage);
+            }
+            else {
+                promise = this.store.storeComponent(id, key, nextValue);
+            }
+            const completeChangeComponentStorage = () => {
+                if (!skipPending && this.pending) {
+                    this.pending.changeComponent(pendingType, id, key);
+                }
+                if (this.events) {
+                    this.events.emit('changeComponent', id, key);
+                }
+                completeChangeComponentUpdate();
+            };
+            if (isAsyncStorage && promise instanceof Promise) {
+                promise.then(completeChangeComponentStorage);
+                return promise;
+            }
+            completeChangeComponentStorage();
+        };
+        if (isAsyncStorage && currentValueOrPromise instanceof Promise) {
+            currentValueOrPromise.then(completeChangeComponents);
+            return currentValueOrPromise;
         }
-        let nextValue;
-        if (pendingType === 'created') {
-            nextValue = value;
-        }
-        else {
-            // nextValue = value
-            [/* combined */ , nextValue] = combineValues(currentValue, value);
-        }
-        if (this.changes) {
-            this.changes.changeComponent(id, key, nextValue, value);
-        }
-        else {
-            this.store.storeComponent(id, key, nextValue);
-        }
-        if (!skipPending && this.pending) {
-            this.pending.changeComponent(pendingType, id, key);
-        }
-        if (this.events) {
-            this.events.emit('changeComponent', id, key);
-        }
-        if (onUpdate) {
-            onUpdate();
-        }
+        completeChangeComponents(currentValueOrPromise);
+        return currentValueOrPromise;
     }
     /**
      * Upserts a component with the given id, key, value, and options.
@@ -322,46 +419,72 @@ export class Context {
      * @param {Options} options - The options for upserting the component.
      */
     upsertComponent(id, key, value, tick = 0, options) {
-        const { actions, skipPending, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
+        const { actions, skipPending, isAsyncStorage, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
+        const completeUpsertComponentUpdate = () => {
+            if (onUpdate) {
+                onUpdate();
+            }
+        };
         if (Array.isArray(id) || id instanceof Uint32Array) {
             if (!isGroupedComponents) {
                 throw new Error('Cannot upsert grouped components without isGroupedComponents option');
             }
             const noUpdateOptions = options.extend({ onUpdate: null });
+            const promises = [];
             for (let i = 0; i < id.length; i++) {
                 const val = getGroupedValue(value, i, types, key);
-                actions.upsertComponent([id[i], key, val, tick], this, noUpdateOptions);
-            }
-            if (onUpdate) {
-                onUpdate();
-            }
-            return;
-        }
-        const currentValue = this.store.fetchComponent(id, key);
-        const pendingType = typeof currentValue === 'undefined' ? 'created' : 'updated';
-        if (currentValue !== value) {
-            if (this.order) {
-                const isValidOrder = this.order.upsertComponent(id, key, tick);
-                if (!isValidOrder && !this.changes) {
-                    return;
+                const promise = actions.upsertComponent([id[i], key, val, tick], this, noUpdateOptions);
+                if (isAsyncStorage && promise instanceof Promise) {
+                    promises.push(promise);
                 }
             }
-            if (this.changes) {
-                this.changes.upsertComponent(id, key, value, null);
+            if (isAsyncStorage && promises.length > 0) {
+                const all = promises.length ? Promise.all(promises) : Promise.resolve([]);
+                all.then(completeUpsertComponentUpdate);
+                return all;
             }
-            else {
-                this.store.storeComponent(id, key, value);
-            }
-            if (!skipPending && this.pending) {
-                this.pending.upsertComponent(pendingType, id, key);
-            }
-            if (this.events) {
-                this.events.emit('upsertComponent', id, key);
-            }
-            if (onUpdate) {
-                onUpdate();
-            }
+            completeUpsertComponentUpdate();
+            return;
         }
+        const currentValueOrPromise = this.store.findComponent(id, key);
+        const completeUpsertComponent = (currentValue) => {
+            if (currentValue !== value) {
+                if (this.order) {
+                    const isValidOrder = this.order.upsertComponent(id, key, tick);
+                    if (!isValidOrder && !this.changes) {
+                        return;
+                    }
+                }
+                let promise = null;
+                if (this.changes) {
+                    promise = this.changes.upsertComponent(id, key, value, currentValue, isAsyncStorage);
+                }
+                else {
+                    promise = this.store.storeComponent(id, key, value);
+                }
+                const completeUpsertComponentStorage = () => {
+                    if (!skipPending && this.pending) {
+                        const pendingType = typeof currentValue === 'undefined' ? 'created' : 'updated';
+                        this.pending.upsertComponent(pendingType, id, key);
+                    }
+                    if (this.events) {
+                        this.events.emit('upsertComponent', id, key);
+                    }
+                    completeUpsertComponentUpdate();
+                };
+                if (isAsyncStorage && promise instanceof Promise) {
+                    promise.then(completeUpsertComponentStorage);
+                    return promise;
+                }
+                completeUpsertComponentStorage();
+            }
+        };
+        if (isAsyncStorage && currentValueOrPromise instanceof Promise) {
+            currentValueOrPromise.then(completeUpsertComponent);
+            return currentValueOrPromise;
+        }
+        completeUpsertComponent(currentValueOrPromise);
+        return currentValueOrPromise;
     }
     /**
      * Removes a component with the given id, key, and options.
@@ -371,20 +494,32 @@ export class Context {
      * @param {Options} options - The options for removing the component.
      */
     removeComponent(id, key, options) {
-        const { skipPending, onUpdate } = options;
-        const currentValue = this.store.fetchComponent(id, key);
-        if (currentValue !== undefined || currentValue !== null) {
-            this.store.destroyComponent(id, key);
-            if (!skipPending && this.pending) {
-                this.pending.removeComponent(id, key);
+        const { skipPending, isAsyncStorage, onUpdate } = options;
+        const currentValueOrPromise = this.store.findComponent(id, key);
+        const completeRemoveComponent = (currentValue) => {
+            if (currentValue !== undefined || currentValue !== null) {
+                this.store.destroyComponent(id, key);
+                if (!skipPending && this.pending) {
+                    this.pending.removeComponent(id, key);
+                }
+                if (this.events) {
+                    this.events.emit('removeComponent', id, key);
+                }
+                if (onUpdate) {
+                    onUpdate();
+                }
+                return true;
             }
-            if (this.events) {
-                this.events.emit('removeComponent', id, key);
-            }
-            if (onUpdate) {
-                onUpdate();
-            }
+            return false;
+        };
+        if (isAsyncStorage && currentValueOrPromise instanceof Promise) {
+            return new Promise((resolve, reject) => {
+                currentValueOrPromise.then((currentValue) => {
+                    resolve(completeRemoveComponent(currentValue));
+                }, reject);
+            });
         }
+        return completeRemoveComponent(currentValueOrPromise);
     }
     /**
      * Merges components with the given payload and options.
@@ -393,21 +528,33 @@ export class Context {
      * @param {Options} options - The options for merging the components.
      */
     mergeComponents(payload, options) {
-        const { actions, onUpdate, isComponentRelay } = options;
+        const { actions, isAsyncStorage, isComponentRelay, onUpdate } = options;
         const nextOptions = options.extend({
             skipPending: !isComponentRelay,
             onUpdate: null
         });
+        const promises = [];
         for (const id in (payload ?? {})) {
             for (const key in payload[id]) {
                 const value = payload[id][key];
                 const nextPayload = [id, key, value];
-                actions.upsertComponent(nextPayload, this, nextOptions);
+                const promise = actions.upsertComponent(nextPayload, this, nextOptions);
+                if ( /* isAsyncStorage && */promise instanceof Promise) {
+                    promises.push(promise);
+                }
             }
         }
-        if (onUpdate) {
-            onUpdate();
+        const completeMergeComponents = () => {
+            if (onUpdate) {
+                onUpdate();
+            }
+        };
+        if (isAsyncStorage && promises.length > 0) {
+            const all = promises.length ? Promise.all(promises) : Promise.resolve([]);
+            all.then(completeMergeComponents);
+            return all;
         }
+        completeMergeComponents();
     }
     /**
      * Gets the inputs from the store.
@@ -415,7 +562,11 @@ export class Context {
      * @returns The inputs from the store.
      */
     get inputs() {
-        return this.getInputs(null, Infinity);
+        const inputs = this.getInputs(null, Infinity);
+        if (inputs instanceof Emitter) {
+            return inputs;
+        }
+        return inputs[0];
     }
     /**
      * Gets the inputs from the store with the given query.
@@ -436,18 +587,26 @@ export class Context {
      * @param {Options} options - The options for handling the actor input.
      */
     actorInput(id, input, tick = 0, options) {
-        const { skipPending, enableRollback, onUpdate } = options;
+        const { skipPending, isAsyncStorage, enableRollback, onUpdate } = options;
         tick = enableRollback ? tick || now() : 0;
-        const newindex = this.store.storeInput(id, input, tick);
-        if (!skipPending && this.pending) {
-            this.pending.actorInput(id, newindex);
+        const indexOrPromise = this.store.storeInput(id, input, tick);
+        const completeActorInput = (index) => {
+            if (!skipPending && this.pending) {
+                this.pending.actorInput(id, index);
+            }
+            if (this.events) {
+                this.events.emit('actorInput', id, input, index, tick);
+            }
+            if (onUpdate) {
+                onUpdate();
+            }
+        };
+        if (isAsyncStorage && indexOrPromise instanceof Promise) {
+            indexOrPromise.then(completeActorInput);
+            return indexOrPromise;
         }
-        if (this.events) {
-            this.events.emit('actorInput', id, input, newindex, tick);
-        }
-        if (onUpdate) {
-            onUpdate();
-        }
+        completeActorInput(indexOrPromise);
+        return indexOrPromise;
     }
     /**
      * Gets the list of symbols.

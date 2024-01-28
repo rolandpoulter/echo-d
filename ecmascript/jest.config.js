@@ -27,10 +27,18 @@ const config = {
   collectCoverage: !true,
 
   // An array of glob patterns indicating a set of files for which coverage information should be collected
-  // collectCoverageFrom: undefined,
+  collectCoverageFrom: [
+    // "**/*.*"
+    'lib/**/*.{js,mjs,cjs,jsx}',
+    'examples/**/*.{js,mjs,cjs,jsx}',
+    // join(__dirname, 'src', '**', '*.{ts,tsx}'),
+    // join(__dirname, 'lib', '**', '*.{js,mjs,cjs,jsx}'),
+    // join(__dirname, 'examples', '**', '*.{js,mjs,cjs,jsx}'),
+  ],
 
   // The directory where Jest should output its coverage files
-  coverageDirectory: "coverage",
+  // coverageDirectory: "coverage",
+  coverageDirectory: join(__dirname, 'test', 'coverage'),
 
   // An array of regexp pattern strings used to skip coverage collection
   // coveragePathIgnorePatterns: [
@@ -128,14 +136,20 @@ const config = {
   // restoreMocks: false,
 
   // The root directory that Jest should scan for tests and modules within
-  rootDir: join(__dirname, 'test', 'env', 'node'),
+  // rootDir: join(__dirname, 'test', 'env', 'node'),
 
   // A list of paths to directories that Jest should use to search for files in
-  // roots: [
-  //   // "<rootDir>",
-  //   path.join(__dirname, 'test', 'env', 'node'),
-  //   path.join(__dirname, 'test', 'env', 'web')
-  // ],
+  roots: [
+    "<rootDir>",
+    // "src",
+    "lib",
+    "examples",
+    // join(__dirname, 'lib'),
+    // join(__dirname, 'examples'),
+    
+    // path.join(__dirname, 'test', 'env', 'node'),
+    // path.join(__dirname, 'test', 'env', 'web')
+  ],
 
   // Allows you to use a custom runner instead of Jest's default test runner
   // runner: "jest-runner",
@@ -162,10 +176,11 @@ const config = {
   // testLocationInResults: false,
 
   // The glob patterns Jest uses to detect test files
-  // testMatch: [
-  //   "**/__tests__/**/*.?(m|c)js?(x)",
-  //   "**/?(*.)(spec|test).?(m|c)js?(x)"
-  // ],
+  testMatch: [
+    '**/test/env/node/**/*test.{js,mjs,cjs,jsx}',
+    // "**/__tests__/**/*.?(m|c)js?(x)",
+    // "**/?(*.)(spec|test).?(m|c)js?(x)"
+  ],
 
   // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
   // testPathIgnorePatterns: [

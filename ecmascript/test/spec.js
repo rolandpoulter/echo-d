@@ -4,13 +4,6 @@ import coreActionsSpec from './spec/actions/core.js';
 import entityActionsSpec from './spec/actions/entity.js';
 import symbolActionsSpec from './spec/actions/symbol.js';
 
-import extraBecsyStorageSpec from './spec/extra/storage/becsy.js';
-import extraBitECSStorageSpec from './spec/extra/storage/bitecs.js';
-import extraMiniplexStorageSpec from './spec/extra/storage/miniplex.js';
-
-import extraRunLoopSpec from './spec/extra/runloop.js';
-import extraSystemSpec from './spec/extra/system.js';
-
 import indexSpec from './spec/indexes/index.js';
 import componentsIndexSpec from './spec/indexes/components.js';
 import sortedIndexSpec from './spec/indexes/sorted.js';
@@ -36,13 +29,6 @@ export default function spec(echo, specOptions) {
     coreActionsSpec(echo, specOptions)
     entityActionsSpec(echo, specOptions)
     symbolActionsSpec(echo, specOptions)
-
-    extraBecsyStorageSpec(echo, specOptions)
-    extraBitECSStorageSpec(echo, specOptions)
-    extraMiniplexStorageSpec(echo, specOptions)
-
-    extraRunLoopSpec(echo, specOptions)
-    extraSystemSpec(echo, specOptions)
 
     indexSpec(echo, specOptions)
     componentsIndexSpec(echo, specOptions)

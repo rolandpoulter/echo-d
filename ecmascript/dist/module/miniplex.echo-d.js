@@ -1487,25 +1487,13 @@ if (false) {} else {
 __webpack_require__.a(__webpack_module__, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   MiniplexStorage: () => (/* binding */ MiniplexStorage),
-/* harmony export */   defaultGetGroupedValue: () => (/* binding */ defaultGetGroupedValue),
-/* harmony export */   defaultSetGroupedValue: () => (/* binding */ defaultSetGroupedValue)
+/* harmony export */   MiniplexStorage: () => (/* binding */ MiniplexStorage)
 /* harmony export */ });
 /* harmony import */ var _storage_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../storage.js */ "./lib/storage.js");
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../utils.js */ "./lib/utils.js");
 
 
 const { World, } = await Promise.resolve(/*! import() */).then(__webpack_require__.t.bind(__webpack_require__, /*! miniplex/dist/miniplex.cjs.js */ "./node_modules/.deno/miniplex@2.0.0/node_modules/miniplex/dist/miniplex.cjs.js", 19));
-function defaultGetGroupedValue(value, i, types, key) {
-    const type = types[key];
-    if (Array.isArray(type)) {
-        return value.slice(i * type[1], (i + 1) * type[1]);
-    }
-    return value[i];
-}
-function defaultSetGroupedValue(value, _types, _key) {
-    return value;
-}
 class MiniplexStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
     constructor(storage, options) {
         super({
@@ -1517,30 +1505,30 @@ class MiniplexStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
             // inputs: new Map(),
             inputs: null,
         }, options);
-        const { worldOptions = [], } = options;
+        const { worldOptions = [], world = null, } = options;
         this.worldOptions = worldOptions;
-        this.world = storage?.world || new World();
+        this.world = world || new World();
+    }
+    derefEntity(id) {
+        if (this.actors.has(id)) {
+            return this.actors.get(id);
+        }
+        if (this.entities.has(id)) {
+            return this.entities.get(id);
+        }
+        return;
     }
     destroyActor(id) {
         return this.destroyId(this.actors, id);
     }
     destroyComponent(id, key) {
-        const entity = this.actors.get(id) || this.entities.get(id);
+        const entity = this.derefEntity(id);
         if (entity) {
             const prevValue = entity[key];
             // delete entity[key]
             this.world.removeComponent(entity, key);
             // this.world.reindex(entity)
-            this.componentsIndex.remove(id, key);
-            if (this.indexes[key]) {
-                const index = this.indexes[key];
-                if (this.isActor(id)) {
-                    index.actors.remove(id, prevValue);
-                }
-                else {
-                    index.entities.remove(id, prevValue);
-                }
-            }
+            this.removeComponentsIndex(id, key, prevValue);
         }
     }
     destroyEntity(id) {
@@ -1555,14 +1543,14 @@ class MiniplexStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
         }
         return false;
     }
-    fetchComponents(id) {
-        const entity = this.actors.get(id) || this.entities.get(id);
+    findComponents(id) {
+        const entity = this.derefEntity(id);
         if (entity) {
             return entity;
         }
     }
-    fetchComponent(id, key) {
-        const entity = this.actors.get(id) || this.entities.get(id);
+    findComponent(id, key) {
+        const entity = this.derefEntity(id);
         if (entity) {
             return entity[key];
         }
@@ -1590,7 +1578,7 @@ class MiniplexStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
         return pages.map((page) => {
             const components = {};
             for (let id of page) {
-                components[id] = this.actors.get(id) || this.entities.get(id);
+                components[id] = this.derefEntity(id);
             }
             return components;
         });
@@ -1627,22 +1615,12 @@ class MiniplexStorage extends _storage_js__WEBPACK_IMPORTED_MODULE_0__.Storage {
         return this.storeId(this.actors, id);
     }
     storeComponent(id, key, value) {
-        const entity = this.actors.get(id) || this.entities.get(id);
+        const entity = this.derefEntity(id);
         if (entity) {
             const prevValue = entity[key];
-            // entity[key] = value
             this.world.addComponent(entity, key, value);
             // this.world.reindex(entity)
-            this.componentsIndex.set(id, key);
-            if (this.indexes[key]) {
-                const index = this.indexes[key];
-                if (this.isActor(id)) {
-                    index.actors.store(id, value, prevValue);
-                }
-                else {
-                    index.entities.store(id, value, prevValue);
-                }
-            }
+            this.updateComponentsIndex(id, key, prevValue, value);
         }
     }
     storeEntity(id) {
@@ -1679,8 +1657,6 @@ __webpack_require__.C(__webpack_chunk_0__);
 var __webpack_exports__ = __webpack_exec__("./lib/extra/storage/miniplex.js");
 __webpack_exports__ = await __webpack_exports__;
 var __webpack_exports__MiniplexStorage = __webpack_exports__.MiniplexStorage;
-var __webpack_exports__defaultGetGroupedValue = __webpack_exports__.defaultGetGroupedValue;
-var __webpack_exports__defaultSetGroupedValue = __webpack_exports__.defaultSetGroupedValue;
-export { __webpack_exports__MiniplexStorage as MiniplexStorage, __webpack_exports__defaultGetGroupedValue as defaultGetGroupedValue, __webpack_exports__defaultSetGroupedValue as defaultSetGroupedValue };
+export { __webpack_exports__MiniplexStorage as MiniplexStorage };
 
 //# sourceMappingURL=miniplex.echo-d.js.map

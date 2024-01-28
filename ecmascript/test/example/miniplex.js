@@ -1,9 +1,7 @@
-export default function (echo, extras, { describe, it, expect, mock, spy }) {
-    // const xit = (n) => { console.log('skip:', n) };
-
+export default function (echo, extras, { describe, it, expect, mock, spy, xit, xdescribe }) {
     const EchoD = extras.miniplex.Handler;
     const echoExample = extras.miniplex.miniplexExample
-
+    
     describe('miniplex example', () => {
         // The function creates an instance of EchoD.
         it('should create an instance of EchoD', () => {

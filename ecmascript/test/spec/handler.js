@@ -1,6 +1,4 @@
-export default function handlerSpec(echo, { describe, it, expect, mock, spy }) {
-    const xit = (n) => { console.log('skip:', n) };
-
+export default function handlerSpec(echo, { describe, it, expect, mock, spy, xit, xdescribe }) {
     describe('Handler', () => {
         const { Handler, Context, Options, Storage } = echo;
 

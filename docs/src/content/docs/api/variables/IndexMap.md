@@ -11,7 +11,7 @@ The Indexes interface represents a mapping from keys to any array.
 
 ## Source
 
-ecmascript/src/storage.ts:57
+ecmascript/src/storage.ts:31
 
 ***
 

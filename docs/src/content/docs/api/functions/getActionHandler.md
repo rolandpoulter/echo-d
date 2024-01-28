@@ -48,7 +48,7 @@ The options.
 
 ## Source
 
-ecmascript/src/handler.ts:38
+ecmascript/src/handler.ts:39
 
 ***
 

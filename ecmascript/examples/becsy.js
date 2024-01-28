@@ -6,8 +6,8 @@ import {
 import { getWorld } from './echo.js';
 import {
     BecsyStorage,
-    defaultGetGroupedValue,
-    defaultSetGroupedValue,
+    // defaultGetGroupedValue,
+    // defaultSetGroupedValue,
 } from '../lib/extra/storage/becsy.js'
 import EchoD, {
     // Context as EchoDContext,
@@ -67,30 +67,62 @@ export class Spin {
     };
 }
 
-export const createBecsyEchoD = (options = {}, Handler = EchoD, actions = EchoDNode.actions) => new Handler(
-    // context,
-    {},
-    // options,
-    {
-        getGroupedValue: defaultGetGroupedValue,
-        setGroupedValue: defaultSetGroupedValue,
-        ...(options || {}),
-        types: {
-            asset: String,
-            collider: String,
-            hidden: Boolean,
-            color: ['ui8', 4, Color, Color.schema],
-            position: ['f32', 3, Position, Position.schema],
-            rotation: ['f32', 3, Rotation, Rotation.schema],
-            velocity: ['f32', 3, Velocity, Velocity.schema],
-            spin: ['f32', 3, Spin, Spin.schema],
-            ...(options && options.types || {}),
-        },
-    },
-    actions,
-    BecsyStorage
-)
+export const getWorldOptions = (options) => ({
+    ...(options?.worldOptions || {}),
+    // defaultComponents: [
+    //     Position
+    // ],
+    defs: [
+        ...(options?.worldOptions?.defs || []),
+        // Color,
+        // Position,
+        // Velocity,
+        // Rotation,
+        // Spin,
+    ]
+})
 
+export const createBecsyEchoD = (options = {}, Handler = EchoD, actions = EchoDNode.actions) => {
+    const worldOptions = getWorldOptions(options)
+    const world = null;
+    // const world = World.create(worldOptions);
+    // world.then((world) => {
+    //     world.build((sys) => {
+    //         const entity = sys.createEntity(
+    //             Position, { x: 0, y: 0, z: 0 }
+    //         ).hold()
+    //     })
+    // })
+    return new Handler(
+        // context,
+        {},
+        // options,
+        {
+            // getGroupedValue: defaultGetGroupedValue,
+            // setGroupedValue: defaultSetGroupedValue,
+            ...(options || {}),
+            isAsyncStorage: true,
+            types: {
+                asset: String,
+                collider: String,
+                hidden: Boolean,
+                color: ['ui8', 4, Color, Color.schema],
+                position: ['f32', 3, Position, Position.schema],
+                rotation: ['f32', 3, Rotation, Rotation.schema],
+                velocity: ['f32', 3, Velocity, Velocity.schema],
+                spin: ['f32', 3, Spin, Spin.schema],
+                ...(options && options.types || {}),
+            },
+            storeOptions: {
+                worldOptions,
+                world,
+            }
+        },
+        actions,
+        BecsyStorage
+    )
+}
+    
 export const Handler = EchoD
 
 export function becsyExample(options) {
@@ -99,4 +131,4 @@ export function becsyExample(options) {
     return { echo, world }
 }
 
-export default becsyExample()
+export default becsyExample

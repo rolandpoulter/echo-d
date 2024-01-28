@@ -62,7 +62,7 @@ export const ActorActionsFactory = (Parent = Object) => class ActorActions exten
         };
         const ctxActors = context.getActors(enableQuerying ? payload : null, pageSize);
         if (isAsyncStorage) {
-            ctxActors.emitTo(sendActors);
+            ctxActors.emitTo(sendActors, true);
         }
         else {
             sendActors(ctxActors);

@@ -25,10 +25,11 @@ export class Changes {
      * @param {string} key - The key of the property to be changed.
      * @param {any} newValue - The new value of the property.
      * @param {any} prevValue - The previous value of the property.
+     * @param {boolean} isAsyncStorage - Whether the storage is asynchronous.
      * @returns {Promise<any[]>} The new value.
      */
-    changeComponent(id, key, newValue, prevValue) {
-        return this.upsertComponent(id, key, newValue, prevValue);
+    changeComponent(id, key, newValue, prevValue, isAsyncStorage = false) {
+        return this.upsertComponent(id, key, newValue, prevValue, isAsyncStorage);
     }
     /**
      * Retrieves the changes of a value.
@@ -62,72 +63,94 @@ export class Changes {
      * @param {string} key - The key of the property to be updated or inserted.
      * @param {any} newValue - The new value of the property.
      * @param {any} _prevValue - The previous value of the property.
+     * @param {boolean} isAsyncStorage - Whether the storage is asynchronous.
      * @returns {Promise<any[]>} The new value.
      */
-    upsertComponent(id, key, newValue, _prevValue) {
+    upsertComponent(id, key, newValue, _prevValue, isAsyncStorage = false) {
         this.diffs[id] = this.diffs[id] || {};
-        const currentScope = this.context.store.fetchComponents(id);
-        if (currentScope === undefined || currentScope === null) {
-            this.diffs[id][key] = newValue;
-            this.context.store.storeComponent(id, key, newValue);
-            return newValue;
-        }
-        let diffObject = this.diffs[id];
-        const recursiveDiff = (key, diff, scope, currVal) => {
-            let nextVal = currVal;
-            if (!scope) {
-                return [diff, nextVal];
-            }
-            const prevType = typeOf(scope[key]);
-            const nextType = typeOf(nextVal);
-            if (prevType !== nextType) {
-                diff[key] = nextVal;
-                diff = diff[key];
-                return [diff, nextVal];
-            }
-            switch (nextType) {
-                case 'bigint':
-                case 'number': {
-                    const v1 = scope[key];
-                    const v2 = nextVal;
-                    const d = v2 - v1;
-                    // scope[key] = v2
-                    diff[key] = d;
-                    break;
+        const currentScopeOrPromise = this.context.store.findComponents(id);
+        const promises = [];
+        const completeUpsertComponent = (currentScope) => {
+            if (currentScope === undefined || currentScope === null) {
+                this.diffs[id][key] = newValue;
+                const promise = this.context.store.storeComponent(id, key, newValue);
+                if (isAsyncStorage && promise instanceof Promise) {
+                    promises.push(promise);
                 }
-                case 'array':
-                    diff = diff[key];
-                    scope = scope[key];
-                    for (let i = 0; i < nextVal.length; i += 1) {
-                        // if (nextVal[i] === undefined || nextVal[i] === null) {
-                        //   nextVal[i] = []
-                        // }
-                        recursiveDiff(i.toString(), diff, scope, nextVal[i]);
-                    }
-                    break;
-                case 'object':
-                    diff = diff[key];
-                    scope = scope[key];
-                    for (const k in nextVal) {
-                        // if (nextVal[k] === undefined || nextVal[k] === null) {
-                        //   nextVal[k] = {}
-                        // }
-                        recursiveDiff(k, diff, scope, nextVal[k]);
-                    }
-                    break;
-                case 'string':
-                // TODO: append with deletes?
-                case 'boolean':
-                default:
-                    diff[key] = nextVal;
+                return newValue;
             }
-            diff = diff[key];
-            nextVal = nextVal[key];
-            return [diff, currVal];
+            let diffObject = this.diffs[id];
+            const recursiveDiff = (key, diff, scope, currVal) => {
+                let nextVal = currVal;
+                if (!scope) {
+                    return [diff, nextVal];
+                }
+                const prevType = typeOf(scope[key]);
+                const nextType = typeOf(nextVal);
+                if (prevType !== nextType) {
+                    diff[key] = nextVal;
+                    diff = diff[key];
+                    return [diff, nextVal];
+                }
+                switch (nextType) {
+                    case 'bigint':
+                    case 'number': {
+                        const v1 = scope[key];
+                        const v2 = nextVal;
+                        const d = v2 - v1;
+                        // scope[key] = v2
+                        diff[key] = d;
+                        break;
+                    }
+                    case 'array':
+                        diff = diff[key];
+                        scope = scope[key];
+                        for (let i = 0; i < nextVal.length; i += 1) {
+                            // if (nextVal[i] === undefined || nextVal[i] === null) {
+                            //   nextVal[i] = []
+                            // }
+                            recursiveDiff(i.toString(), diff, scope, nextVal[i]);
+                        }
+                        break;
+                    case 'object':
+                        diff = diff[key];
+                        scope = scope[key];
+                        for (const k in nextVal) {
+                            // if (nextVal[k] === undefined || nextVal[k] === null) {
+                            //   nextVal[k] = {}
+                            // }
+                            recursiveDiff(k, diff, scope, nextVal[k]);
+                        }
+                        break;
+                    case 'string':
+                    // TODO: append with deletes?
+                    case 'boolean':
+                    default:
+                        diff[key] = nextVal;
+                }
+                diff = diff[key];
+                nextVal = nextVal[key];
+                return [diff, currVal];
+            };
+            [diffObject, newValue] = recursiveDiff(key, diffObject, currentScope, newValue);
+            const promise = this.context.store.storeComponent(id, key, newValue);
+            if (isAsyncStorage && promise instanceof Promise) {
+                promises.push(promise);
+            }
+            return newValue;
         };
-        [diffObject, newValue] = recursiveDiff(key, diffObject, currentScope, newValue);
-        this.context.store.storeComponent(id, key, newValue);
-        return newValue;
+        if (isAsyncStorage && currentScopeOrPromise instanceof Promise) {
+            return new Promise((resolve, reject) => {
+                currentScopeOrPromise.then((currentScope) => {
+                    completeUpsertComponent(currentScope);
+                    if (promises.length === 0) {
+                        return Promise.all(promises).then(() => resolve(newValue), reject);
+                    }
+                    return resolve(newValue);
+                });
+            });
+        }
+        return completeUpsertComponent(currentScopeOrPromise);
     }
 }
 export default Changes;

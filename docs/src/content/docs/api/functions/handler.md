@@ -29,7 +29,7 @@ The options for the handler.
 
 ## Source
 
-ecmascript/src/handler.ts:84
+ecmascript/src/handler.ts:86
 
 ***
 

@@ -1,16 +1,8 @@
-import { Storage } from '../../storage.js';
+import { Storage,
+// Types
+ } from '../../storage.js';
 import { paginate, now } from '../../utils.js';
 const { World, } = await import('miniplex/dist/miniplex.cjs.js');
-export function defaultGetGroupedValue(value, i, types, key) {
-    const type = types[key];
-    if (Array.isArray(type)) {
-        return value.slice(i * type[1], (i + 1) * type[1]);
-    }
-    return value[i];
-}
-export function defaultSetGroupedValue(value, _types, _key) {
-    return value;
-}
 export class MiniplexStorage extends Storage {
     constructor(storage, options) {
         super({
@@ -22,30 +14,30 @@ export class MiniplexStorage extends Storage {
             // inputs: new Map(),
             inputs: null,
         }, options);
-        const { worldOptions = [], } = options;
+        const { worldOptions = [], world = null, } = options;
         this.worldOptions = worldOptions;
-        this.world = storage?.world || new World();
+        this.world = world || new World();
+    }
+    derefEntity(id) {
+        if (this.actors.has(id)) {
+            return this.actors.get(id);
+        }
+        if (this.entities.has(id)) {
+            return this.entities.get(id);
+        }
+        return;
     }
     destroyActor(id) {
         return this.destroyId(this.actors, id);
     }
     destroyComponent(id, key) {
-        const entity = this.actors.get(id) || this.entities.get(id);
+        const entity = this.derefEntity(id);
         if (entity) {
             const prevValue = entity[key];
             // delete entity[key]
             this.world.removeComponent(entity, key);
             // this.world.reindex(entity)
-            this.componentsIndex.remove(id, key);
-            if (this.indexes[key]) {
-                const index = this.indexes[key];
-                if (this.isActor(id)) {
-                    index.actors.remove(id, prevValue);
-                }
-                else {
-                    index.entities.remove(id, prevValue);
-                }
-            }
+            this.removeComponentsIndex(id, key, prevValue);
         }
     }
     destroyEntity(id) {
@@ -60,14 +52,14 @@ export class MiniplexStorage extends Storage {
         }
         return false;
     }
-    fetchComponents(id) {
-        const entity = this.actors.get(id) || this.entities.get(id);
+    findComponents(id) {
+        const entity = this.derefEntity(id);
         if (entity) {
             return entity;
         }
     }
-    fetchComponent(id, key) {
-        const entity = this.actors.get(id) || this.entities.get(id);
+    findComponent(id, key) {
+        const entity = this.derefEntity(id);
         if (entity) {
             return entity[key];
         }
@@ -95,7 +87,7 @@ export class MiniplexStorage extends Storage {
         return pages.map((page) => {
             const components = {};
             for (let id of page) {
-                components[id] = this.actors.get(id) || this.entities.get(id);
+                components[id] = this.derefEntity(id);
             }
             return components;
         });
@@ -132,22 +124,12 @@ export class MiniplexStorage extends Storage {
         return this.storeId(this.actors, id);
     }
     storeComponent(id, key, value) {
-        const entity = this.actors.get(id) || this.entities.get(id);
+        const entity = this.derefEntity(id);
         if (entity) {
             const prevValue = entity[key];
-            // entity[key] = value
             this.world.addComponent(entity, key, value);
             // this.world.reindex(entity)
-            this.componentsIndex.set(id, key);
-            if (this.indexes[key]) {
-                const index = this.indexes[key];
-                if (this.isActor(id)) {
-                    index.actors.store(id, value, prevValue);
-                }
-                else {
-                    index.entities.store(id, value, prevValue);
-                }
-            }
+            this.updateComponentsIndex(id, key, prevValue, value);
         }
     }
     storeEntity(id) {

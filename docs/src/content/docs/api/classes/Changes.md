@@ -37,7 +37,7 @@ ecmascript/src/changes.ts:29
 
 ### changeComponent()
 
-> **changeComponent**(`id`, `key`, `newValue`): `void`
+> **changeComponent**(`id`, `key`, `newValue`, `prevValue`): `Promise`\<`any`[]\>
 
 Changes a component in the current context.
 
@@ -55,19 +55,25 @@ The key of the property to be changed.
 
 The new value of the property.
 
+• **prevValue**: `any`
+
+The previous value of the property.
+
 #### Returns
 
-`void`
+`Promise`\<`any`[]\>
+
+The new value.
 
 #### Source
 
-ecmascript/src/changes.ts:41
+ecmascript/src/changes.ts:43
 
 ***
 
 ### getValue()
 
-> **getValue**(`id`, `key`): `Record`\<`string`, `any`\>
+> **getValue**(`id`, `key`, `storedValue`): `Record`\<`string`, `any`\>
 
 Retrieves the changes of a value.
 
@@ -81,6 +87,10 @@ The ID of the component.
 
 The key of the property.
 
+• **storedValue**: `any`
+
+The stored value.
+
 #### Returns
 
 `Record`\<`string`, `any`\>
@@ -89,7 +99,7 @@ The diffs.
 
 #### Source
 
-ecmascript/src/changes.ts:52
+ecmascript/src/changes.ts:55
 
 ***
 
@@ -113,13 +123,13 @@ The instance of the Changes class.
 
 #### Source
 
-ecmascript/src/changes.ts:62
+ecmascript/src/changes.ts:71
 
 ***
 
 ### upsertComponent()
 
-> **upsertComponent**(`id`, `key`, `newValue`): `void`
+> **upsertComponent**(`id`, `key`, `newValue`, `_prevValue`): `Promise`\<`any`[]\>
 
 Updates an existing component or inserts a new one if it doesn't exist in the current context.
 
@@ -137,15 +147,19 @@ The key of the property to be updated or inserted.
 
 The new value of the property.
 
+• **\_prevValue**: `any`
+
+The previous value of the property.
+
 #### Returns
 
-`void`
+`Promise`\<`any`[]\>
 
 The new value.
 
 #### Source
 
-ecmascript/src/changes.ts:75
+ecmascript/src/changes.ts:85
 
 ***
 

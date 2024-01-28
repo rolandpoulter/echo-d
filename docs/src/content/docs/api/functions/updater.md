@@ -5,7 +5,7 @@ prev: true
 title: "updater"
 ---
 
-> **updater**(`context`, `options`, `tick`): `Promise`\<`void`\>
+> **updater**(`context`, `options`, `tick`): `Promise`\<`any`[]\>
 
 The updater function updates the context based on the provided options.
 
@@ -25,11 +25,13 @@ The current tick.
 
 ## Returns
 
-`Promise`\<`void`\>
+`Promise`\<`any`[]\>
+
+A promise that resolves to an array of arrays, where each sub-array represents a batch of updates. This is only relevant if the `batched` option is enabled.
 
 ## Source
 
-ecmascript/src/updater.ts:43
+ecmascript/src/updater.ts:45
 
 ***
 

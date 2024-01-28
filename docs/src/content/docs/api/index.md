@@ -40,6 +40,7 @@ title: "echo-d"
 - [Message](/api/interfaces/message/)
 - [OptionsProps](/api/interfaces/optionsprops/)
 - [RemovedState](/api/interfaces/removedstate/)
+- [StorageInterface](/api/interfaces/storageinterface/)
 - [StorageOptions](/api/interfaces/storageoptions/)
 - [StorageProps](/api/interfaces/storageprops/)
 - [Types](/api/interfaces/types/)
@@ -65,6 +66,7 @@ title: "echo-d"
 
 ## Functions
 
+- [createStorageProps](/api/functions/createstorageprops/)
 - [defaultGetActorId](/api/functions/defaultgetactorid/)
 - [defaultGetGroupedValue](/api/functions/defaultgetgroupedvalue/)
 - [defaultSetGroupedValue](/api/functions/defaultsetgroupedvalue/)

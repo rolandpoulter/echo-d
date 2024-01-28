@@ -29,7 +29,15 @@ describe('echo', () => {
         expect(echo).toBeDefined()
     })
     
-    const specOptions = { describe, it, expect, mock: fn, spy }
+    const specOptions = {
+        describe,
+        it,
+        expect,
+        mock: fn,
+        spy,
+        xdescribe: describe.skip,
+        xit: it.skip,
+    }
     
     spec(echo, specOptions)
     example(echo, specOptions)

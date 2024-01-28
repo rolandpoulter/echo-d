@@ -30,6 +30,7 @@ export class Options {
     skipPending;
     types;
     setGroupedValue;
+    storeOptions;
     updateOptions;
     worldOptions;
     // [key: string]: any;
@@ -50,7 +51,7 @@ export class Options {
      * @param {any} actionsThis - The context for the actions.
      */
     constructor(options = {}, actionsThis = null) {
-        const { actions = actionsThis || defaultActions, batchActionPayloadSizes = Constants.batchActionPayloadSizes, compressStringsAsInts = Constants.defaultOptions.compressStringsAsInts, defaultSymbols = Constants.DefaultSymbols, enableRollback = Constants.defaultOptions.enableRollback, enableQuerying = Constants.defaultOptions.enableQuerying, enumDefaultSymbols = Constants.enumDefaultSymbols, getActorId = Constants.defaultGetActorId, getGroupedValue = Constants.defaultGetGroupedValue, indexes = Constants.defaultOptions.indexes, isAuthority = Constants.defaultOptions.isAuthority, isAsyncStorage = Constants.defaultOptions.isAsyncStorage, isComponentRelay = Constants.defaultOptions.isComponentRelay, isDiffed = Constants.defaultOptions.isDiffed, isGroupedComponents = Constants.defaultOptions.isGroupedComponents, isOrdered = Constants.defaultOptions.isOrdered, isReadOnly = Constants.defaultOptions.isReadOnly, isSymbolLeader = Constants.defaultOptions.isSymbolLeader, isSymbolRelay = Constants.defaultOptions.isSymbolRelay, onUpdate = null, pageSize = Constants.defaultOptions.pageSize, responder = Constants.voidResponder, skipPending = Constants.defaultOptions.skipPending, types = Constants.defaultOptions.types, setGroupedValue = Constants.defaultSetGroupedValue, updateOptions: overridenUpdateOptions = {}, worldOptions = null,
+        const { actions = actionsThis || defaultActions, batchActionPayloadSizes = Constants.batchActionPayloadSizes, compressStringsAsInts = Constants.defaultOptions.compressStringsAsInts, defaultSymbols = Constants.DefaultSymbols, enableRollback = Constants.defaultOptions.enableRollback, enableQuerying = Constants.defaultOptions.enableQuerying, enumDefaultSymbols = Constants.enumDefaultSymbols, getActorId = Constants.defaultGetActorId, getGroupedValue = Constants.defaultGetGroupedValue, indexes = Constants.defaultOptions.indexes, isAuthority = Constants.defaultOptions.isAuthority, isAsyncStorage = Constants.defaultOptions.isAsyncStorage, isComponentRelay = Constants.defaultOptions.isComponentRelay, isDiffed = Constants.defaultOptions.isDiffed, isGroupedComponents = Constants.defaultOptions.isGroupedComponents, isOrdered = Constants.defaultOptions.isOrdered, isReadOnly = Constants.defaultOptions.isReadOnly, isSymbolLeader = Constants.defaultOptions.isSymbolLeader, isSymbolRelay = Constants.defaultOptions.isSymbolRelay, onUpdate = null, pageSize = Constants.defaultOptions.pageSize, responder = Constants.voidResponder, skipPending = Constants.defaultOptions.skipPending, types = Constants.defaultOptions.types, setGroupedValue = Constants.defaultSetGroupedValue, storeOptions = {}, updateOptions: overridenUpdateOptions = {}, worldOptions = null,
         // ...otherOptions
          } = options;
         const updateOptions = {
@@ -88,6 +89,7 @@ export class Options {
         this.skipPending = skipPending;
         this.types = types;
         this.setGroupedValue = setGroupedValue;
+        this.storeOptions = storeOptions;
         this.updateOptions = updateOptions;
         this.worldOptions = worldOptions;
         // Object.assign(this, otherOptions)

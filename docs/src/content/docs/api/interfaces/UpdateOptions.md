@@ -16,7 +16,7 @@ It includes information about the type of update, whether the update is batched,
 
 #### Source
 
-ecmascript/src/updater.ts:24
+ecmascript/src/updater.ts:25
 
 ***
 
@@ -26,7 +26,7 @@ ecmascript/src/updater.ts:24
 
 #### Source
 
-ecmascript/src/updater.ts:23
+ecmascript/src/updater.ts:24
 
 ***
 
@@ -58,7 +58,7 @@ ecmascript/src/updater.ts:23
 
 #### Source
 
-ecmascript/src/updater.ts:25
+ecmascript/src/updater.ts:26
 
 ***
 
@@ -68,7 +68,7 @@ ecmascript/src/updater.ts:25
 
 #### Source
 
-ecmascript/src/updater.ts:32
+ecmascript/src/updater.ts:33
 
 ***
 
@@ -78,7 +78,7 @@ ecmascript/src/updater.ts:32
 
 #### Source
 
-ecmascript/src/updater.ts:33
+ecmascript/src/updater.ts:34
 
 ***
 

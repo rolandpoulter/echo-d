@@ -25,4 +25,4 @@ export function echoExample(options) {
 
 export const Handler = EchoD
 
-export default echoExample()
+export default echoExample

@@ -53,7 +53,7 @@ export const EntityActionsFactory = (Parent: any = Object): any => class EntityA
     const ctxEntities = context.getEntities(enableQuerying ? payload : null, pageSize)
 
     if (isAsyncStorage) {
-      (ctxEntities as Emitter<string[][]>).emitTo(sendEntities)
+      (ctxEntities as Emitter<string[][]>).emitTo(sendEntities, true)
     } else {
       sendEntities(ctxEntities as string[][])
     }

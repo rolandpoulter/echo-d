@@ -139,7 +139,7 @@ const store = context.store
     const groups = isGroupedComponents ? {} as { [key: string]: any } : null
     
     for (const id in (pendingComponents ?? {})) {
-      const components = isAsyncStorage ? await store.fetchComponents(id) : store.fetchComponents(id)
+      const components = isAsyncStorage ? await store.findComponents(id) : store.findComponents(id)
       if (!components) {
         break
       }
@@ -165,7 +165,7 @@ const store = context.store
           }
         }
 
-        let value = isAsyncStorage ? await store.fetchComponent(id, key) : store.fetchComponent(id, key)
+        let value = isAsyncStorage ? await store.findComponent(id, key) : store.findComponent(id, key)
         if (isDiffed && context.changes && (state === 'updated' || !true)) {
           value = context.changes.getValue(id, key, value)
         }
@@ -379,7 +379,7 @@ const store = context.store
       for (let i = 0; i < createdInputs.length; i += 1) {
         const index = createdInputs[i]
 
-        const payload = isAsyncStorage ? await store.fetchInput(id, index) : store.fetchInput(id, index)
+        const payload = isAsyncStorage ? await store.findInput(id, index) : store.findInput(id, index)
         
         const isTuple = Array.isArray(payload)
         const input = isTuple ? payload[0] : payload

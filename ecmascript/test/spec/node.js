@@ -1,6 +1,4 @@
-export default function nodeSpec(echo, { describe, it, expect, mock, spy }) {
-    // const xit = (n) => { console.log('skip:', n) };
-    
+export default function nodeSpec(echo, { describe, it, expect, mock, spy, xit, xdescribe }) {
     describe('Node', () => {
         const { Node } = echo;
 

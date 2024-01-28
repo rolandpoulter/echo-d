@@ -5,6 +5,8 @@ prev: true
 title: "StorageOptions"
 ---
 
+The StorageOptions interface represents the options of a store.
+
 ## Indexable
 
  \[`key`: `string`\]: `any`
@@ -21,7 +23,7 @@ title: "StorageOptions"
 
 #### Source
 
-ecmascript/src/storage.ts:49
+ecmascript/src/storage/interface.ts:34
 
 ***
 
@@ -31,17 +33,7 @@ ecmascript/src/storage.ts:49
 
 #### Source
 
-ecmascript/src/storage.ts:48
-
-***
-
-### worldOptions?
-
-> **worldOptions**?: `Object`
-
-#### Source
-
-ecmascript/src/storage.ts:50
+ecmascript/src/storage/interface.ts:33
 
 ***
 

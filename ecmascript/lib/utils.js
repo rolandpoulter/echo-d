@@ -186,6 +186,9 @@ export function messageTuple(message) {
  * @returns {any[][]} The array of pages.
  */
 export function paginate(array, pageSize) {
+    if (pageSize === Infinity && Array.isArray(array) && array.length > 0) {
+        return [array];
+    }
     const pages = [];
     let page = [];
     let i = 0;

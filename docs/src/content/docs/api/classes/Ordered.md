@@ -27,7 +27,7 @@ The initial tick values.
 
 #### Source
 
-ecmascript/src/ordered.ts:23
+ecmascript/src/ordered.ts:25
 
 ## Methods
 
@@ -59,7 +59,7 @@ Whether the operation was successful.
 
 #### Source
 
-ecmascript/src/ordered.ts:35
+ecmascript/src/ordered.ts:37
 
 ***
 
@@ -83,7 +83,7 @@ The Ordered object.
 
 #### Source
 
-ecmascript/src/ordered.ts:45
+ecmascript/src/ordered.ts:47
 
 ***
 
@@ -115,7 +115,7 @@ Whether the operation was successful.
 
 #### Source
 
-ecmascript/src/ordered.ts:57
+ecmascript/src/ordered.ts:59
 
 ***
 

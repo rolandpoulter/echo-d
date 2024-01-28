@@ -7,17 +7,21 @@ title: "Storage"
 
 The Storage class represents a store with actors, entities, components, and inputs.
 
+## Implements
+
+- [`StorageInterface`](/api/interfaces/storageinterface/)
+
 ## Constructors
 
-### new Storage(store, options)
+### new Storage(storage, options)
 
-> **new Storage**(`store`, `options`): [`Storage`](/api/classes/storage/)
+> **new Storage**(`storage`, `options`): [`Storage`](/api/classes/storage/)
 
 Constructs a new Storage object.
 
 #### Parameters
 
-• **store**: [`StorageProps`](/api/interfaces/storageprops/) \| [`Storage`](/api/classes/storage/)= `{}`
+• **storage**: [`StorageProps`](/api/interfaces/storageprops/) \| [`Storage`](/api/classes/storage/)= `{}`
 
 The properties of the store.
 
@@ -29,7 +33,7 @@ The properties of the store.
 
 #### Source
 
-ecmascript/src/storage.ts:87
+ecmascript/src/storage.ts:120
 
 ## Properties
 
@@ -39,9 +43,13 @@ ecmascript/src/storage.ts:87
 
 The actors in the store.
 
+#### Implementation of
+
+[`StorageInterface.actors`](/api/interfaces/storageinterface/#actors)
+
 #### Source
 
-ecmascript/src/storage.ts:72
+ecmascript/src/storage.ts:101
 
 ***
 
@@ -51,9 +59,13 @@ ecmascript/src/storage.ts:72
 
 The components in the store.
 
+#### Implementation of
+
+[`StorageInterface.components`](/api/interfaces/storageinterface/#components)
+
 #### Source
 
-ecmascript/src/storage.ts:74
+ecmascript/src/storage.ts:103
 
 ***
 
@@ -61,9 +73,15 @@ ecmascript/src/storage.ts:74
 
 > **componentsIndex**: `ComponentsIndex`\<`string`, `string`\>
 
+The components index in the store.
+
+#### Implementation of
+
+[`StorageInterface.componentsIndex`](/api/interfaces/storageinterface/#componentsindex)
+
 #### Source
 
-ecmascript/src/storage.ts:79
+ecmascript/src/storage.ts:110
 
 ***
 
@@ -73,9 +91,13 @@ ecmascript/src/storage.ts:79
 
 The entities in the store.
 
+#### Implementation of
+
+[`StorageInterface.entities`](/api/interfaces/storageinterface/#entities)
+
 #### Source
 
-ecmascript/src/storage.ts:73
+ecmascript/src/storage.ts:102
 
 ***
 
@@ -83,13 +105,19 @@ ecmascript/src/storage.ts:73
 
 > **indexes**: `Object`
 
+The indexes in the store.
+
 #### Index signature
 
  \[`key`: `string`\]: `Object`
 
+#### Implementation of
+
+[`StorageInterface.indexes`](/api/interfaces/storageinterface/#indexes)
+
 #### Source
 
-ecmascript/src/storage.ts:76
+ecmascript/src/storage.ts:111
 
 ***
 
@@ -99,9 +127,13 @@ ecmascript/src/storage.ts:76
 
 The inputs in the store.
 
+#### Implementation of
+
+[`StorageInterface.inputs`](/api/interfaces/storageinterface/#inputs)
+
 #### Source
 
-ecmascript/src/storage.ts:75
+ecmascript/src/storage.ts:105
 
 ***
 
@@ -109,13 +141,19 @@ ecmascript/src/storage.ts:75
 
 > **typeCtors**: `Object`
 
+The type constructors in the store
+
 #### Index signature
 
  \[`key`: `string`\]: `Function`
 
+#### Implementation of
+
+[`StorageInterface.typeCtors`](/api/interfaces/storageinterface/#typectors)
+
 #### Source
 
-ecmascript/src/storage.ts:78
+ecmascript/src/storage.ts:108
 
 ***
 
@@ -123,13 +161,19 @@ ecmascript/src/storage.ts:78
 
 > **types**: `Object`
 
+The types in the store.
+
 #### Index signature
 
  \[`key`: `string`\]: `any`
 
+#### Implementation of
+
+[`StorageInterface.types`](/api/interfaces/storageinterface/#types)
+
 #### Source
 
-ecmascript/src/storage.ts:77
+ecmascript/src/storage.ts:107
 
 ## Methods
 
@@ -151,9 +195,13 @@ The ID of the actor to remove.
 
 True if the actor ID was removed, false otherwise.
 
+#### Implementation of
+
+[`StorageInterface.destroyActor`](/api/interfaces/storageinterface/#destroyactor)
+
 #### Source
 
-ecmascript/src/storage.ts:143
+ecmascript/src/storage.ts:130
 
 ***
 
@@ -177,9 +225,13 @@ The key of the component to remove.
 
 `void`
 
+#### Implementation of
+
+[`StorageInterface.destroyComponent`](/api/interfaces/storageinterface/#destroycomponent)
+
 #### Source
 
-ecmascript/src/storage.ts:154
+ecmascript/src/storage.ts:141
 
 ***
 
@@ -201,9 +253,13 @@ The ID of the entity to remove.
 
 True if the entity ID was removed, false otherwise.
 
+#### Implementation of
+
+[`StorageInterface.destroyEntity`](/api/interfaces/storageinterface/#destroyentity)
+
 #### Source
 
-ecmascript/src/storage.ts:174
+ecmascript/src/storage.ts:161
 
 ***
 
@@ -229,15 +285,19 @@ The ID to remove.
 
 True if the ID was removed, false otherwise.
 
+#### Implementation of
+
+[`StorageInterface.destroyId`](/api/interfaces/storageinterface/#destroyid)
+
 #### Source
 
-ecmascript/src/storage.ts:186
+ecmascript/src/storage.ts:173
 
 ***
 
-### fetchComponent()
+### findComponent()
 
-> **fetchComponent**(`id`, `key`): `any`
+> **findComponent**(`id`, `key`): `any`
 
 Fetches a component.
 
@@ -257,15 +317,19 @@ The key of the component to fetch.
 
 The fetched component.
 
+#### Implementation of
+
+[`StorageInterface.findComponent`](/api/interfaces/storageinterface/#findcomponent)
+
 #### Source
 
-ecmascript/src/storage.ts:212
+ecmascript/src/storage.ts:200
 
 ***
 
-### fetchComponents()
+### findComponents()
 
-> **fetchComponents**(`id`): [`Components`](/api/interfaces/components/)
+> **findComponents**(`id`): [`Components`](/api/interfaces/components/)
 
 Fetches a components container for an entity.
 
@@ -281,9 +345,73 @@ The ID of the entity.
 
 The fetched components container.
 
+#### Implementation of
+
+[`StorageInterface.findComponents`](/api/interfaces/storageinterface/#findcomponents)
+
 #### Source
 
-ecmascript/src/storage.ts:201
+ecmascript/src/storage.ts:188
+
+***
+
+### findInput()
+
+> **findInput**(`id`, `index`): [`InputPayload`](/api/namespaces/actor/interfaces/inputpayload/)
+
+Fetches an actors input
+
+#### Parameters
+
+• **id**: `string`
+
+The ID of the actor.
+
+• **index**: `number`
+
+The index of the input.
+
+#### Returns
+
+[`InputPayload`](/api/namespaces/actor/interfaces/inputpayload/)
+
+The fetched inputs.
+
+#### Implementation of
+
+[`StorageInterface.findInput`](/api/interfaces/storageinterface/#findinput)
+
+#### Source
+
+ecmascript/src/storage.ts:222
+
+***
+
+### findInputs()
+
+> **findInputs**(`id`): [`InputPayload`](/api/namespaces/actor/interfaces/inputpayload/)
+
+Fetches an actors inputs
+
+#### Parameters
+
+• **id**: `string`
+
+The ID of the actor.
+
+#### Returns
+
+[`InputPayload`](/api/namespaces/actor/interfaces/inputpayload/)
+
+The fetched inputs.
+
+#### Implementation of
+
+[`StorageInterface.findInputs`](/api/interfaces/storageinterface/#findinputs)
+
+#### Source
+
+ecmascript/src/storage.ts:211
 
 ***
 
@@ -309,9 +437,13 @@ The page size to use.
 
 The actors.
 
+#### Implementation of
+
+[`StorageInterface.getActors`](/api/interfaces/storageinterface/#getactors)
+
 #### Source
 
-ecmascript/src/storage.ts:224
+ecmascript/src/storage.ts:238
 
 ***
 
@@ -337,9 +469,13 @@ The page size to use.
 
 The components.
 
+#### Implementation of
+
+[`StorageInterface.getComponents`](/api/interfaces/storageinterface/#getcomponents)
+
 #### Source
 
-ecmascript/src/storage.ts:249
+ecmascript/src/storage.ts:263
 
 ***
 
@@ -365,9 +501,13 @@ The page size to use.
 
 The entities.
 
+#### Implementation of
+
+[`StorageInterface.getEntities`](/api/interfaces/storageinterface/#getentities)
+
 #### Source
 
-ecmascript/src/storage.ts:276
+ecmascript/src/storage.ts:290
 
 ***
 
@@ -389,9 +529,13 @@ Gets the inputs.
 
 The inputs.
 
+#### Implementation of
+
+[`StorageInterface.getInputs`](/api/interfaces/storageinterface/#getinputs)
+
 #### Source
 
-ecmascript/src/storage.ts:299
+ecmascript/src/storage.ts:313
 
 ***
 
@@ -413,9 +557,13 @@ The ID to check.
 
 True if the ID is an actor, false otherwise.
 
+#### Implementation of
+
+[`StorageInterface.isActor`](/api/interfaces/storageinterface/#isactor)
+
 #### Source
 
-ecmascript/src/storage.ts:325
+ecmascript/src/storage.ts:339
 
 ***
 
@@ -437,9 +585,13 @@ The ID to check.
 
 True if the ID is an entity, false otherwise.
 
+#### Implementation of
+
+[`StorageInterface.isEntity`](/api/interfaces/storageinterface/#isentity)
+
 #### Source
 
-ecmascript/src/storage.ts:336
+ecmascript/src/storage.ts:350
 
 ***
 
@@ -463,7 +615,7 @@ The entities.
 
 #### Source
 
-ecmascript/src/storage.ts:469
+ecmascript/src/storage.ts:487
 
 ***
 
@@ -485,9 +637,13 @@ The actors to set.
 
 The actors.
 
+#### Implementation of
+
+[`StorageInterface.setActors`](/api/interfaces/storageinterface/#setactors)
+
 #### Source
 
-ecmascript/src/storage.ts:347
+ecmascript/src/storage.ts:361
 
 ***
 
@@ -509,9 +665,13 @@ The components to set.
 
 The components.
 
+#### Implementation of
+
+[`StorageInterface.setComponents`](/api/interfaces/storageinterface/#setcomponents)
+
 #### Source
 
-ecmascript/src/storage.ts:358
+ecmascript/src/storage.ts:372
 
 ***
 
@@ -533,9 +693,13 @@ The entities to set.
 
 The entities.
 
+#### Implementation of
+
+[`StorageInterface.setEntities`](/api/interfaces/storageinterface/#setentities)
+
 #### Source
 
-ecmascript/src/storage.ts:369
+ecmascript/src/storage.ts:383
 
 ***
 
@@ -557,9 +721,13 @@ The inputs to set.
 
 The inputs.
 
+#### Implementation of
+
+[`StorageInterface.setInputs`](/api/interfaces/storageinterface/#setinputs)
+
 #### Source
 
-ecmascript/src/storage.ts:380
+ecmascript/src/storage.ts:394
 
 ***
 
@@ -581,9 +749,13 @@ The ID of the actor to store.
 
 True if the actor ID was stored, false otherwise.
 
+#### Implementation of
+
+[`StorageInterface.storeActor`](/api/interfaces/storageinterface/#storeactor)
+
 #### Source
 
-ecmascript/src/storage.ts:391
+ecmascript/src/storage.ts:405
 
 ***
 
@@ -611,9 +783,13 @@ The value of the component to store.
 
 `void`
 
+#### Implementation of
+
+[`StorageInterface.storeComponent`](/api/interfaces/storageinterface/#storecomponent)
+
 #### Source
 
-ecmascript/src/storage.ts:403
+ecmascript/src/storage.ts:417
 
 ***
 
@@ -635,9 +811,13 @@ The ID of the entity to store.
 
 True if the entity ID was stored, false otherwise.
 
+#### Implementation of
+
+[`StorageInterface.storeEntity`](/api/interfaces/storageinterface/#storeentity)
+
 #### Source
 
-ecmascript/src/storage.ts:423
+ecmascript/src/storage.ts:437
 
 ***
 
@@ -663,9 +843,13 @@ The ID to store.
 
 True if the ID was stored, false otherwise.
 
+#### Implementation of
+
+[`StorageInterface.storeId`](/api/interfaces/storageinterface/#storeid)
+
 #### Source
 
-ecmascript/src/storage.ts:435
+ecmascript/src/storage.ts:449
 
 ***
 
@@ -693,9 +877,13 @@ The payload of the input to store.
 
 The new index of the stored input.
 
+#### Implementation of
+
+[`StorageInterface.storeInput`](/api/interfaces/storageinterface/#storeinput)
+
 #### Source
 
-ecmascript/src/storage.ts:451
+ecmascript/src/storage.ts:465
 
 ***
 

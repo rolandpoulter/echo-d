@@ -79,7 +79,7 @@ const ActorActionsFactory = (Parent = Object) => class ActorActions extends Pare
         };
         const ctxActors = context.getActors(enableQuerying ? payload : null, pageSize);
         if (isAsyncStorage) {
-            ctxActors.emitTo(sendActors);
+            ctxActors.emitTo(sendActors, true);
         }
         else {
             sendActors(ctxActors);
@@ -235,7 +235,7 @@ const ComponentActionsFactory = (Parent = Object) => class ComponentActions exte
                 }
             }
         }
-        context.changeComponent(id, key, value, tick, options);
+        return context.changeComponent(id, key, value, tick, options);
     }
     /**
      * Retrieves components from the current context and sends them to the responder.
@@ -262,7 +262,7 @@ const ComponentActionsFactory = (Parent = Object) => class ComponentActions exte
         };
         const ctxComponents = context.getComponents(enableQuerying ? payload : null, pageSize);
         if (isAsyncStorage) {
-            ctxComponents.emitTo(sendComponents);
+            ctxComponents.emitTo(sendComponents, true);
         }
         else {
             sendComponents(ctxComponents);
@@ -339,7 +339,7 @@ const ComponentActionsFactory = (Parent = Object) => class ComponentActions exte
                 }
             }
         }
-        context.upsertComponent(id, key, value, tick, options);
+        return context.upsertComponent(id, key, value, tick, options);
     }
 };
 /**
@@ -500,7 +500,7 @@ const EntityActionsFactory = (Parent = Object) => class EntityActions extends Pa
         };
         const ctxEntities = context.getEntities(enableQuerying ? payload : null, pageSize);
         if (isAsyncStorage) {
-            ctxEntities.emitTo(sendEntities);
+            ctxEntities.emitTo(sendEntities, true);
         }
         else {
             sendEntities(ctxEntities);
@@ -788,10 +788,11 @@ class Changes {
      * @param {string} key - The key of the property to be changed.
      * @param {any} newValue - The new value of the property.
      * @param {any} prevValue - The previous value of the property.
+     * @param {boolean} isAsyncStorage - Whether the storage is asynchronous.
      * @returns {Promise<any[]>} The new value.
      */
-    changeComponent(id, key, newValue, prevValue) {
-        return this.upsertComponent(id, key, newValue, prevValue);
+    changeComponent(id, key, newValue, prevValue, isAsyncStorage = false) {
+        return this.upsertComponent(id, key, newValue, prevValue, isAsyncStorage);
     }
     /**
      * Retrieves the changes of a value.
@@ -825,72 +826,94 @@ class Changes {
      * @param {string} key - The key of the property to be updated or inserted.
      * @param {any} newValue - The new value of the property.
      * @param {any} _prevValue - The previous value of the property.
+     * @param {boolean} isAsyncStorage - Whether the storage is asynchronous.
      * @returns {Promise<any[]>} The new value.
      */
-    upsertComponent(id, key, newValue, _prevValue) {
+    upsertComponent(id, key, newValue, _prevValue, isAsyncStorage = false) {
         this.diffs[id] = this.diffs[id] || {};
-        const currentScope = this.context.store.fetchComponents(id);
-        if (currentScope === undefined || currentScope === null) {
-            this.diffs[id][key] = newValue;
-            this.context.store.storeComponent(id, key, newValue);
-            return newValue;
-        }
-        let diffObject = this.diffs[id];
-        const recursiveDiff = (key, diff, scope, currVal) => {
-            let nextVal = currVal;
-            if (!scope) {
-                return [diff, nextVal];
-            }
-            const prevType = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__.typeOf)(scope[key]);
-            const nextType = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__.typeOf)(nextVal);
-            if (prevType !== nextType) {
-                diff[key] = nextVal;
-                diff = diff[key];
-                return [diff, nextVal];
-            }
-            switch (nextType) {
-                case 'bigint':
-                case 'number': {
-                    const v1 = scope[key];
-                    const v2 = nextVal;
-                    const d = v2 - v1;
-                    // scope[key] = v2
-                    diff[key] = d;
-                    break;
+        const currentScopeOrPromise = this.context.store.findComponents(id);
+        const promises = [];
+        const completeUpsertComponent = (currentScope) => {
+            if (currentScope === undefined || currentScope === null) {
+                this.diffs[id][key] = newValue;
+                const promise = this.context.store.storeComponent(id, key, newValue);
+                if (isAsyncStorage && promise instanceof Promise) {
+                    promises.push(promise);
                 }
-                case 'array':
-                    diff = diff[key];
-                    scope = scope[key];
-                    for (let i = 0; i < nextVal.length; i += 1) {
-                        // if (nextVal[i] === undefined || nextVal[i] === null) {
-                        //   nextVal[i] = []
-                        // }
-                        recursiveDiff(i.toString(), diff, scope, nextVal[i]);
-                    }
-                    break;
-                case 'object':
-                    diff = diff[key];
-                    scope = scope[key];
-                    for (const k in nextVal) {
-                        // if (nextVal[k] === undefined || nextVal[k] === null) {
-                        //   nextVal[k] = {}
-                        // }
-                        recursiveDiff(k, diff, scope, nextVal[k]);
-                    }
-                    break;
-                case 'string':
-                // TODO: append with deletes?
-                case 'boolean':
-                default:
-                    diff[key] = nextVal;
+                return newValue;
             }
-            diff = diff[key];
-            nextVal = nextVal[key];
-            return [diff, currVal];
+            let diffObject = this.diffs[id];
+            const recursiveDiff = (key, diff, scope, currVal) => {
+                let nextVal = currVal;
+                if (!scope) {
+                    return [diff, nextVal];
+                }
+                const prevType = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__.typeOf)(scope[key]);
+                const nextType = (0,_utils_js__WEBPACK_IMPORTED_MODULE_0__.typeOf)(nextVal);
+                if (prevType !== nextType) {
+                    diff[key] = nextVal;
+                    diff = diff[key];
+                    return [diff, nextVal];
+                }
+                switch (nextType) {
+                    case 'bigint':
+                    case 'number': {
+                        const v1 = scope[key];
+                        const v2 = nextVal;
+                        const d = v2 - v1;
+                        // scope[key] = v2
+                        diff[key] = d;
+                        break;
+                    }
+                    case 'array':
+                        diff = diff[key];
+                        scope = scope[key];
+                        for (let i = 0; i < nextVal.length; i += 1) {
+                            // if (nextVal[i] === undefined || nextVal[i] === null) {
+                            //   nextVal[i] = []
+                            // }
+                            recursiveDiff(i.toString(), diff, scope, nextVal[i]);
+                        }
+                        break;
+                    case 'object':
+                        diff = diff[key];
+                        scope = scope[key];
+                        for (const k in nextVal) {
+                            // if (nextVal[k] === undefined || nextVal[k] === null) {
+                            //   nextVal[k] = {}
+                            // }
+                            recursiveDiff(k, diff, scope, nextVal[k]);
+                        }
+                        break;
+                    case 'string':
+                    // TODO: append with deletes?
+                    case 'boolean':
+                    default:
+                        diff[key] = nextVal;
+                }
+                diff = diff[key];
+                nextVal = nextVal[key];
+                return [diff, currVal];
+            };
+            [diffObject, newValue] = recursiveDiff(key, diffObject, currentScope, newValue);
+            const promise = this.context.store.storeComponent(id, key, newValue);
+            if (isAsyncStorage && promise instanceof Promise) {
+                promises.push(promise);
+            }
+            return newValue;
         };
-        [diffObject, newValue] = recursiveDiff(key, diffObject, currentScope, newValue);
-        this.context.store.storeComponent(id, key, newValue);
-        return newValue;
+        if (isAsyncStorage && currentScopeOrPromise instanceof Promise) {
+            return new Promise((resolve, reject) => {
+                currentScopeOrPromise.then((currentScope) => {
+                    completeUpsertComponent(currentScope);
+                    if (promises.length === 0) {
+                        return Promise.all(promises).then(() => resolve(newValue), reject);
+                    }
+                    return resolve(newValue);
+                });
+            });
+        }
+        return completeUpsertComponent(currentScopeOrPromise);
     }
 }
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Changes);
@@ -1189,26 +1212,29 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _changes_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./changes.js */ "./lib/changes.js");
-/* harmony import */ var _options_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./options.js */ "./lib/options.js");
-/* harmony import */ var _ordered_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./ordered.js */ "./lib/ordered.js");
-/* harmony import */ var _pending_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./pending.js */ "./lib/pending.js");
-/* harmony import */ var _symbols_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./symbols.js */ "./lib/symbols.js");
-/* harmony import */ var _storage_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./storage.js */ "./lib/storage.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./utils.js */ "./lib/utils.js");
-/* harmony import */ var _node_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./node.js */ "./lib/node.js");
+/* harmony import */ var _emitter_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./emitter.js */ "./lib/emitter.js");
+/* harmony import */ var _options_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./options.js */ "./lib/options.js");
+/* harmony import */ var _ordered_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ordered.js */ "./lib/ordered.js");
+/* harmony import */ var _pending_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./pending.js */ "./lib/pending.js");
+/* harmony import */ var _symbols_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./symbols.js */ "./lib/symbols.js");
+/* harmony import */ var _storage_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./storage.js */ "./lib/storage.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./utils.js */ "./lib/utils.js");
+/* harmony import */ var _node_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./node.js */ "./lib/node.js");
 
 
 
 
 
 
+
+// import { StorageInterface } from './storage/interface'
 
 
 /**
  * The Context class provides methods for managing the context.
 *
 * @property {any} events - The events.
-* @property {Storage} store - The store.
+* @property {StorageInterface} store - The store.
 * @property {Ordered | null} order - The order.
 * @property {Changes | null} changes - The changes.
 * @property {Pending | null} pending - The pending.
@@ -1222,7 +1248,7 @@ class Context {
      * @param {Storage} _Storage - The store.
      * @returns {Context} The context.
      */
-    static ensure(context, options, _Storage = _storage_js__WEBPACK_IMPORTED_MODULE_5__.Storage) {
+    static ensure(context, options, _Storage = _storage_js__WEBPACK_IMPORTED_MODULE_6__.Storage) {
         if (context instanceof Context) {
             return context;
         }
@@ -1235,14 +1261,14 @@ class Context {
      * @param {Options | any} options - The context options.
      * @param {Storage} _Storage - The store.
      */
-    constructor(context = {}, options, _Storage = _storage_js__WEBPACK_IMPORTED_MODULE_5__.Storage) {
+    constructor(context = {}, options, _Storage = _storage_js__WEBPACK_IMPORTED_MODULE_6__.Storage) {
         const { events = null, store = null, order = null, changes = null, symbols = null, pending = null,
         // ...otherProps
          } = context;
-        options = _options_js__WEBPACK_IMPORTED_MODULE_1__.Options.ensure(options, options?.actions || _node_js__WEBPACK_IMPORTED_MODULE_7__.allActions);
-        const { isOrdered, isDiffed, isReadOnly, compressStringsAsInts, enableQuerying, enumDefaultSymbols, worldOptions, indexes, types, } = options;
+        options = _options_js__WEBPACK_IMPORTED_MODULE_2__.Options.ensure(options, options?.actions || _node_js__WEBPACK_IMPORTED_MODULE_8__.allActions);
+        const { isOrdered, isDiffed, isReadOnly, compressStringsAsInts, enableQuerying, enumDefaultSymbols, storeOptions, indexes, types, } = options;
         if (isOrdered) {
-            this.order = new _ordered_js__WEBPACK_IMPORTED_MODULE_2__.Ordered(order);
+            this.order = new _ordered_js__WEBPACK_IMPORTED_MODULE_3__.Ordered(order);
         }
         else {
             this.order = null;
@@ -1255,10 +1281,10 @@ class Context {
         }
         if (compressStringsAsInts) {
             if (symbols) {
-                this.symbols = new _symbols_js__WEBPACK_IMPORTED_MODULE_4__.Symbols(symbols);
+                this.symbols = new _symbols_js__WEBPACK_IMPORTED_MODULE_5__.Symbols(symbols);
             }
             else {
-                this.symbols = new _symbols_js__WEBPACK_IMPORTED_MODULE_4__.Symbols();
+                this.symbols = new _symbols_js__WEBPACK_IMPORTED_MODULE_5__.Symbols();
                 this.symbols.copyEnum(enumDefaultSymbols);
             }
         }
@@ -1269,13 +1295,13 @@ class Context {
             this.pending = null;
         }
         else {
-            this.pending = pending || new _pending_js__WEBPACK_IMPORTED_MODULE_3__.Pending(isDiffed);
+            this.pending = pending || new _pending_js__WEBPACK_IMPORTED_MODULE_4__.Pending(isDiffed);
         }
         this.events = events;
-        this.store = store || new _Storage(store, {
+        this.store = store || new _Storage(undefined, {
+            ...(storeOptions || {}),
             types,
             indexes: enableQuerying ? indexes : null,
-            worldOptions
         });
         // Object.assign(this, otherProps)
     }
@@ -1285,7 +1311,11 @@ class Context {
      * @returns The actors from the store.
      */
     get actors() {
-        return this.getActors(null, Infinity);
+        const actors = this.getActors(null, Infinity);
+        if (actors instanceof _emitter_js__WEBPACK_IMPORTED_MODULE_1__.Emitter) {
+            return actors;
+        }
+        return actors[0];
     }
     /**
      * Gets the actors from the store with the given query.
@@ -1304,9 +1334,12 @@ class Context {
      * @param {Options} options - The options for spawning the actor.
      */
     spawnActor(id, options) {
-        const { skipPending, onUpdate } = options;
-        const added = this.store.storeActor(id);
-        if (added) {
+        const { skipPending, isAsyncStorage, onUpdate } = options;
+        const addedOrPromise = this.store.storeActor(id);
+        const completeActorInput = (added) => {
+            if (!added) {
+                return;
+            }
             if (!skipPending && this.pending) {
                 this.pending.spawnActor(id);
             }
@@ -1316,7 +1349,13 @@ class Context {
             if (onUpdate) {
                 onUpdate();
             }
+        };
+        if (isAsyncStorage && addedOrPromise instanceof Promise) {
+            addedOrPromise.then(completeActorInput);
+            return addedOrPromise;
         }
+        completeActorInput(addedOrPromise);
+        return addedOrPromise;
     }
     /**
      * Removes an actor with the given id and options.
@@ -1325,19 +1364,27 @@ class Context {
      * @param {Options} options - The options for removing the actor.
      */
     removeActor(id, options) {
-        const { skipPending, onUpdate } = options;
-        const removed = this.store.destroyActor(id);
-        if (removed) {
-            if (!skipPending && this.pending) {
-                this.pending.removeActor(id);
+        const { skipPending, isAsyncStorage, onUpdate } = options;
+        const removedOrPromise = this.store.destroyActor(id);
+        const completeRemoveActor = (removed) => {
+            if (removed) {
+                if (!skipPending && this.pending) {
+                    this.pending.removeActor(id);
+                }
+                if (this.events) {
+                    this.events.emit('removeActor', id);
+                }
+                if (onUpdate) {
+                    onUpdate();
+                }
             }
-            if (this.events) {
-                this.events.emit('removeActor', id);
-            }
-            if (onUpdate) {
-                onUpdate();
-            }
+        };
+        if (isAsyncStorage && removedOrPromise instanceof Promise) {
+            removedOrPromise.then(completeRemoveActor);
+            return removedOrPromise;
         }
+        completeRemoveActor(removedOrPromise);
+        return removedOrPromise;
     }
     /**
      * Merges actors with the given payload and options.
@@ -1346,16 +1393,28 @@ class Context {
      * @param {Options} options - The options for merging the actors.
      */
     mergeActors(payload, options) {
-        const { actions, onUpdate } = options;
+        const { actions, isAsyncStorage, onUpdate } = options;
         const nextOptions = options.extend({
             onUpdate: null
         });
+        const promises = [];
         for (const id of payload) {
-            actions.spawnActor(id, this, nextOptions);
+            const promise = actions.spawnActor(id, this, nextOptions);
+            if (isAsyncStorage && promise instanceof Promise) {
+                promises.push(promise);
+            }
         }
-        if (onUpdate) {
-            onUpdate();
+        const completeMergeActors = () => {
+            if (onUpdate) {
+                onUpdate();
+            }
+        };
+        if (isAsyncStorage && promises.length > 0) {
+            const all = promises.length ? Promise.all(promises) : Promise.resolve([]);
+            all.then(completeMergeActors);
+            return all;
         }
+        completeMergeActors();
     }
     /**
      * Gets the entities from the store.
@@ -1363,7 +1422,11 @@ class Context {
      * @returns The entities from the store.
      */
     get entities() {
-        return this.getEntities(null, Infinity);
+        const entities = this.getEntities(null, Infinity);
+        if (entities instanceof _emitter_js__WEBPACK_IMPORTED_MODULE_1__.Emitter) {
+            return entities;
+        }
+        return entities[0];
     }
     /**
      * Gets the entities from the store with the given query.
@@ -1382,19 +1445,27 @@ class Context {
      * @param {Options} options - The options for creating the entity.
      */
     createEntity(id, options) {
-        const { skipPending, onUpdate } = options;
+        const { skipPending, isAsyncStorage, onUpdate } = options;
         const added = this.store.storeEntity(id);
-        if (added) {
-            if (!skipPending && this.pending) {
-                this.pending.createEntity(id);
+        const completeCreateEntity = (added) => {
+            if (added) {
+                if (!skipPending && this.pending) {
+                    this.pending.createEntity(id);
+                }
+                if (this.events) {
+                    this.events.emit('createEntity', id);
+                }
+                if (onUpdate) {
+                    onUpdate();
+                }
             }
-            if (this.events) {
-                this.events.emit('createEntity', id);
-            }
-            if (onUpdate) {
-                onUpdate();
-            }
+        };
+        if (isAsyncStorage && added instanceof Promise) {
+            added.then(completeCreateEntity);
+            return added;
         }
+        completeCreateEntity(added);
+        return added;
     }
     /**
      * Removes an entity with the given id and options.
@@ -1403,19 +1474,27 @@ class Context {
      * @param {Options} options - The options for removing the entity.
      */
     removeEntity(id, options) {
-        const { skipPending, onUpdate } = options;
+        const { skipPending, isAsyncStorage, onUpdate } = options;
         const removed = this.store.destroyEntity(id);
-        if (removed) {
-            if (!skipPending && this.pending) {
-                this.pending.removeEntity(id);
+        const completeRemoveEntity = (removed) => {
+            if (removed) {
+                if (!skipPending && this.pending) {
+                    this.pending.removeEntity(id);
+                }
+                if (this.events) {
+                    this.events.emit('removeEntity', id);
+                }
+                if (onUpdate) {
+                    onUpdate();
+                }
             }
-            if (this.events) {
-                this.events.emit('removeEntity', id);
-            }
-            if (onUpdate) {
-                onUpdate();
-            }
+        };
+        if (isAsyncStorage && removed instanceof Promise) {
+            removed.then(completeRemoveEntity);
+            return removed;
         }
+        completeRemoveEntity(removed);
+        return removed;
     }
     /**
      * Merges entities with the given payload and options.
@@ -1424,16 +1503,28 @@ class Context {
      * @param {Options} options - The options for merging the entities.
      */
     mergeEntities(payload, options) {
-        const { actions, onUpdate } = options;
+        const { actions, isAsyncStorage, onUpdate } = options;
         const nextOptions = options.extend({
             onUpdate: null
         });
+        const promises = [];
         for (const id of payload) {
-            actions.createEntity(id, this, nextOptions);
+            const promise = actions.createEntity(id, this, nextOptions);
+            if (isAsyncStorage && promise instanceof Promise) {
+                promises.push(promise);
+            }
         }
-        if (onUpdate) {
-            onUpdate();
+        const completeMergeEntities = () => {
+            if (onUpdate) {
+                onUpdate();
+            }
+        };
+        if (isAsyncStorage && promises.length > 0) {
+            const all = promises.length ? Promise.all(promises) : Promise.resolve([]);
+            all.then(completeMergeEntities);
+            return all;
         }
+        completeMergeEntities();
     }
     /**
      * Gets the components from the store.
@@ -1441,7 +1532,11 @@ class Context {
      * @returns The components from the store.
      */
     get components() {
-        return this.getComponents(null, Infinity);
+        const components = this.getComponents(null, Infinity);
+        if (components instanceof _emitter_js__WEBPACK_IMPORTED_MODULE_1__.Emitter) {
+            return components;
+        }
+        return components[0];
     }
     /**
      * Gets the components from the store with the given query.
@@ -1463,52 +1558,78 @@ class Context {
      * @param {Options} options - The options for changing the component.
      */
     changeComponent(id, key, value, tick = 0, options) {
-        const { actions, skipPending, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
+        const { actions, skipPending, isAsyncStorage, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
+        const completeChangeComponentUpdate = () => {
+            if (onUpdate) {
+                onUpdate();
+            }
+        };
         if (Array.isArray(id) || id instanceof Uint32Array) {
             if (!isGroupedComponents) {
                 throw new Error('Cannot change grouped components without isGroupedComponents option');
             }
             const noUpdateOptions = options.extend({ onUpdate: null });
+            const promises = [];
             for (let i = 0; i < id.length; i++) {
                 const val = getGroupedValue(value, i, types, key);
-                actions.changeComponent([id[i], key, val, tick], this, noUpdateOptions);
+                const promise = actions.changeComponent([id[i], key, val, tick], this, noUpdateOptions);
+                if (isAsyncStorage && promise instanceof Promise) {
+                    promises.push(promise);
+                }
             }
-            if (onUpdate) {
-                onUpdate();
+            if (isAsyncStorage && promises.length > 0) {
+                const all = promises.length ? Promise.all(promises) : Promise.resolve([]);
+                all.then(completeChangeComponentUpdate);
+                return all;
             }
+            completeChangeComponentUpdate();
             return;
         }
-        const currentValue = this.store.fetchComponent(id, key);
-        const pendingType = typeof currentValue === 'undefined' ? 'created' : 'updated';
-        if (this.order) {
-            const isValidOrder = this.order.changeComponent(id, key, tick);
-            if (!isValidOrder && !this.changes) {
-                return;
+        const currentValueOrPromise = this.store.findComponent(id, key);
+        const completeChangeComponents = (currentValue) => {
+            const pendingType = typeof currentValue === 'undefined' ? 'created' : 'updated';
+            if (this.order) {
+                const isValidOrder = this.order.changeComponent(id, key, tick);
+                if (!isValidOrder && !this.changes) {
+                    return;
+                }
             }
+            let nextValue;
+            if (pendingType === 'created') {
+                nextValue = value;
+            }
+            else {
+                // nextValue = value
+                [/* combined */ , nextValue] = (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.combineValues)(currentValue, value);
+            }
+            let promise = null;
+            if (this.changes) {
+                promise = this.changes.changeComponent(id, key, nextValue, value, isAsyncStorage);
+            }
+            else {
+                promise = this.store.storeComponent(id, key, nextValue);
+            }
+            const completeChangeComponentStorage = () => {
+                if (!skipPending && this.pending) {
+                    this.pending.changeComponent(pendingType, id, key);
+                }
+                if (this.events) {
+                    this.events.emit('changeComponent', id, key);
+                }
+                completeChangeComponentUpdate();
+            };
+            if (isAsyncStorage && promise instanceof Promise) {
+                promise.then(completeChangeComponentStorage);
+                return promise;
+            }
+            completeChangeComponentStorage();
+        };
+        if (isAsyncStorage && currentValueOrPromise instanceof Promise) {
+            currentValueOrPromise.then(completeChangeComponents);
+            return currentValueOrPromise;
         }
-        let nextValue;
-        if (pendingType === 'created') {
-            nextValue = value;
-        }
-        else {
-            // nextValue = value
-            [/* combined */ , nextValue] = (0,_utils_js__WEBPACK_IMPORTED_MODULE_6__.combineValues)(currentValue, value);
-        }
-        if (this.changes) {
-            this.changes.changeComponent(id, key, nextValue, value);
-        }
-        else {
-            this.store.storeComponent(id, key, nextValue);
-        }
-        if (!skipPending && this.pending) {
-            this.pending.changeComponent(pendingType, id, key);
-        }
-        if (this.events) {
-            this.events.emit('changeComponent', id, key);
-        }
-        if (onUpdate) {
-            onUpdate();
-        }
+        completeChangeComponents(currentValueOrPromise);
+        return currentValueOrPromise;
     }
     /**
      * Upserts a component with the given id, key, value, and options.
@@ -1520,46 +1641,72 @@ class Context {
      * @param {Options} options - The options for upserting the component.
      */
     upsertComponent(id, key, value, tick = 0, options) {
-        const { actions, skipPending, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
+        const { actions, skipPending, isAsyncStorage, isGroupedComponents, getGroupedValue, types, onUpdate } = options;
+        const completeUpsertComponentUpdate = () => {
+            if (onUpdate) {
+                onUpdate();
+            }
+        };
         if (Array.isArray(id) || id instanceof Uint32Array) {
             if (!isGroupedComponents) {
                 throw new Error('Cannot upsert grouped components without isGroupedComponents option');
             }
             const noUpdateOptions = options.extend({ onUpdate: null });
+            const promises = [];
             for (let i = 0; i < id.length; i++) {
                 const val = getGroupedValue(value, i, types, key);
-                actions.upsertComponent([id[i], key, val, tick], this, noUpdateOptions);
-            }
-            if (onUpdate) {
-                onUpdate();
-            }
-            return;
-        }
-        const currentValue = this.store.fetchComponent(id, key);
-        const pendingType = typeof currentValue === 'undefined' ? 'created' : 'updated';
-        if (currentValue !== value) {
-            if (this.order) {
-                const isValidOrder = this.order.upsertComponent(id, key, tick);
-                if (!isValidOrder && !this.changes) {
-                    return;
+                const promise = actions.upsertComponent([id[i], key, val, tick], this, noUpdateOptions);
+                if (isAsyncStorage && promise instanceof Promise) {
+                    promises.push(promise);
                 }
             }
-            if (this.changes) {
-                this.changes.upsertComponent(id, key, value, null);
+            if (isAsyncStorage && promises.length > 0) {
+                const all = promises.length ? Promise.all(promises) : Promise.resolve([]);
+                all.then(completeUpsertComponentUpdate);
+                return all;
             }
-            else {
-                this.store.storeComponent(id, key, value);
-            }
-            if (!skipPending && this.pending) {
-                this.pending.upsertComponent(pendingType, id, key);
-            }
-            if (this.events) {
-                this.events.emit('upsertComponent', id, key);
-            }
-            if (onUpdate) {
-                onUpdate();
-            }
+            completeUpsertComponentUpdate();
+            return;
         }
+        const currentValueOrPromise = this.store.findComponent(id, key);
+        const completeUpsertComponent = (currentValue) => {
+            if (currentValue !== value) {
+                if (this.order) {
+                    const isValidOrder = this.order.upsertComponent(id, key, tick);
+                    if (!isValidOrder && !this.changes) {
+                        return;
+                    }
+                }
+                let promise = null;
+                if (this.changes) {
+                    promise = this.changes.upsertComponent(id, key, value, currentValue, isAsyncStorage);
+                }
+                else {
+                    promise = this.store.storeComponent(id, key, value);
+                }
+                const completeUpsertComponentStorage = () => {
+                    if (!skipPending && this.pending) {
+                        const pendingType = typeof currentValue === 'undefined' ? 'created' : 'updated';
+                        this.pending.upsertComponent(pendingType, id, key);
+                    }
+                    if (this.events) {
+                        this.events.emit('upsertComponent', id, key);
+                    }
+                    completeUpsertComponentUpdate();
+                };
+                if (isAsyncStorage && promise instanceof Promise) {
+                    promise.then(completeUpsertComponentStorage);
+                    return promise;
+                }
+                completeUpsertComponentStorage();
+            }
+        };
+        if (isAsyncStorage && currentValueOrPromise instanceof Promise) {
+            currentValueOrPromise.then(completeUpsertComponent);
+            return currentValueOrPromise;
+        }
+        completeUpsertComponent(currentValueOrPromise);
+        return currentValueOrPromise;
     }
     /**
      * Removes a component with the given id, key, and options.
@@ -1569,20 +1716,32 @@ class Context {
      * @param {Options} options - The options for removing the component.
      */
     removeComponent(id, key, options) {
-        const { skipPending, onUpdate } = options;
-        const currentValue = this.store.fetchComponent(id, key);
-        if (currentValue !== undefined || currentValue !== null) {
-            this.store.destroyComponent(id, key);
-            if (!skipPending && this.pending) {
-                this.pending.removeComponent(id, key);
+        const { skipPending, isAsyncStorage, onUpdate } = options;
+        const currentValueOrPromise = this.store.findComponent(id, key);
+        const completeRemoveComponent = (currentValue) => {
+            if (currentValue !== undefined || currentValue !== null) {
+                this.store.destroyComponent(id, key);
+                if (!skipPending && this.pending) {
+                    this.pending.removeComponent(id, key);
+                }
+                if (this.events) {
+                    this.events.emit('removeComponent', id, key);
+                }
+                if (onUpdate) {
+                    onUpdate();
+                }
+                return true;
             }
-            if (this.events) {
-                this.events.emit('removeComponent', id, key);
-            }
-            if (onUpdate) {
-                onUpdate();
-            }
+            return false;
+        };
+        if (isAsyncStorage && currentValueOrPromise instanceof Promise) {
+            return new Promise((resolve, reject) => {
+                currentValueOrPromise.then((currentValue) => {
+                    resolve(completeRemoveComponent(currentValue));
+                }, reject);
+            });
         }
+        return completeRemoveComponent(currentValueOrPromise);
     }
     /**
      * Merges components with the given payload and options.
@@ -1591,21 +1750,33 @@ class Context {
      * @param {Options} options - The options for merging the components.
      */
     mergeComponents(payload, options) {
-        const { actions, onUpdate, isComponentRelay } = options;
+        const { actions, isAsyncStorage, isComponentRelay, onUpdate } = options;
         const nextOptions = options.extend({
             skipPending: !isComponentRelay,
             onUpdate: null
         });
+        const promises = [];
         for (const id in (payload ?? {})) {
             for (const key in payload[id]) {
                 const value = payload[id][key];
                 const nextPayload = [id, key, value];
-                actions.upsertComponent(nextPayload, this, nextOptions);
+                const promise = actions.upsertComponent(nextPayload, this, nextOptions);
+                if ( /* isAsyncStorage && */promise instanceof Promise) {
+                    promises.push(promise);
+                }
             }
         }
-        if (onUpdate) {
-            onUpdate();
+        const completeMergeComponents = () => {
+            if (onUpdate) {
+                onUpdate();
+            }
+        };
+        if (isAsyncStorage && promises.length > 0) {
+            const all = promises.length ? Promise.all(promises) : Promise.resolve([]);
+            all.then(completeMergeComponents);
+            return all;
         }
+        completeMergeComponents();
     }
     /**
      * Gets the inputs from the store.
@@ -1613,7 +1784,11 @@ class Context {
      * @returns The inputs from the store.
      */
     get inputs() {
-        return this.getInputs(null, Infinity);
+        const inputs = this.getInputs(null, Infinity);
+        if (inputs instanceof _emitter_js__WEBPACK_IMPORTED_MODULE_1__.Emitter) {
+            return inputs;
+        }
+        return inputs[0];
     }
     /**
      * Gets the inputs from the store with the given query.
@@ -1634,18 +1809,26 @@ class Context {
      * @param {Options} options - The options for handling the actor input.
      */
     actorInput(id, input, tick = 0, options) {
-        const { skipPending, enableRollback, onUpdate } = options;
-        tick = enableRollback ? tick || (0,_utils_js__WEBPACK_IMPORTED_MODULE_6__.now)() : 0;
-        const newindex = this.store.storeInput(id, input, tick);
-        if (!skipPending && this.pending) {
-            this.pending.actorInput(id, newindex);
+        const { skipPending, isAsyncStorage, enableRollback, onUpdate } = options;
+        tick = enableRollback ? tick || (0,_utils_js__WEBPACK_IMPORTED_MODULE_7__.now)() : 0;
+        const indexOrPromise = this.store.storeInput(id, input, tick);
+        const completeActorInput = (index) => {
+            if (!skipPending && this.pending) {
+                this.pending.actorInput(id, index);
+            }
+            if (this.events) {
+                this.events.emit('actorInput', id, input, index, tick);
+            }
+            if (onUpdate) {
+                onUpdate();
+            }
+        };
+        if (isAsyncStorage && indexOrPromise instanceof Promise) {
+            indexOrPromise.then(completeActorInput);
+            return indexOrPromise;
         }
-        if (this.events) {
-            this.events.emit('actorInput', id, input, newindex, tick);
-        }
-        if (onUpdate) {
-            onUpdate();
-        }
+        completeActorInput(indexOrPromise);
+        return indexOrPromise;
     }
     /**
      * Gets the list of symbols.
@@ -1820,7 +2003,8 @@ class Context {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   Emitter: () => (/* binding */ Emitter)
+/* harmony export */   Emitter: () => (/* binding */ Emitter),
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /**
  * Emitter
@@ -1837,37 +2021,110 @@ __webpack_require__.r(__webpack_exports__);
  *  console.log(value)
  * })
  * emitter.emit('Hello, world!')
+ * emitter.done() // cleanup
  * // => 'Hello, world!'
  */
 class Emitter {
     handlers;
+    emissions;
+    handlersDone;
+    emissionsDone;
     /**
      * Constructs a new Emitter object.
      */
-    constructor() {
+    constructor(emissions = [], emissionsDone = false, handlers = [], handlersDone = false) {
+        this.handlers = handlers;
+        this.emissions = emissions;
+        for (const handler of this.handlers) {
+            for (const emission of this.emissions) {
+                handler(emission);
+            }
+        }
+        this.handlersDone = emissionsDone;
+        this.emissionsDone = handlersDone;
+        this.cleanup();
+    }
+    /**
+     * Cleans up the Emitter.
+     */
+    cleanup() {
+        if (this.handlersDone && this.emissionsDone) {
+            this.clear();
+        }
+    }
+    /**
+     * Clears all handlers and emissions from the Emitter.
+     */
+    clear() {
         this.handlers = [];
+        this.emissions = [];
+        this.handlersDone = false;
+        this.emissionsDone = false;
+    }
+    /**
+     * Marks the Emitter as done.
+     *
+     * @param {boolean} handlersDone - Whether or not the Emitter is done emitting values.
+     * @param {boolean} emissionsDone - Whether or not the Emitter is done emitting values.
+     */
+    done(handlersDone = true, emissionsDone = true) {
+        this.handlersDone = handlersDone;
+        this.emissionsDone = emissionsDone;
+        this.cleanup();
     }
     /**
      * Adds a handler to the Emitter and returns the handler.
      *
      * @param {Function} handler - The handler to add to the Emitter.
+     * @param {boolean} handlersDone - Whether or not the Emitter is done emitting values.
      * @returns {Function} The handler.
      */
-    emitTo(handler) {
+    emitTo(handler, handlersDone = false) {
         this.handlers.push(handler);
-        return handler;
+        for (const emission of this.emissions) {
+            handler(emission);
+        }
+        this.handlersDone = handlersDone;
+        this.cleanup();
     }
     /**
      * Emits a value to the handlers of the Emitter.
      *
      * @param {T} value - The value to emit to the handlers of the Emitter.
+     * @param {boolean} emissionsDone - Whether or not the Emitter is done emitting values.
      */
-    emit(value) {
+    emit(value, emissionsDone = false) {
+        this.emissions.push(value);
         for (const handler of this.handlers) {
             handler(value);
         }
+        this.emissionsDone = emissionsDone;
+        this.cleanup();
+    }
+    /**
+     * Removes a handler from the Emitter.
+     *
+     * @param {Function} handler - The handler to remove from the Emitter.
+     */
+    removeHandler(handler) {
+        const index = this.handlers.indexOf(handler);
+        if (index !== -1) {
+            this.handlers.splice(index, 1);
+        }
+    }
+    /**
+     * Removes an emission from the Emitter.
+     *
+     * @param {T} emission - The emission to remove from the Emitter.
+     */
+    removeEmission(emission) {
+        const index = this.emissions.indexOf(emission);
+        if (index !== -1) {
+            this.emissions.splice(index, 1);
+        }
     }
 }
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Emitter);
 
 
 /***/ }),
@@ -2928,6 +3185,7 @@ class Options {
     skipPending;
     types;
     setGroupedValue;
+    storeOptions;
     updateOptions;
     worldOptions;
     // [key: string]: any;
@@ -2948,7 +3206,7 @@ class Options {
      * @param {any} actionsThis - The context for the actions.
      */
     constructor(options = {}, actionsThis = null) {
-        const { actions = actionsThis || _node_js__WEBPACK_IMPORTED_MODULE_1__.actions, batchActionPayloadSizes = _constants_js__WEBPACK_IMPORTED_MODULE_0__.batchActionPayloadSizes, compressStringsAsInts = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.compressStringsAsInts, defaultSymbols = _constants_js__WEBPACK_IMPORTED_MODULE_0__.DefaultSymbols, enableRollback = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.enableRollback, enableQuerying = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.enableQuerying, enumDefaultSymbols = _constants_js__WEBPACK_IMPORTED_MODULE_0__.enumDefaultSymbols, getActorId = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultGetActorId, getGroupedValue = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultGetGroupedValue, indexes = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.indexes, isAuthority = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isAuthority, isAsyncStorage = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isAsyncStorage, isComponentRelay = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isComponentRelay, isDiffed = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isDiffed, isGroupedComponents = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isGroupedComponents, isOrdered = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isOrdered, isReadOnly = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isReadOnly, isSymbolLeader = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isSymbolLeader, isSymbolRelay = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isSymbolRelay, onUpdate = null, pageSize = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.pageSize, responder = _constants_js__WEBPACK_IMPORTED_MODULE_0__.voidResponder, skipPending = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.skipPending, types = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.types, setGroupedValue = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultSetGroupedValue, updateOptions: overridenUpdateOptions = {}, worldOptions = null,
+        const { actions = actionsThis || _node_js__WEBPACK_IMPORTED_MODULE_1__.actions, batchActionPayloadSizes = _constants_js__WEBPACK_IMPORTED_MODULE_0__.batchActionPayloadSizes, compressStringsAsInts = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.compressStringsAsInts, defaultSymbols = _constants_js__WEBPACK_IMPORTED_MODULE_0__.DefaultSymbols, enableRollback = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.enableRollback, enableQuerying = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.enableQuerying, enumDefaultSymbols = _constants_js__WEBPACK_IMPORTED_MODULE_0__.enumDefaultSymbols, getActorId = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultGetActorId, getGroupedValue = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultGetGroupedValue, indexes = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.indexes, isAuthority = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isAuthority, isAsyncStorage = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isAsyncStorage, isComponentRelay = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isComponentRelay, isDiffed = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isDiffed, isGroupedComponents = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isGroupedComponents, isOrdered = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isOrdered, isReadOnly = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isReadOnly, isSymbolLeader = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isSymbolLeader, isSymbolRelay = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.isSymbolRelay, onUpdate = null, pageSize = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.pageSize, responder = _constants_js__WEBPACK_IMPORTED_MODULE_0__.voidResponder, skipPending = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.skipPending, types = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions.types, setGroupedValue = _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultSetGroupedValue, storeOptions = {}, updateOptions: overridenUpdateOptions = {}, worldOptions = null,
         // ...otherOptions
          } = options;
         const updateOptions = {
@@ -2986,6 +3244,7 @@ class Options {
         this.skipPending = skipPending;
         this.types = types;
         this.setGroupedValue = setGroupedValue;
+        this.storeOptions = storeOptions;
         this.updateOptions = updateOptions;
         this.worldOptions = worldOptions;
         // Object.assign(this, otherOptions)
@@ -3143,11 +3402,11 @@ class Pending {
      * Adds an actor input to the created inputs state.
      *
      * @param {string} id - The ID of the actor.
-     * @param {number} newindex - The index of the new input.
+     * @param {number} index - The index of the new input.
      */
-    actorInput(id, newindex) {
+    actorInput(id, index) {
         this.created.inputs[id] = this.created.inputs[id] || [];
-        this.created.inputs[id].push(newindex);
+        this.created.inputs[id].push(index);
     }
     /**
      * Changes a component in the specified pending state.
@@ -3271,23 +3530,30 @@ class Pending {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   Emitter: () => (/* reexport safe */ _emitter_js__WEBPACK_IMPORTED_MODULE_5__.Emitter),
 /* harmony export */   IndexMap: () => (/* binding */ IndexMap),
-/* harmony export */   Storage: () => (/* binding */ Storage)
+/* harmony export */   Storage: () => (/* binding */ Storage),
+/* harmony export */   createStorageProps: () => (/* binding */ createStorageProps),
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _indexes_sorted_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./indexes/sorted.js */ "./lib/indexes/sorted.js");
 /* harmony import */ var _indexes_spatial_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./indexes/spatial.js */ "./lib/indexes/spatial.js");
 /* harmony import */ var _indexes_components_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./indexes/components.js */ "./lib/indexes/components.js");
 /* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./types.js */ "./lib/types.js");
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./utils.js */ "./lib/utils.js");
-/* harmony import */ var _emitter_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./emitter.js */ "./lib/emitter.js");
 
 
 
 
 
 
-
+// export {
+//   StorageInterface,
+//   StorageOptions,
+//   StorageProps,
+//   Components,
+//   Types,
+//   Inputs
+// }
 /**
  * The Indexes interface represents a mapping from keys to any array.
  */
@@ -3295,6 +3561,45 @@ const IndexMap = {
     sorted: _indexes_sorted_js__WEBPACK_IMPORTED_MODULE_0__.SortedIndex,
     spatial: _indexes_spatial_js__WEBPACK_IMPORTED_MODULE_1__.SpatialIndex,
 };
+function createStorageProps(props = {}, storage = {}, options = {}) {
+    const { actors = [], entities = [], components = {}, inputs = {} } = storage || {};
+    const { types = {}, indexes = {},
+    // worldOptions,
+     } = options;
+    props.actors = actors || [];
+    props.entities = entities || [];
+    props.components = components || {};
+    props.inputs = inputs || {};
+    props.types = types;
+    props.typeCtors = {};
+    for (let key in types) {
+        let TypeCtor = types[key];
+        if (Array.isArray(TypeCtor)) {
+            TypeCtor = _types_js__WEBPACK_IMPORTED_MODULE_3__.BasicTypes.get(TypeCtor[0]) || _types_js__WEBPACK_IMPORTED_MODULE_3__.ArrayTypes.get(TypeCtor[0]);
+        }
+        else if (typeof TypeCtor === 'string') {
+            TypeCtor = _types_js__WEBPACK_IMPORTED_MODULE_3__.BasicTypes.get(TypeCtor) || _types_js__WEBPACK_IMPORTED_MODULE_3__.ArrayTypes.get(TypeCtor);
+        }
+        if (typeof TypeCtor === 'function') {
+            if (TypeCtor) {
+                props.typeCtors[key] = TypeCtor;
+            }
+        }
+    }
+    props.componentsIndex = new _indexes_components_js__WEBPACK_IMPORTED_MODULE_2__.ComponentsIndex();
+    props.indexes = {};
+    for (let key in indexes) {
+        const { type } = indexes[key];
+        const IndexCtor = IndexMap[type];
+        if (IndexCtor) {
+            props.indexes[key] = {
+                actors: new IndexCtor([], indexes[key]),
+                entities: new IndexCtor([], indexes[key]),
+            };
+        }
+    }
+    return props;
+}
 /**
  * The Storage class represents a store with actors, entities, components, and inputs.
  *
@@ -3302,52 +3607,20 @@ const IndexMap = {
  * @property {string[]} entities - The entities in the store.
  * @property {Components} components - The components in the store.
  * @property {Inputs} inputs - The inputs in the store.
- * @property {Inputs} inputs - The inputs in the store.
+ * @property {Types} types - The types in the store.
+ * @property {any} typeCtors - The type constructors in the store
+ * @property {ComponentsIndex} componentsIndex - The components index in the store.
+ * @property {Indexes} indexes - The indexes in the store.
  */
 class Storage {
     // declare world?: any
     /**
      * Constructs a new Storage object.
      *
-     * @param {StorageProps} store - The properties of the store.
+     * @param {StorageProps} storage - The properties of the store.
      */
-    constructor(store = {}, options = {}) {
-        const { actors = [], entities = [], components = {}, inputs = {} } = store || {};
-        const { types = {}, indexes = {},
-        // worldOptions,
-         } = options;
-        this.actors = actors || [];
-        this.entities = entities || [];
-        this.components = components || {};
-        this.inputs = inputs || {};
-        this.types = types;
-        this.typeCtors = {};
-        for (let key in types) {
-            let TypeCtor = types[key];
-            if (Array.isArray(TypeCtor)) {
-                TypeCtor = _types_js__WEBPACK_IMPORTED_MODULE_3__.BasicTypes.get(TypeCtor[0]) || _types_js__WEBPACK_IMPORTED_MODULE_3__.ArrayTypes.get(TypeCtor[0]);
-            }
-            else if (typeof TypeCtor === 'string') {
-                TypeCtor = _types_js__WEBPACK_IMPORTED_MODULE_3__.BasicTypes.get(TypeCtor) || _types_js__WEBPACK_IMPORTED_MODULE_3__.ArrayTypes.get(TypeCtor);
-            }
-            if (typeof TypeCtor === 'function') {
-                if (TypeCtor) {
-                    this.typeCtors[key] = TypeCtor;
-                }
-            }
-        }
-        this.componentsIndex = new _indexes_components_js__WEBPACK_IMPORTED_MODULE_2__.ComponentsIndex();
-        this.indexes = {};
-        for (let key in indexes) {
-            const { type } = indexes[key];
-            const IndexCtor = IndexMap[type];
-            if (IndexCtor) {
-                this.indexes[key] = {
-                    actors: new IndexCtor([], indexes[key]),
-                    entities: new IndexCtor([], indexes[key]),
-                };
-            }
-        }
+    constructor(storage = {}, options = {}) {
+        createStorageProps(this, storage, options);
     }
     /**
      * Removes an actor ID.
@@ -3368,16 +3641,7 @@ class Storage {
     destroyComponent(id, key) {
         const prevValue = this.components[id][key];
         delete this.components[id][key];
-        this.componentsIndex.remove(id, key);
-        if (this.indexes[key]) {
-            const index = this.indexes[key];
-            if (this.isActor(id)) {
-                index.actors.remove(id, prevValue);
-            }
-            else {
-                index.entities.remove(id, prevValue);
-            }
-        }
+        this.removeComponentsIndex(id, key, prevValue);
     }
     /**
      * Removes an entity ID.
@@ -3410,7 +3674,7 @@ class Storage {
      * @param {string} id - The ID of the entity.
      * @returns {Components} The fetched components container.
      */
-    fetchComponents(id) {
+    findComponents(id) {
         this.components[id] = this.components[id] || {};
         return this.components[id];
     }
@@ -3421,7 +3685,7 @@ class Storage {
      * @param {string} key - The key of the component to fetch.
      * @returns {any} The fetched component.
      */
-    fetchComponent(id, key) {
+    findComponent(id, key) {
         this.components[id] = this.components[id] || {};
         return this.components[id][key];
     }
@@ -3431,7 +3695,7 @@ class Storage {
      * @param {string} id - The ID of the actor.
      * @returns {InputPayload} The fetched inputs.
      */
-    fetchInputs(id) {
+    findInputs(id) {
         return this.inputs[id];
     }
     /**
@@ -3441,7 +3705,7 @@ class Storage {
      * @param {number} index - The index of the input.
      * @returns {InputPayload} The fetched inputs.
      */
-    fetchInput(id, index) {
+    findInput(id, index) {
         this.inputs[id] = this.inputs[id] || [];
         const input = this.inputs[id][index];
         if (Array.isArray(input)) {
@@ -3627,16 +3891,7 @@ class Storage {
     storeComponent(id, key, value) {
         const prevValue = this.components[id][key];
         this.components[id][key] = value;
-        this.componentsIndex.set(id, key);
-        if (this.indexes[key]) {
-            const index = this.indexes[key];
-            if (this.isActor(id)) {
-                index.actors.store(id, prevValue, value);
-            }
-            else {
-                index.entities.store(id, prevValue, value);
-            }
-        }
+        this.updateComponentsIndex(id, key, prevValue, value);
     }
     /**
      * Stores an entity ID.
@@ -3673,12 +3928,12 @@ class Storage {
     storeInput(id, input, tick = 0) {
         const inputs = this.inputs;
         inputs[id] = inputs[id] || [];
-        const newindex = inputs[id].length;
+        const index = inputs[id].length;
         if (input.id === id) {
             delete input.id;
         }
         inputs[id].push(tick ? [input, tick] : input);
-        return newindex;
+        return index;
     }
     /**
      * Queries the store for entities by component.
@@ -3689,7 +3944,49 @@ class Storage {
     queryComponents(query) {
         return this.componentsIndex.query(query);
     }
+    /**
+     * Removes a component from the components index.
+     *
+     * @param {string} id - The ID of the component to remove.
+     * @param {string} key - The key of the component to remove.
+     * @param {any} prevValue - The previous value of the component.
+     * @returns {void}
+     */
+    removeComponentsIndex(id, key, prevValue) {
+        this.componentsIndex.remove(id, key);
+        if (this.indexes[key]) {
+            const index = this.indexes[key];
+            if (this.isActor(id)) {
+                index.actors.remove(id, prevValue);
+            }
+            else {
+                index.entities.remove(id, prevValue);
+            }
+        }
+    }
+    /**
+     * Updates a component in the components index.
+     *
+     * @param {string} id - The ID of the component to update.
+     * @param {string} key - The key of the component to update.
+     * @param {any} prevValue - The previous value of the component.
+     * @param {any} value - The new value of the component.
+     * @returns {void}
+     */
+    updateComponentsIndex(id, key, prevValue, value) {
+        this.componentsIndex.set(id, key);
+        if (this.indexes[key]) {
+            const index = this.indexes[key];
+            if (this.isActor(id)) {
+                index.actors.store(id, prevValue, value);
+            }
+            else {
+                index.entities.store(id, prevValue, value);
+            }
+        }
+    }
 }
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Storage);
 
 
 /***/ }),
@@ -4095,7 +4392,7 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
     const upsertComponents = async (pendingComponents = {}, state) => {
         const groups = isGroupedComponents ? {} : null;
         for (const id in (pendingComponents ?? {})) {
-            const components = isAsyncStorage ? await store.fetchComponents(id) : store.fetchComponents(id);
+            const components = isAsyncStorage ? await store.findComponents(id) : store.findComponents(id);
             if (!components) {
                 break;
             }
@@ -4116,7 +4413,7 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
                         ticks: new Uint32Array(0),
                     };
                 }
-                let value = isAsyncStorage ? await store.fetchComponent(id, key) : store.fetchComponent(id, key);
+                let value = isAsyncStorage ? await store.findComponent(id, key) : store.findComponent(id, key);
                 if (isDiffed && context.changes && (state === 'updated' || !true)) {
                     value = context.changes.getValue(id, key, value);
                 }
@@ -4291,7 +4588,7 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
             const createdInputs = created?.inputs ? (created.inputs[id] ?? []) : [];
             for (let i = 0; i < createdInputs.length; i += 1) {
                 const index = createdInputs[i];
-                const payload = isAsyncStorage ? await store.fetchInput(id, index) : store.fetchInput(id, index);
+                const payload = isAsyncStorage ? await store.findInput(id, index) : store.findInput(id, index);
                 const isTuple = Array.isArray(payload);
                 const input = isTuple ? payload[0] : payload;
                 const tick_ = isTuple ? payload[1] : tick;
@@ -4563,6 +4860,9 @@ function messageTuple(message) {
  * @returns {any[][]} The array of pages.
  */
 function paginate(array, pageSize) {
+    if (pageSize === Infinity && Array.isArray(array) && array.length > 0) {
+        return [array];
+    }
     const pages = [];
     let page = [];
     let i = 0;
@@ -4857,6 +5157,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   Symbol: () => (/* reexport module object */ _actions_symbol_js__WEBPACK_IMPORTED_MODULE_22__),
 /* harmony export */   Symbols: () => (/* reexport safe */ _symbols_js__WEBPACK_IMPORTED_MODULE_12__.Symbols),
 /* harmony export */   batchActionPayloadSizes: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.batchActionPayloadSizes),
+/* harmony export */   createStorageProps: () => (/* reexport safe */ _storage_js__WEBPACK_IMPORTED_MODULE_11__.createStorageProps),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
 /* harmony export */   defaultGetActorId: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultGetActorId),
 /* harmony export */   defaultGetGroupedValue: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultGetGroupedValue),
@@ -5033,6 +5334,7 @@ var __webpack_exports__Storage = __webpack_exports__.Storage;
 var __webpack_exports__Symbol = __webpack_exports__.Symbol;
 var __webpack_exports__Symbols = __webpack_exports__.Symbols;
 var __webpack_exports__batchActionPayloadSizes = __webpack_exports__.batchActionPayloadSizes;
+var __webpack_exports__createStorageProps = __webpack_exports__.createStorageProps;
 var __webpack_exports__default = __webpack_exports__["default"];
 var __webpack_exports__defaultGetActorId = __webpack_exports__.defaultGetActorId;
 var __webpack_exports__defaultGetGroupedValue = __webpack_exports__.defaultGetGroupedValue;
@@ -5056,6 +5358,6 @@ var __webpack_exports__recursiveSymbolIndexesEnsured = __webpack_exports__.recur
 var __webpack_exports__updater = __webpack_exports__.updater;
 var __webpack_exports__utils = __webpack_exports__.utils;
 var __webpack_exports__voidResponder = __webpack_exports__.voidResponder;
-export { __webpack_exports__Actions as Actions, __webpack_exports__Actor as Actor, __webpack_exports__ArrayTypes as ArrayTypes, __webpack_exports__BasicTypes as BasicTypes, __webpack_exports__Changes as Changes, __webpack_exports__Client as Client, __webpack_exports__CommonComponents as CommonComponents, __webpack_exports__Component as Component, __webpack_exports__Context as Context, __webpack_exports__Core as Core, __webpack_exports__DefaultSymbols as DefaultSymbols, __webpack_exports__Emitter as Emitter, __webpack_exports__Entitity as Entitity, __webpack_exports__Handler as Handler, __webpack_exports__Index as Index, __webpack_exports__IndexMap as IndexMap, __webpack_exports__Node as Node, __webpack_exports__Options as Options, __webpack_exports__Ordered as Ordered, __webpack_exports__Pending as Pending, __webpack_exports__SortedIndex as SortedIndex, __webpack_exports__SpatialIndex as SpatialIndex, __webpack_exports__Storage as Storage, __webpack_exports__Symbol as Symbol, __webpack_exports__Symbols as Symbols, __webpack_exports__batchActionPayloadSizes as batchActionPayloadSizes, __webpack_exports__default as default, __webpack_exports__defaultGetActorId as defaultGetActorId, __webpack_exports__defaultGetGroupedValue as defaultGetGroupedValue, __webpack_exports__defaultOptions as defaultOptions, __webpack_exports__defaultSetGroupedValue as defaultSetGroupedValue, __webpack_exports__defaultUpdateOptions as defaultUpdateOptions, __webpack_exports__defaultValidKeys as defaultValidKeys, __webpack_exports__ensureSymbolIndex as ensureSymbolIndex, __webpack_exports__enumActions as enumActions, __webpack_exports__enumCommonComponents as enumCommonComponents, __webpack_exports__enumDefaultSymbols as enumDefaultSymbols, __webpack_exports__extractSymbol as extractSymbol, __webpack_exports__getActionHandler as getActionHandler, __webpack_exports__getSymbolAction as getSymbolAction, __webpack_exports__handler as handler, __webpack_exports__manyHandler as manyHandler, __webpack_exports__oneHandler as oneHandler, __webpack_exports__padEnum as padEnum, __webpack_exports__recursiveSymbolExtraction as recursiveSymbolExtraction, __webpack_exports__recursiveSymbolIndexesEnsured as recursiveSymbolIndexesEnsured, __webpack_exports__updater as updater, __webpack_exports__utils as utils, __webpack_exports__voidResponder as voidResponder };
+export { __webpack_exports__Actions as Actions, __webpack_exports__Actor as Actor, __webpack_exports__ArrayTypes as ArrayTypes, __webpack_exports__BasicTypes as BasicTypes, __webpack_exports__Changes as Changes, __webpack_exports__Client as Client, __webpack_exports__CommonComponents as CommonComponents, __webpack_exports__Component as Component, __webpack_exports__Context as Context, __webpack_exports__Core as Core, __webpack_exports__DefaultSymbols as DefaultSymbols, __webpack_exports__Emitter as Emitter, __webpack_exports__Entitity as Entitity, __webpack_exports__Handler as Handler, __webpack_exports__Index as Index, __webpack_exports__IndexMap as IndexMap, __webpack_exports__Node as Node, __webpack_exports__Options as Options, __webpack_exports__Ordered as Ordered, __webpack_exports__Pending as Pending, __webpack_exports__SortedIndex as SortedIndex, __webpack_exports__SpatialIndex as SpatialIndex, __webpack_exports__Storage as Storage, __webpack_exports__Symbol as Symbol, __webpack_exports__Symbols as Symbols, __webpack_exports__batchActionPayloadSizes as batchActionPayloadSizes, __webpack_exports__createStorageProps as createStorageProps, __webpack_exports__default as default, __webpack_exports__defaultGetActorId as defaultGetActorId, __webpack_exports__defaultGetGroupedValue as defaultGetGroupedValue, __webpack_exports__defaultOptions as defaultOptions, __webpack_exports__defaultSetGroupedValue as defaultSetGroupedValue, __webpack_exports__defaultUpdateOptions as defaultUpdateOptions, __webpack_exports__defaultValidKeys as defaultValidKeys, __webpack_exports__ensureSymbolIndex as ensureSymbolIndex, __webpack_exports__enumActions as enumActions, __webpack_exports__enumCommonComponents as enumCommonComponents, __webpack_exports__enumDefaultSymbols as enumDefaultSymbols, __webpack_exports__extractSymbol as extractSymbol, __webpack_exports__getActionHandler as getActionHandler, __webpack_exports__getSymbolAction as getSymbolAction, __webpack_exports__handler as handler, __webpack_exports__manyHandler as manyHandler, __webpack_exports__oneHandler as oneHandler, __webpack_exports__padEnum as padEnum, __webpack_exports__recursiveSymbolExtraction as recursiveSymbolExtraction, __webpack_exports__recursiveSymbolIndexesEnsured as recursiveSymbolIndexesEnsured, __webpack_exports__updater as updater, __webpack_exports__utils as utils, __webpack_exports__voidResponder as voidResponder };
 
 //# sourceMappingURL=lib.echo-d.js.map

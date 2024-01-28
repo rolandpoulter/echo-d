@@ -84,11 +84,11 @@ export class Pending {
    * Adds an actor input to the created inputs state.
    *
    * @param {string} id - The ID of the actor.
-   * @param {number} newindex - The index of the new input.
+   * @param {number} index - The index of the new input.
    */
-  actorInput (id: string, newindex: number): void {
+  actorInput (id: string, index: number): void {
     this.created.inputs[id] = this.created.inputs[id] || []
-    this.created.inputs[id].push(newindex)
+    this.created.inputs[id].push(index)
   }
 
   /**
