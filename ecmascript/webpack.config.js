@@ -9,6 +9,7 @@ export default {
   target: 'web',
   entry: {
     lib: './lib/index.js',
+    /*
     becsy: {
       import: './lib/extra/storage/becsy.js',
       dependOn: 'lib',
@@ -29,6 +30,7 @@ export default {
       import: './lib/extra/system.js',
       dependOn: 'lib',
     },
+    */
   },
   output: {
     clean: true,
