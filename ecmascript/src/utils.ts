@@ -1,10 +1,10 @@
-import { TypedArray } from "bitecs";
+import { TypedArray } from 'bitecs';
 
 /**
  * @returns {number} The current time in milliseconds.
  */
 export function now(): number {
-  return performance.timeOrigin + performance.now()
+    return performance.timeOrigin + performance.now()
 }
 
 /**
@@ -15,23 +15,23 @@ export function now(): number {
  * @returns {TypedArray | any[]} The concatenated typed array or array.
  */
 export function concatTypedArray(a: TypedArray | any[], b: TypedArray | any[]): TypedArray | any[] {
-  if (Array.isArray(a) && Array.isArray(b)) {
-    return a.concat(b);
-  } else if (Array.isArray(a)) {
-    const a_ = new (b.constructor as any)(a.length);
-    a_.set(a);
-    a = a_;
-  } else if (Array.isArray(b)) {
-    const b_ = new (a.constructor as any)(b.length);
-    b_.set(b);
-    b = b_;
-  }
-  const c = new (a.constructor as any)(a.length + b.length);
-  if (c.set) {
-    c.set(a);
-    c.set(b, a.length);
-  }
-  return c;
+    if (Array.isArray(a) && Array.isArray(b)) {
+        return a.concat(b);
+    } else if (Array.isArray(a)) {
+        const a_ = new (b.constructor as any)(a.length);
+        a_.set(a);
+        a = a_;
+    } else if (Array.isArray(b)) {
+        const b_ = new (a.constructor as any)(b.length);
+        b_.set(b);
+        b = b_;
+    }
+    const c = new (a.constructor as any)(a.length + b.length);
+    if (c.set) {
+        c.set(a);
+        c.set(b, a.length);
+    }
+    return c;
 }
 
 /**
@@ -46,26 +46,26 @@ type SetOrArray<type> = Set<type> | Array<type>
  * @returns {Array<string>} The union of the sets or arrays.
  */
 export function unionSetOrArray(...sets: Array<SetOrArray<any>>): Array<string> {
-  const union: Record<string, boolean> = {};
+    const union: Record<string, boolean> = {};
 
-  for (const set of sets) {
-    if (set) {
-      for (const v of set) {
-        union[v] = true;
-      }
+    for (const set of sets) {
+        if (set) {
+            for (const v of set) {
+                union[v] = true;
+            }
+        }
     }
-  }
 
-  return Object.keys(union);
+    return Object.keys(union);
 }
 
 /**
  * A type that exposes experimental set operations.
  */
 export interface SetExperimental<T> extends Set<T> {
-  union?: (other: Set<T>) => Set<T>;
-  difference?: (other: Set<T>) => Set<T>;
-  intersection?: (other: Set<T>) => Set<T>;
+    union?: (other: Set<T>) => Set<T>;
+    difference?: (other: Set<T>) => Set<T>;
+    intersection?: (other: Set<T>) => Set<T>;
 }
 
 /**
@@ -76,13 +76,13 @@ export interface SetExperimental<T> extends Set<T> {
  * @returns {Set<any>} The union of the sets.
  */
 export function unionSets(setA: SetExperimental<any>, setB: SetExperimental<any>): Set<any> {
-  if (typeof setA.union === 'function') {
-    return setA.union(setA);
-  }
-  const union = new Set();
-  for (const v of setA) union.add(v);
-  for (const v of setB) union.add(v);
-  return union;
+    if (typeof setA.union === 'function') {
+        return setA.union(setA);
+    }
+    const union = new Set();
+    for (const v of setA) union.add(v);
+    for (const v of setB) union.add(v);
+    return union;
 }
 
 /**
@@ -93,13 +93,13 @@ export function unionSets(setA: SetExperimental<any>, setB: SetExperimental<any>
  * @returns {Set<any>} The difference of the sets.
  */
 export function differenceSets(setA: SetExperimental<any>, setB: SetExperimental<any>): Set<any> {
-  if (typeof setA.difference === 'function') {
-    return setA.difference(setA);
-  }
-  const difference = new Set();
-  for (const v of setA) if (!setB.has(v)) difference.add(v);
-  return difference;
-} 
+    if (typeof setA.difference === 'function') {
+        return setA.difference(setA);
+    }
+    const difference = new Set();
+    for (const v of setA) if (!setB.has(v)) difference.add(v);
+    return difference;
+}
 
 /**
  * Creates an intersection of the two sets.
@@ -109,12 +109,12 @@ export function differenceSets(setA: SetExperimental<any>, setB: SetExperimental
  * @returns {Set<any>} The intersection of the sets.
  */
 export function intersectionSets(setA: SetExperimental<any>, setB: SetExperimental<any>): Set<any> {
-  if (typeof setA.intersection === 'function') {
-    return setA.intersection(setA);
-  }
-  const intersection = new Set();
-  for (const v of setA) if (setB.has(v)) intersection.add(v);
-  return intersection;
+    if (typeof setA.intersection === 'function') {
+        return setA.intersection(setA);
+    }
+    const intersection = new Set();
+    for (const v of setA) if (setB.has(v)) intersection.add(v);
+    return intersection;
 }
 
 /**
@@ -125,22 +125,22 @@ export function intersectionSets(setA: SetExperimental<any>, setB: SetExperiment
  * @param {Function} getValue - The function to get the value from the item
  * @returns {number} The index of where the value should be inserted
  */
-export function binaryInsert (items: any[], value: any, getValue: Function = (v: any) => v): number {
-  let low = 0
-  let high = items.length
+export function binaryInsert(items: any[], value: any, getValue: Function = (v: any) => v): number {
+    let low = 0
+    let high = items.length
 
-  while (low < high) {
-    const mid = (low + high) >>> 1
-    const item = items[mid]
-    const v = getValue(item)
-    if (v < value) {
-      low = mid + 1
-    } else {
-      high = mid
+    while (low < high) {
+        const mid = (low + high) >>> 1
+        const item = items[mid]
+        const v = getValue(item)
+        if (v < value) {
+            low = mid + 1
+        } else {
+            high = mid
+        }
     }
-  }
 
-  return low  
+    return low
 }
 
 /**
@@ -151,24 +151,24 @@ export function binaryInsert (items: any[], value: any, getValue: Function = (v:
  * @param {Function} getValue - The function to get the value from the item
  * @returns {number[]} The index of the value
  */
-export function binarySearch (items: any[], target: any, getValue: Function = (v: any) => v): number[] {
-  let left = 0
-  let right = items.length - 1
+export function binarySearch(items: any[], target: any, getValue: Function = (v: any) => v): number[] {
+    let left = 0
+    let right = items.length - 1
 
-  while (left <= right) {
-    const mid = (left + right) >>> 1
-    const item = items[mid]
-    const v = getValue(item)
-    if (v === target) {
-      return [mid, left]
-    } else if (v < target) {
-      left = mid + 1
-    } else {
-      right = mid - 1
+    while (left <= right) {
+        const mid = (left + right) >>> 1
+        const item = items[mid]
+        const v = getValue(item)
+        if (v === target) {
+            return [mid, left]
+        } else if (v < target) {
+            left = mid + 1
+        } else {
+            right = mid - 1
+        }
     }
-  }
 
-  return [-1, left];
+    return [-1, left];
 }
 
 /**
@@ -179,16 +179,16 @@ export function binarySearch (items: any[], target: any, getValue: Function = (v
  * @returns {Record<string, number>} The created enum.
  */
 export function createEnum(set: SetOrArray<any>, offset: number = 0): Record<string, number> {
-  const _enum: Record<string, number> = {};
+    const _enum: Record<string, number> = {};
 
-  let i = offset;
-  if (set) {
-    for (const v of set) {
-      _enum[v] = i++;
+    let i = offset;
+    if (set) {
+        for (const v of set) {
+            _enum[v] = i++;
+        }
     }
-  }
 
-  return _enum;
+    return _enum;
 }
 
 /**
@@ -198,7 +198,7 @@ export function createEnum(set: SetOrArray<any>, offset: number = 0): Record<str
  * @returns {Array<any>} The created tuple.
  */
 export function messageTuple(message: { action?: any, payload?: any }): Array<any> {
-  return [message?.action, message?.payload];
+    return [message?.action, message?.payload];
 }
 
 /**
@@ -209,28 +209,28 @@ export function messageTuple(message: { action?: any, payload?: any }): Array<an
  * @returns {any[][]} The array of pages.
  */
 export function paginate(array: Iterable<any> | any[], pageSize: number): any[][] {
-  if (pageSize === Infinity && Array.isArray(array) && array.length > 0) {
-    return [array];
-  }
-  const pages = [];
-  let page = [];
-  let i = 0;
-  // if (!Array.isArray(array)) {
-  //   throw new Error('paginate: array must be an array');
-  // }
-  for (const v of array) {
-    if (i >= pageSize) {
-      pages.push(page);
-      page = [];
-      i = 0;
+    if (pageSize === Infinity && Array.isArray(array) && array.length > 0) {
+        return [array];
     }
-    page.push(v);
-    i++;
-  }
-  if (page.length > 0) {
-    pages.push(page);
-  }
-  return pages;
+    const pages = [];
+    let page = [];
+    let i = 0;
+    // if (!Array.isArray(array)) {
+    //   throw new Error('paginate: array must be an array');
+    // }
+    for (const v of array) {
+        if (i >= pageSize) {
+            pages.push(page);
+            page = [];
+            i = 0;
+        }
+        page.push(v);
+        i++;
+    }
+    if (page.length > 0) {
+        pages.push(page);
+    }
+    return pages;
 }
 
 /**
@@ -240,11 +240,11 @@ export function paginate(array: Iterable<any> | any[], pageSize: number): any[][
  * @returns {string} The type of the value.
  */
 export function typeOf(v: any): string {
-  const t = typeof v;
-  if (t === 'object') {
-    if (!v) { return 'null'; } else if (Array.isArray(v)) { return 'array'; }
-  }
-  return t;
+    const t = typeof v;
+    if (t === 'object') {
+        if (!v) { return 'null'; } else if (Array.isArray(v)) { return 'array'; }
+    }
+    return t;
 }
 
 /**
@@ -255,7 +255,7 @@ export function typeOf(v: any): string {
  * @returns {[boolean, any]} A tuple where the first element is a boolean indicating whether the values were combined, and the second element is the combined value.
  */
 export function combineValues(objA: any, objB: any): [boolean, any] {
-  return recursiveCombination(objA, objB);
+    return recursiveCombination(objA, objB);
 }
 
 /**
@@ -266,48 +266,48 @@ export function combineValues(objA: any, objB: any): [boolean, any] {
  * @param objB - The second object/array to combine.
  * @returns A tuple with a boolean indicating success/failure and the combined object/array.
  */
-export function recursiveCombination (objA: any, objB: any): [boolean, any] {
-  const typeA = typeOf(objA);
-  const typeB = typeOf(objB);
-  switch (typeB) {
-    case 'bigint':
-    case 'number': {
-      if (typeA !== 'number' && typeA !== 'bigint') {
-        return [false, objB];
-      }
-      return [true, objA + objB];
-    }
-    case 'array': {
-      if (typeA !== 'array') {
-        return [false, objB];
-      }
-      const newArr: any[] = [];
-      let combined = true;
-      for (let i = 0; i < objB.length; i += 1) {
-        const [c, value] = recursiveCombination(objA[i], objB[i]);
-        newArr[i] = value;
-        if (c === false) {
-          combined = false;
+export function recursiveCombination(objA: any, objB: any): [boolean, any] {
+    const typeA = typeOf(objA);
+    const typeB = typeOf(objB);
+    switch (typeB) {
+        case 'bigint':
+        case 'number': {
+            if (typeA !== 'number' && typeA !== 'bigint') {
+                return [false, objB];
+            }
+            return [true, objA + objB];
         }
-      }
-      return [combined, newArr];
-    }
-    case 'object': {
-      if (typeA !== 'object') {
-        return [false, objB];
-      }
-      const newObj: Record<string, any> = {};
-      let combined = true;
-      for (const k in objB) {
-        const [c, value] = recursiveCombination(objA[k], objB[k]);
-        if (c === false) {
-          combined = false;
+        case 'array': {
+            if (typeA !== 'array') {
+                return [false, objB];
+            }
+            const newArr: any[] = [];
+            let combined = true;
+            for (let i = 0; i < objB.length; i += 1) {
+                const [c, value] = recursiveCombination(objA[i], objB[i]);
+                newArr[i] = value;
+                if (c === false) {
+                    combined = false;
+                }
+            }
+            return [combined, newArr];
         }
-        newObj[k] = value;
-      }
-      return [combined, newObj];
+        case 'object': {
+            if (typeA !== 'object') {
+                return [false, objB];
+            }
+            const newObj: Record<string, any> = {};
+            let combined = true;
+            for (const k in objB) {
+                const [c, value] = recursiveCombination(objA[k], objB[k]);
+                if (c === false) {
+                    combined = false;
+                }
+                newObj[k] = value;
+            }
+            return [combined, newObj];
+        }
+        default:
+            return [false, objB];
     }
-    default:
-      return [false, objB];
-  }
 }

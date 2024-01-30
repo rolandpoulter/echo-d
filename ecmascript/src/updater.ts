@@ -1,17 +1,17 @@
 import { Options } from './options'
 import { Context } from './context'
 import {
-  CreatedState,
-  RemovedState,
-  UpdatedState,
+    CreatedState,
+    RemovedState,
+    UpdatedState,
 } from './pending';
 import {
-  Components,
-  // Inputs
+    Components,
+    // Inputs
 } from './storage'
 import {
-  ensureSymbolIndex,
-  recursiveSymbolIndexesEnsured
+    ensureSymbolIndex,
+    recursiveSymbolIndexesEnsured
 } from './symbols'
 import { ArrayTypes } from './types';
 import { now, concatTypedArray } from './utils'
@@ -21,17 +21,17 @@ import { now, concatTypedArray } from './utils'
  * It includes information about the type of update, whether the update is batched, the batch size, and the valid keys.
  */
 export interface UpdateOptions {
-  batched?: boolean;
-  batchSize?: number;
-  mask?: {
-    actors?: boolean;
-    components?: boolean;
-    entities?: boolean;
-    inputs?: boolean;
-    symbols?: boolean;
-  };
-  type?: any;
-  validKeys?: { [key: string]: boolean } | null;
+    batched?: boolean;
+    batchSize?: number;
+    mask?: {
+        actors?: boolean;
+        components?: boolean;
+        entities?: boolean;
+        inputs?: boolean;
+        symbols?: boolean;
+    };
+    type?: any;
+    validKeys?: { [key: string]: boolean } | null;
 }
 
 /**
@@ -42,412 +42,412 @@ export interface UpdateOptions {
  * @param {number} tick - The current tick.
  * @returns {Promise<any[]>} A promise that resolves to an array of arrays, where each sub-array represents a batch of updates. This is only relevant if the `batched` option is enabled.
  */
-export async function updater (context: Context, options: Options | any, tick: number = now()): Promise<any[]> {
-  options = options instanceof Options ? options : new Options(options)
+export async function updater(context: Context, options: Options | any, tick: number = now()): Promise<any[]> {
+    options = options instanceof Options ? options : new Options(options)
 
-  const {
-    responder,
-    enumDefaultSymbols,
-    compressStringsAsInts,
-    enableRollback,
-    isOrdered,
-    isDiffed,
-    isGroupedComponents,
-    isAsyncStorage,
-    types,
-    setGroupedValue,
-    updateOptions
-  } = options
+    const {
+        responder,
+        enumDefaultSymbols,
+        compressStringsAsInts,
+        enableRollback,
+        isOrdered,
+        isDiffed,
+        isGroupedComponents,
+        isAsyncStorage,
+        types,
+        setGroupedValue,
+        updateOptions
+    } = options
 
-  const {
-    batched,
-    batchSize,
-    mask,
-    type,
-    validKeys
-  } = updateOptions
+    const {
+        batched,
+        batchSize,
+        mask,
+        type,
+        validKeys
+    } = updateOptions
 
-  if (!context.pending) {
-    return []
-  }
-  
-  /**
-   * An array of arrays, where each sub-array represents a batch of updates.
-  */
- const batch: Array<Array<string | number>> = []
- 
- /**
-  * An array representing the current batch of updates.
- */
-let batchBlock: Array<any> = []
-
-const {
-  created = {} as CreatedState,
-  removed = {} as RemovedState,
-  symbols = [] as any[],
-  updated = {} as UpdatedState
-} = context.pending
-
-const store = context.store
-
-  /**
-   * Merges the current batch block into the batch array.
-   *
-   * @param {string | number} action - The action associated with the current batch block.
-   */
-  const mergeBatch = (action: string | number) => {
-    if (batched && batchBlock.length) {
-      batch.push([action, ...batchBlock])
-      batchBlock = []
+    if (!context.pending) {
+        return []
     }
-  }
 
-  /**
-   * Queues a message for later processing.
-   *
-   * @param {string | number} action - The action associated with the message.
-   * @param {any} payload - The payload of the message.
-   */
-  const queueMessage = async (action: string | number, payload: any) => {
-    if (batched) {
-      // batchBlock.push(payload)
-      batchBlock = batchBlock.concat(payload)
+    /**
+     * An array of arrays, where each sub-array represents a batch of updates.
+    */
+    const batch: Array<Array<string | number>> = []
 
-      if (batchBlock.length >= batchSize) { mergeBatch(action) }
-    } else {
-      if (compressStringsAsInts) {
-        action = ensureSymbolIndex(action, context, options)
-      }
-      await responder([action, payload], type)
+    /**
+     * An array representing the current batch of updates.
+    */
+    let batchBlock: Array<any> = []
+
+    const {
+        created = {} as CreatedState,
+        removed = {} as RemovedState,
+        symbols = [] as any[],
+        updated = {} as UpdatedState
+    } = context.pending
+
+    const store = context.store
+
+    /**
+     * Merges the current batch block into the batch array.
+     *
+     * @param {string | number} action - The action associated with the current batch block.
+     */
+    const mergeBatch = (action: string | number) => {
+        if (batched && batchBlock.length) {
+            batch.push([action, ...batchBlock])
+            batchBlock = []
+        }
     }
-  }
 
-  /**
-   * Ensures that a symbol is indexed if the `compressStringsAsInts` option is enabled.
-   *
-   * @param {string | number} symbol - The symbol to be indexed.
-   * @returns {string | number} The indexed symbol, or the original symbol if `compressStringsAsInts` is not enabled.
-   */
-  const ensureSymbol = (symbol: string | number) => {
-    if (compressStringsAsInts) {
-      symbol = ensureSymbolIndex(symbol, context, options)
-    }
-    return symbol
-  }
+    /**
+     * Queues a message for later processing.
+     *
+     * @param {string | number} action - The action associated with the message.
+     * @param {any} payload - The payload of the message.
+     */
+    const queueMessage = async (action: string | number, payload: any) => {
+        if (batched) {
+            // batchBlock.push(payload)
+            batchBlock = batchBlock.concat(payload)
 
-  const upsertComponents = async (pendingComponents: Components = {}, state: string) => {
-    const groups = isGroupedComponents ? {} as { [key: string]: any } : null
-    
-    for (const id in (pendingComponents ?? {})) {
-      const components = isAsyncStorage ? await store.findComponents(id) : store.findComponents(id)
-
-      if (components === null || components === undefined) {
-        break
-      }
-
-      const updatedComponents = pendingComponents ? pendingComponents[id] : {}
-      
-      for (const key in (updatedComponents ?? {})) {
-        if (validKeys && !validKeys[key]) {
-          break
-        }
-        
-        const type = types[key] ?? null
-        const Type = type ? ArrayTypes.get(Array.isArray(type) ? type[0] : type) : null
-
-        let group = null
-        if (groups) {
-          group = groups[key] = groups[key] ?? {
-            key,
-            ids: compressStringsAsInts ? new Uint32Array(0) : [],
-            intIds: true,
-            values: Type ? new Type(0) : [],
-            ticks: new Uint32Array(0),
-          }
-        }
-
-        let value = isAsyncStorage ? await store.findComponent(id, key) : store.findComponent(id, key)
-        // TODO: Fix !true
-        if (isDiffed && context.changes && (state === 'updated' || !true)) {
-          value = context.changes.getValue(id, key, value)
-        }
-
-        if (compressStringsAsInts) {
-          value = recursiveSymbolIndexesEnsured(key, value, context, options)
-        }
-
-        const nid = ensureSymbol(id)
-        const nkey = ensureSymbol(key)
-
-        if (groups)  {
-          group.ids = compressStringsAsInts
-            ? concatTypedArray(group.ids, [nid])
-            : group.ids.concat([id])
-          if (nid === id) {
-            group.intIds = false
-          }
-          group.values = Type
-            ? concatTypedArray(group.values, setGroupedValue(value, types, key))
-            : group.values.concat(setGroupedValue(value, types, key))
-          if (isOrdered) {
-            group.ticks = concatTypedArray(
-              group.ticks,
-              [isDiffed ? -tick : tick]
-            )
-          }
-          continue
-        }
-
-        const payload = [nid, nkey, value]
-
-        if (isOrdered) {
-          payload.push(isDiffed ? -tick : tick)
-        }
-
-        if (isDiffed) {
-          await queueMessage(enumDefaultSymbols.changeComponent, payload)
+            if (batchBlock.length >= batchSize) { mergeBatch(action) }
         } else {
-          await queueMessage(enumDefaultSymbols.upsertComponent, payload)
+            if (compressStringsAsInts) {
+                action = ensureSymbolIndex(action, context, options)
+            }
+            await responder([action, payload], type)
         }
-      }
-
-      // delete pendingComponents[id];
     }
 
-    if (groups) {
-      for (const key in groups) {
-        const group = groups[key]
-        const bufferIds = compressStringsAsInts && group.intIds ? new Uint32Array(group.ids) : group.ids
-        const type = types[key] ?? null
-        const Type = type ? ArrayTypes.get(Array.isArray(type) ? type[0] : type) : null
-        const bufferValues = Type ? new Type(group.values) : group.values
-
-        let i = 0;
-        const size = bufferIds.length;
-        for (; i < size; i += batchSize) {
-          const payload = [
-            bufferIds.slice(i, i + batchSize),
-            group.key,
-            bufferValues.slice(i, i + batchSize)
-          ]
-
-          if (isOrdered) {
-            const bufferTicks = new Uint32Array(group.ticks.slice(i, i + batchSize))
-            payload.push(bufferTicks)
-          }
-
-          if (isDiffed) {
-            await queueMessage(enumDefaultSymbols.changeComponent, payload)
-          } else {
-            await queueMessage(enumDefaultSymbols.upsertComponent, payload)
-          }
+    /**
+     * Ensures that a symbol is indexed if the `compressStringsAsInts` option is enabled.
+     *
+     * @param {string | number} symbol - The symbol to be indexed.
+     * @returns {string | number} The indexed symbol, or the original symbol if `compressStringsAsInts` is not enabled.
+     */
+    const ensureSymbol = (symbol: string | number) => {
+        if (compressStringsAsInts) {
+            symbol = ensureSymbolIndex(symbol, context, options)
         }
-      }
+        return symbol
     }
 
-    mergeBatch(isDiffed ? enumDefaultSymbols.changeComponent : enumDefaultSymbols.upsertComponent)
-  }
+    const upsertComponents = async (pendingComponents: Components = {}, state: string) => {
+        const groups = isGroupedComponents ? {} as { [key: string]: any } : null
 
-  /**
-   * If the `mask` object does not exist or does not have an `entities` property,
-   * this code block ensures that each entity in the `created.entities` array is indexed,
-   * queues a message to create each entity, merges the batch of messages, and then clears the `created.entities` array.
-   */
-  if (!mask || !mask.entities) {
-    for (const key of created.entities ?? []) {
-      const nkey = ensureSymbol(key)
+        for (const id in (pendingComponents ?? {})) {
+            const components = isAsyncStorage ? await store.findComponents(id) : store.findComponents(id)
 
-      await queueMessage(enumDefaultSymbols.createEntity, nkey)
-    }
+            if (components === null || components === undefined) {
+                break
+            }
 
-    mergeBatch(enumDefaultSymbols.createEntity)
-    created.entities = []
-  }
+            const updatedComponents = pendingComponents ? pendingComponents[id] : {}
 
-  /**
-   * If the `mask` object does not exist or does not have an `actors` property,
-   * this code block ensures that each actor in the `created.actors` array is indexed,
-   * queues a message to spawn each actor, merges the batch of messages, and then clears the `created.actors` array.
-   */
-  if (!mask || !mask.actors) {
-    for (const id in (created.actors ?? {})) {
-      const nid = ensureSymbol(id)
+            for (const key in (updatedComponents ?? {})) {
+                if (validKeys && !validKeys[key]) {
+                    break
+                }
 
-      await queueMessage(enumDefaultSymbols.spawnActor, nid)
-    }
+                const type = types[key] ?? null
+                const Type = type ? ArrayTypes.get(Array.isArray(type) ? type[0] : type) : null
 
-    mergeBatch(enumDefaultSymbols.spawnActor)
-    created.actors = {}
-  }
+                let group = null
+                if (groups) {
+                    group = groups[key] = groups[key] ?? {
+                        key,
+                        ids: compressStringsAsInts ? new Uint32Array(0) : [],
+                        intIds: true,
+                        values: Type ? new Type(0) : [],
+                        ticks: new Uint32Array(0),
+                    }
+                }
 
-  /**
-   * If the `mask` object does not exist or does not have a `components` property,
-   * this code block ensures that each component in the `removed.components` object is indexed,
-   * queues a message to remove each component, merges the batch of messages, and then clears the `removed.components` object.
-   */
-  if (!mask || !mask.entities) {
-    for (const key of removed.entities ?? []) {
-      const nkey = ensureSymbol(key)
+                let value = isAsyncStorage ? await store.findComponent(id, key) : store.findComponent(id, key)
+                // TODO: Fix !true
+                if (isDiffed && context.changes && (state === 'updated' || !true)) {
+                    value = context.changes.getValue(id, key, value)
+                }
 
-      await queueMessage(enumDefaultSymbols.removeEntity, nkey)
-    }
+                if (compressStringsAsInts) {
+                    value = recursiveSymbolIndexesEnsured(key, value, context, options)
+                }
 
-    mergeBatch(enumDefaultSymbols.removeEntity)
-    removed.entities = []
-  }
+                const nid = ensureSymbol(id)
+                const nkey = ensureSymbol(key)
 
-  /**
-   * If the `mask` object does not exist or does not have a `components` property,
-   * this code block ensures that each component in the `removed.components` object is indexed,
-   * queues a message to remove each component, merges the batch of messages, and then clears the `removed.components` object.
-   */
-  if (!mask || !mask.actors) {
-    for (const id in (removed.actors ?? {})) {
-      const nid = ensureSymbol(id)
+                if (groups) {
+                    group.ids = compressStringsAsInts
+                        ? concatTypedArray(group.ids, [nid])
+                        : group.ids.concat([id])
+                    if (nid === id) {
+                        group.intIds = false
+                    }
+                    group.values = Type
+                        ? concatTypedArray(group.values, setGroupedValue(value, types, key))
+                        : group.values.concat(setGroupedValue(value, types, key))
+                    if (isOrdered) {
+                        group.ticks = concatTypedArray(
+                            group.ticks,
+                            [isDiffed ? -tick : tick]
+                        )
+                    }
+                    continue
+                }
 
-      await queueMessage(enumDefaultSymbols.removeActor, nid)
-    }
+                const payload = [nid, nkey, value]
 
-    mergeBatch(enumDefaultSymbols.removeActor)
-    removed.actors = {}
-  }
+                if (isOrdered) {
+                    payload.push(isDiffed ? -tick : tick)
+                }
 
-  /**
-   * If the `mask` object does not exist or does not have a `components` property,
-   * this code block ensures that each component in the `removed.components` object is indexed,
-   * queues a message to remove each component, merges the batch of messages, and then clears the `removed.components` object.
-   */
-  if (!mask || !mask.components) {
-    for (const id in (removed.components ?? {})) {
-      const components = removed?.components ? removed.components[id] : null
-      if (!components) {
-        break
-      }
+                if (isDiffed) {
+                    await queueMessage(enumDefaultSymbols.changeComponent, payload)
+                } else {
+                    await queueMessage(enumDefaultSymbols.upsertComponent, payload)
+                }
+            }
 
-      const nid = ensureSymbol(id)
-
-      for (const key in components) {
-        if (validKeys && !validKeys[key]) {
-          break
+            // delete pendingComponents[id];
         }
 
-        const nkey = ensureSymbol(key)
+        if (groups) {
+            for (const key in groups) {
+                const group = groups[key]
+                const bufferIds = compressStringsAsInts && group.intIds ? new Uint32Array(group.ids) : group.ids
+                const type = types[key] ?? null
+                const Type = type ? ArrayTypes.get(Array.isArray(type) ? type[0] : type) : null
+                const bufferValues = Type ? new Type(group.values) : group.values
 
-        const payload = [nid, nkey]
+                let i = 0;
+                const size = bufferIds.length;
+                for (; i < size; i += batchSize) {
+                    const payload = [
+                        bufferIds.slice(i, i + batchSize),
+                        group.key,
+                        bufferValues.slice(i, i + batchSize)
+                    ]
 
-        await queueMessage(enumDefaultSymbols.removeComponent, payload)
-      }
+                    if (isOrdered) {
+                        const bufferTicks = new Uint32Array(group.ticks.slice(i, i + batchSize))
+                        payload.push(bufferTicks)
+                    }
 
-      // delete removed.components[key]
+                    if (isDiffed) {
+                        await queueMessage(enumDefaultSymbols.changeComponent, payload)
+                    } else {
+                        await queueMessage(enumDefaultSymbols.upsertComponent, payload)
+                    }
+                }
+            }
+        }
+
+        mergeBatch(isDiffed ? enumDefaultSymbols.changeComponent : enumDefaultSymbols.upsertComponent)
     }
 
-    mergeBatch(enumDefaultSymbols.removeComponent)
-    removed.components = {}
-  }
+    /**
+     * If the `mask` object does not exist or does not have an `entities` property,
+     * this code block ensures that each entity in the `created.entities` array is indexed,
+     * queues a message to create each entity, merges the batch of messages, and then clears the `created.entities` array.
+     */
+    if (!mask || !mask.entities) {
+        for (const key of created.entities ?? []) {
+            const nkey = ensureSymbol(key)
 
-  /**
-   * If the `mask` object does not exist or does not have a `components` property,
-   * this code block ensures that each component in the `created.components` object is indexed,
-   * queues a message to create each component, merges the batch of messages, and then clears the `created.components` object.
-   */
-  if (!mask || !mask.components) {
-    const promise = upsertComponents(created.components, 'created')
-    created.components = {}
-    await promise
-  }
+            await queueMessage(enumDefaultSymbols.createEntity, nkey)
+        }
 
-  /**
-   * If the `mask` object does not exist or does not have a `components` property,
-   * this code block ensures that each component in the `updated.components` object is indexed,
-   * queues a message to update each component, merges the batch of messages, and then clears the `updated.components` object.
-   */
-  if (!mask || !mask.components) {
-    const promise = upsertComponents(updated.components, 'updated')
-    updated.components = {}
-    await promise
-  }
-
-  /**
-   * If the `mask` object does not exist or does not have an `inputs` property,
-   * this code block ensures that each input in the `created.inputs` object is indexed,
-   * queues a message to create each input, merges the batch of messages, and then clears the `created.inputs` object.
-   */
-  if (!mask || !mask.inputs) {
-    for (const id in (created.inputs ?? {})) {
-      // const nid = ensureSymbol(id)
-
-      const createdInputs = created?.inputs ? (created.inputs[id] ?? []) : []
-
-      for (let i = 0; i < createdInputs.length; i += 1) {
-        const index = createdInputs[i]
-
-        const payload = isAsyncStorage ? await store.findInput(id, index) : store.findInput(id, index)
-        
-        const isTuple = Array.isArray(payload)
-        const input = isTuple ? payload[0] : payload
-        const tick_ = isTuple ? payload[1] : tick
-
-        await queueMessage(
-          enumDefaultSymbols.actorInput,
-          isTuple || enableRollback ? [input, tick_] : input
-        )
-      }
-
-      // delete created.inputs[id];
+        mergeBatch(enumDefaultSymbols.createEntity)
+        created.entities = []
     }
 
-    mergeBatch(enumDefaultSymbols.actorInput)
-    created.inputs = {}
-  }
+    /**
+     * If the `mask` object does not exist or does not have an `actors` property,
+     * this code block ensures that each actor in the `created.actors` array is indexed,
+     * queues a message to spawn each actor, merges the batch of messages, and then clears the `created.actors` array.
+     */
+    if (!mask || !mask.actors) {
+        for (const id in (created.actors ?? {})) {
+            const nid = ensureSymbol(id)
 
-  /**
-   * If the `mask` object does not exist or does not have a `symbols` property,
-   * this code block ensures that each symbol in the `symbols` array is indexed,
-   * queues a message to add each symbol, merges the batch of messages, and then clears the `symbols` array.
-   */
-  if (!mask || !mask.symbols) {
-    for (const symbolOp of symbols) {
-      if (batched) {
-        batchBlock.push(symbolOp)
-      } else {
-        const message = [enumDefaultSymbols.mergeSymbol, symbolOp]
-        await responder(message, type)
-      }
+            await queueMessage(enumDefaultSymbols.spawnActor, nid)
+        }
 
-      if (batchBlock.length >= batchSize && batchBlock.length) {
-        batch.unshift([enumDefaultSymbols.mergeSymbol].concat(batchBlock))
-        batchBlock = []
-      }
+        mergeBatch(enumDefaultSymbols.spawnActor)
+        created.actors = {}
     }
 
-    if (batched && batchBlock.length) {
-      batch.unshift([enumDefaultSymbols.mergeSymbol].concat(batchBlock))
-      batchBlock = []
+    /**
+     * If the `mask` object does not exist or does not have a `components` property,
+     * this code block ensures that each component in the `removed.components` object is indexed,
+     * queues a message to remove each component, merges the batch of messages, and then clears the `removed.components` object.
+     */
+    if (!mask || !mask.entities) {
+        for (const key of removed.entities ?? []) {
+            const nkey = ensureSymbol(key)
+
+            await queueMessage(enumDefaultSymbols.removeEntity, nkey)
+        }
+
+        mergeBatch(enumDefaultSymbols.removeEntity)
+        removed.entities = []
     }
 
-    context.pending.symbols = []
-  }
+    /**
+     * If the `mask` object does not exist or does not have a `components` property,
+     * this code block ensures that each component in the `removed.components` object is indexed,
+     * queues a message to remove each component, merges the batch of messages, and then clears the `removed.components` object.
+     */
+    if (!mask || !mask.actors) {
+        for (const id in (removed.actors ?? {})) {
+            const nid = ensureSymbol(id)
 
-  /**
-   * If the `mask` object does not exist or does not have a `symbols` property,
-   * this code block ensures that each symbol in the `symbols` array is indexed,
-   * queues a message to add each symbol, merges the batch of messages, and then clears the `symbols` array.
-   */
-  if (batched && batch.length) {
-    for (let i = 0; i < batch.length; i += 1) {
-      const batchSlice = batch[i]
-      if (batchSlice) {
-        await responder([enumDefaultSymbols.batch, batchSlice])
-        // if (batchSlice.length > 1) {
-        //   responder([enumDefaultSymbols.batch].concat(batchSlice))
-        // } else {
-        //   responder(batchSlice)
-        // }
-      }
+            await queueMessage(enumDefaultSymbols.removeActor, nid)
+        }
+
+        mergeBatch(enumDefaultSymbols.removeActor)
+        removed.actors = {}
     }
-  }
 
-  return batch;
+    /**
+     * If the `mask` object does not exist or does not have a `components` property,
+     * this code block ensures that each component in the `removed.components` object is indexed,
+     * queues a message to remove each component, merges the batch of messages, and then clears the `removed.components` object.
+     */
+    if (!mask || !mask.components) {
+        for (const id in (removed.components ?? {})) {
+            const components = removed?.components ? removed.components[id] : null
+            if (!components) {
+                break
+            }
+
+            const nid = ensureSymbol(id)
+
+            for (const key in components) {
+                if (validKeys && !validKeys[key]) {
+                    break
+                }
+
+                const nkey = ensureSymbol(key)
+
+                const payload = [nid, nkey]
+
+                await queueMessage(enumDefaultSymbols.removeComponent, payload)
+            }
+
+            // delete removed.components[key]
+        }
+
+        mergeBatch(enumDefaultSymbols.removeComponent)
+        removed.components = {}
+    }
+
+    /**
+     * If the `mask` object does not exist or does not have a `components` property,
+     * this code block ensures that each component in the `created.components` object is indexed,
+     * queues a message to create each component, merges the batch of messages, and then clears the `created.components` object.
+     */
+    if (!mask || !mask.components) {
+        const promise = upsertComponents(created.components, 'created')
+        created.components = {}
+        await promise
+    }
+
+    /**
+     * If the `mask` object does not exist or does not have a `components` property,
+     * this code block ensures that each component in the `updated.components` object is indexed,
+     * queues a message to update each component, merges the batch of messages, and then clears the `updated.components` object.
+     */
+    if (!mask || !mask.components) {
+        const promise = upsertComponents(updated.components, 'updated')
+        updated.components = {}
+        await promise
+    }
+
+    /**
+     * If the `mask` object does not exist or does not have an `inputs` property,
+     * this code block ensures that each input in the `created.inputs` object is indexed,
+     * queues a message to create each input, merges the batch of messages, and then clears the `created.inputs` object.
+     */
+    if (!mask || !mask.inputs) {
+        for (const id in (created.inputs ?? {})) {
+            // const nid = ensureSymbol(id)
+
+            const createdInputs = created?.inputs ? (created.inputs[id] ?? []) : []
+
+            for (let i = 0; i < createdInputs.length; i += 1) {
+                const index = createdInputs[i]
+
+                const payload = isAsyncStorage ? await store.findInput(id, index) : store.findInput(id, index)
+
+                const isTuple = Array.isArray(payload)
+                const input = isTuple ? payload[0] : payload
+                const tick_ = isTuple ? payload[1] : tick
+
+                await queueMessage(
+                    enumDefaultSymbols.actorInput,
+                    isTuple || enableRollback ? [input, tick_] : input
+                )
+            }
+
+            // delete created.inputs[id];
+        }
+
+        mergeBatch(enumDefaultSymbols.actorInput)
+        created.inputs = {}
+    }
+
+    /**
+     * If the `mask` object does not exist or does not have a `symbols` property,
+     * this code block ensures that each symbol in the `symbols` array is indexed,
+     * queues a message to add each symbol, merges the batch of messages, and then clears the `symbols` array.
+     */
+    if (!mask || !mask.symbols) {
+        for (const symbolOp of symbols) {
+            if (batched) {
+                batchBlock.push(symbolOp)
+            } else {
+                const message = [enumDefaultSymbols.mergeSymbol, symbolOp]
+                await responder(message, type)
+            }
+
+            if (batchBlock.length >= batchSize && batchBlock.length) {
+                batch.unshift([enumDefaultSymbols.mergeSymbol].concat(batchBlock))
+                batchBlock = []
+            }
+        }
+
+        if (batched && batchBlock.length) {
+            batch.unshift([enumDefaultSymbols.mergeSymbol].concat(batchBlock))
+            batchBlock = []
+        }
+
+        context.pending.symbols = []
+    }
+
+    /**
+     * If the `mask` object does not exist or does not have a `symbols` property,
+     * this code block ensures that each symbol in the `symbols` array is indexed,
+     * queues a message to add each symbol, merges the batch of messages, and then clears the `symbols` array.
+     */
+    if (batched && batch.length) {
+        for (let i = 0; i < batch.length; i += 1) {
+            const batchSlice = batch[i]
+            if (batchSlice) {
+                await responder([enumDefaultSymbols.batch, batchSlice])
+                // if (batchSlice.length > 1) {
+                //   responder([enumDefaultSymbols.batch].concat(batchSlice))
+                // } else {
+                //   responder(batchSlice)
+                // }
+            }
+        }
+    }
+
+    return batch;
 }
 
 export default updater

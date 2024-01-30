@@ -36,191 +36,191 @@ import { UpdateOptions } from './updater'
  * @property {any} worldOptions - An object containing the world options.
  */
 export interface OptionsProps {
-  actions?: {
-    addSymbol?: Function;
-    getSymbol?: Function;
-  };
-  batchActionPayloadSizes?: Object;
-  compressStringsAsInts?: boolean;
-  defaultSymbols?: Array<string>;
-  enableRollback?: boolean;
-  enableQuerying?: boolean;
-  enumDefaultSymbols?: Object;
-  getActorId?: Function;
-  getGroupedValue?: Function;
-  indexes?: Object;
-  isAuthority?: boolean;
-  isAsyncStorage?: boolean;
-  isComponentRelay?: boolean;
-  isDiffed?: boolean;
-  isGroupedComponents?: boolean;
-  isOrdered?: boolean;
-  isReadOnly?: boolean;
-  isSymbolLeader?: boolean;
-  isSymbolRelay?: boolean;
-  onUpdate?: Function;
-  pageSize?: number;
-  responder?: Function;
-  skipPending?: boolean;
-  types?: Object;
-  setGroupedValue?: Function;
-  storeOptions?: Object;
-  updateOptions?: UpdateOptions;
-  worldOptions?: any;
-  // [key: string]: any;
+    actions?: {
+        addSymbol?: Function;
+        getSymbol?: Function;
+    };
+    batchActionPayloadSizes?: Object;
+    compressStringsAsInts?: boolean;
+    defaultSymbols?: Array<string>;
+    enableRollback?: boolean;
+    enableQuerying?: boolean;
+    enumDefaultSymbols?: Object;
+    getActorId?: Function;
+    getGroupedValue?: Function;
+    indexes?: Object;
+    isAuthority?: boolean;
+    isAsyncStorage?: boolean;
+    isComponentRelay?: boolean;
+    isDiffed?: boolean;
+    isGroupedComponents?: boolean;
+    isOrdered?: boolean;
+    isReadOnly?: boolean;
+    isSymbolLeader?: boolean;
+    isSymbolRelay?: boolean;
+    onUpdate?: Function;
+    pageSize?: number;
+    responder?: Function;
+    skipPending?: boolean;
+    types?: Object;
+    setGroupedValue?: Function;
+    storeOptions?: Object;
+    updateOptions?: UpdateOptions;
+    worldOptions?: any;
+    // [key: string]: any;
 }
 
 /**
  * The Options class represents the options for a node.
  */
-export class Options  {
-  actions: {
-    addSymbol: Function;
-    getSymbol: Function;
-    [key: string]: Function;
-  };
-  batchActionPayloadSizes: Object;
-  compressStringsAsInts: boolean;
-  defaultSymbols: Array<string>;
-  enableRollback: boolean;
-  enableQuerying: boolean;
-  enumDefaultSymbols: Object;
-  getActorId: Function;
-  getGroupedValue: Function;
-  indexes: Object;
-  isAuthority: boolean;
-  isAsyncStorage: boolean;
-  isComponentRelay: boolean;
-  isDiffed: boolean;
-  isGroupedComponents: boolean;
-  isOrdered: boolean;
-  isReadOnly: boolean;
-  isSymbolLeader: boolean;
-  isSymbolRelay: boolean;
-  onUpdate: Function | null;
-  pageSize: number;
-  responder: Function;
-  skipPending: boolean;
-  types: Object;
-  setGroupedValue: Function;
-  storeOptions: Object;
-  updateOptions: UpdateOptions;
-  worldOptions: any;
-  // [key: string]: any;
+export class Options {
+    actions: {
+        addSymbol: Function;
+        getSymbol: Function;
+        [key: string]: Function;
+    };
+    batchActionPayloadSizes: Object;
+    compressStringsAsInts: boolean;
+    defaultSymbols: Array<string>;
+    enableRollback: boolean;
+    enableQuerying: boolean;
+    enumDefaultSymbols: Object;
+    getActorId: Function;
+    getGroupedValue: Function;
+    indexes: Object;
+    isAuthority: boolean;
+    isAsyncStorage: boolean;
+    isComponentRelay: boolean;
+    isDiffed: boolean;
+    isGroupedComponents: boolean;
+    isOrdered: boolean;
+    isReadOnly: boolean;
+    isSymbolLeader: boolean;
+    isSymbolRelay: boolean;
+    onUpdate: Function | null;
+    pageSize: number;
+    responder: Function;
+    skipPending: boolean;
+    types: Object;
+    setGroupedValue: Function;
+    storeOptions: Object;
+    updateOptions: UpdateOptions;
+    worldOptions: any;
+    // [key: string]: any;
 
-  /**
-   * Ensures that the provided options are an instance of Options.
-   *
-   * @param {Options | OptionsProps} options - The options for the node.
-   * @param {any} actionsThis - The context for the actions.
-   * @returns {Options} - An instance of Options.
-   */
-  static ensure(options: Options | OptionsProps = {}, actionsThis: any): Options {
-    return options instanceof Options ? options : new Options(options, actionsThis)
-  }
-
-  /**
-   * Constructs a new Options object.
-   *
-   * @param {Options | OptionsProps} options - The options for the node.
-   * @param {any} actionsThis - The context for the actions.
-   */
-  constructor (options: Options | OptionsProps = {}, actionsThis: any = null) {
-    const {
-      actions = actionsThis || defaultActions,
-      batchActionPayloadSizes = Constants.batchActionPayloadSizes,
-      compressStringsAsInts = Constants.defaultOptions.compressStringsAsInts,
-      defaultSymbols = Constants.DefaultSymbols,
-      enableRollback = Constants.defaultOptions.enableRollback,
-      enableQuerying = Constants.defaultOptions.enableQuerying,
-      enumDefaultSymbols = Constants.enumDefaultSymbols,
-      getActorId = Constants.defaultGetActorId,
-      getGroupedValue = Constants.defaultGetGroupedValue,
-      indexes = Constants.defaultOptions.indexes,
-      isAuthority = Constants.defaultOptions.isAuthority,
-      isAsyncStorage = Constants.defaultOptions.isAsyncStorage,
-      isComponentRelay = Constants.defaultOptions.isComponentRelay,
-      isDiffed = Constants.defaultOptions.isDiffed,
-      isGroupedComponents = Constants.defaultOptions.isGroupedComponents,
-      isOrdered = Constants.defaultOptions.isOrdered,
-      isReadOnly = Constants.defaultOptions.isReadOnly,
-      isSymbolLeader = Constants.defaultOptions.isSymbolLeader,
-      isSymbolRelay = Constants.defaultOptions.isSymbolRelay,
-      onUpdate = null,
-      pageSize = Constants.defaultOptions.pageSize,
-      responder = Constants.voidResponder,
-      skipPending = Constants.defaultOptions.skipPending,
-      types = Constants.defaultOptions.types,
-      setGroupedValue = Constants.defaultSetGroupedValue,
-      storeOptions = {},
-      updateOptions: overridenUpdateOptions = {},
-      worldOptions = null,
-
-      // ...otherOptions
-    } = options
-
-    const updateOptions = {
-      ...Constants.defaultUpdateOptions,
-      ...overridenUpdateOptions
+    /**
+     * Ensures that the provided options are an instance of Options.
+     *
+     * @param {Options | OptionsProps} options - The options for the node.
+     * @param {any} actionsThis - The context for the actions.
+     * @returns {Options} - An instance of Options.
+     */
+    static ensure(options: Options | OptionsProps = {}, actionsThis: any): Options {
+        return options instanceof Options ? options : new Options(options, actionsThis)
     }
 
-    updateOptions.validKeys = !overridenUpdateOptions?.validKeys
-      ? null
-      : {
-          ...Constants.defaultValidKeys,
-          ...(overridenUpdateOptions?.validKeys || {})
+    /**
+     * Constructs a new Options object.
+     *
+     * @param {Options | OptionsProps} options - The options for the node.
+     * @param {any} actionsThis - The context for the actions.
+     */
+    constructor(options: Options | OptionsProps = {}, actionsThis: any = null) {
+        const {
+            actions = actionsThis || defaultActions,
+            batchActionPayloadSizes = Constants.batchActionPayloadSizes,
+            compressStringsAsInts = Constants.defaultOptions.compressStringsAsInts,
+            defaultSymbols = Constants.DefaultSymbols,
+            enableRollback = Constants.defaultOptions.enableRollback,
+            enableQuerying = Constants.defaultOptions.enableQuerying,
+            enumDefaultSymbols = Constants.enumDefaultSymbols,
+            getActorId = Constants.defaultGetActorId,
+            getGroupedValue = Constants.defaultGetGroupedValue,
+            indexes = Constants.defaultOptions.indexes,
+            isAuthority = Constants.defaultOptions.isAuthority,
+            isAsyncStorage = Constants.defaultOptions.isAsyncStorage,
+            isComponentRelay = Constants.defaultOptions.isComponentRelay,
+            isDiffed = Constants.defaultOptions.isDiffed,
+            isGroupedComponents = Constants.defaultOptions.isGroupedComponents,
+            isOrdered = Constants.defaultOptions.isOrdered,
+            isReadOnly = Constants.defaultOptions.isReadOnly,
+            isSymbolLeader = Constants.defaultOptions.isSymbolLeader,
+            isSymbolRelay = Constants.defaultOptions.isSymbolRelay,
+            onUpdate = null,
+            pageSize = Constants.defaultOptions.pageSize,
+            responder = Constants.voidResponder,
+            skipPending = Constants.defaultOptions.skipPending,
+            types = Constants.defaultOptions.types,
+            setGroupedValue = Constants.defaultSetGroupedValue,
+            storeOptions = {},
+            updateOptions: overridenUpdateOptions = {},
+            worldOptions = null,
+
+            // ...otherOptions
+        } = options
+
+        const updateOptions = {
+            ...Constants.defaultUpdateOptions,
+            ...overridenUpdateOptions
         }
 
-    this.actions = actions
-    this.batchActionPayloadSizes = batchActionPayloadSizes
-    this.compressStringsAsInts = compressStringsAsInts
-    this.defaultSymbols = defaultSymbols
-    this.enableRollback = enableRollback
-    this.enableQuerying = enableQuerying
-    this.enumDefaultSymbols = enumDefaultSymbols
-    this.getActorId = getActorId
-    this.getGroupedValue = getGroupedValue
-    this.indexes = indexes
-    this.isAuthority = isAuthority
-    this.isAsyncStorage = isAsyncStorage
-    this.isComponentRelay = isComponentRelay
-    this.isDiffed = isDiffed
-    this.isGroupedComponents = isGroupedComponents
-    this.isOrdered = isOrdered
-    this.isReadOnly = isReadOnly
-    this.isSymbolLeader = isSymbolLeader
-    this.isSymbolRelay = isSymbolRelay
-    this.onUpdate = onUpdate
-    this.pageSize = pageSize
-    this.responder = responder
-    this.skipPending = skipPending
-    this.types = types
-    this.setGroupedValue = setGroupedValue
-    this.storeOptions = storeOptions
-    this.updateOptions = updateOptions as UpdateOptions
-    this.worldOptions = worldOptions
-    // Object.assign(this, otherOptions)
-  }
+        updateOptions.validKeys = !overridenUpdateOptions?.validKeys
+            ? null
+            : {
+                ...Constants.defaultValidKeys,
+                ...(overridenUpdateOptions?.validKeys || {})
+            }
 
-  /**
-   * Creates a new Options object from the current one.
-   *
-   * @param {Options | OptionsProps} options - The options for the node.
-   * @param {any} actionThis - The context for the actions.
-   */
-  clone (): Options {
-    return new Options({ ...this }, this.actions)
-  }
+        this.actions = actions
+        this.batchActionPayloadSizes = batchActionPayloadSizes
+        this.compressStringsAsInts = compressStringsAsInts
+        this.defaultSymbols = defaultSymbols
+        this.enableRollback = enableRollback
+        this.enableQuerying = enableQuerying
+        this.enumDefaultSymbols = enumDefaultSymbols
+        this.getActorId = getActorId
+        this.getGroupedValue = getGroupedValue
+        this.indexes = indexes
+        this.isAuthority = isAuthority
+        this.isAsyncStorage = isAsyncStorage
+        this.isComponentRelay = isComponentRelay
+        this.isDiffed = isDiffed
+        this.isGroupedComponents = isGroupedComponents
+        this.isOrdered = isOrdered
+        this.isReadOnly = isReadOnly
+        this.isSymbolLeader = isSymbolLeader
+        this.isSymbolRelay = isSymbolRelay
+        this.onUpdate = onUpdate
+        this.pageSize = pageSize
+        this.responder = responder
+        this.skipPending = skipPending
+        this.types = types
+        this.setGroupedValue = setGroupedValue
+        this.storeOptions = storeOptions
+        this.updateOptions = updateOptions as UpdateOptions
+        this.worldOptions = worldOptions
+        // Object.assign(this, otherOptions)
+    }
 
-  /**
-   * Extends the current Options object.
-   *
-   * @param {Options | OptionsProps | Object} options - The options for the node.
-   * @param {any} actionThis - The context for the actions.
-   */
-  extend (options: Options | OptionsProps | Object, actionThis: any = this.actions): Options {
-    return new Options({ ...this, ...options } as OptionsProps, actionThis)
-  }
+    /**
+     * Creates a new Options object from the current one.
+     *
+     * @param {Options | OptionsProps} options - The options for the node.
+     * @param {any} actionThis - The context for the actions.
+     */
+    clone(): Options {
+        return new Options({ ...this }, this.actions)
+    }
+
+    /**
+     * Extends the current Options object.
+     *
+     * @param {Options | OptionsProps | Object} options - The options for the node.
+     * @param {any} actionThis - The context for the actions.
+     */
+    extend(options: Options | OptionsProps | Object, actionThis: any = this.actions): Options {
+        return new Options({ ...this, ...options } as OptionsProps, actionThis)
+    }
 }
 
 export default Options

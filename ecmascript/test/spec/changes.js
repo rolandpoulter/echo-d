@@ -2,7 +2,68 @@ export default function changesSpec(echo, { describe, it, expect, mock, spy, xit
     describe('Changes', () => {
         const { Changes, Context } = echo;
 
-        it('should create an instance of Changes class with a context and an optional initial set of changes', () => {
+        // Can create a new instance of Changes class with a context and an optional initial set of changes.
+        it('should create a new instance of Changes class with a context', () => {
+            const context = new Context();
+            const changes = new Changes(context);
+
+            expect(changes).toBeInstanceOf(Changes);
+            expect(changes.context).toBe(context);
+            expect(changes.diffs).toEqual({});
+        });
+
+        // Can change a component in the current context.
+        xit('should change a component in the current context', () => {
+            const context = new Context();
+            const changes = new Changes(context);
+            const id = 'componentId';
+            const key = 'propertyKey';
+            const newValue = 'new value';
+            const prevValue = 'previous value';
+
+            const result = changes.changeComponent(id, key, newValue, prevValue);
+
+            expect(result).toBeInstanceOf(Promise);
+            return result.then((value) => {
+                expect(value).toEqual(newValue);
+                expect(changes.diffs[id][key]).toEqual(newValue);
+            });
+        });
+
+        // Can retrieve the changes of a value.
+        it('should retrieve the changes of a value', () => {
+            const context = new Context();
+            const changes = new Changes(context);
+            const id = 'componentId';
+            const key = 'propertyKey';
+            const storedValue = 'stored value';
+
+            const result = changes.getValue(id, key, storedValue);
+
+            expect(result).toEqual(storedValue);
+        });
+
+        // Can handle undefined or null diffedValue when retrieving the changes of a value.
+        it('should handle undefined or null diffedValue when retrieving the changes of a value', () => {
+            const context = new Context();
+            const changes = new Changes(context);
+            const id = 'componentId';
+            const key = 'propertyKey';
+            const storedValue = 'stored value';
+
+            changes.diffs[id] = { [key]: null };
+
+            const result1 = changes.getValue(id, key, storedValue);
+            expect(result1).toEqual(storedValue);
+
+            changes.diffs[id] = { [key]: undefined };
+
+            const result2 = changes.getValue(id, key, storedValue);
+            expect(result2).toEqual(storedValue);
+        });
+
+        // Can upsert a component in the current context.
+        it('should create an instance of Changes class with a context and an initial set of changes', () => {
             const context = new Context();
             const changes = new Changes(context, { diffs: { '1': { name: 'John', age: 30 } } });
 
