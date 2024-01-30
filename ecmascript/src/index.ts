@@ -1,23 +1,16 @@
 /**
  * Exports all the constants.
  */
-export * from './constants'
+export * as Constants from './constants'
 
 // Index Classes
 
 /**
- * Exports all the indexes-related functions and classes.
+ * Exports all the indexes-related classes.
  */
+export * from './indexes/components'
 export * from './indexes/index'
-
-/**
- * Exports all the indexes-related functions and classes.
- */
 export * from './indexes/sorted'
-
-/**
- * Exports all the indexes-related functions and classes.
- */
 export * from './indexes/spatial'
 
 // Main Classes
@@ -116,15 +109,17 @@ export * as Core from './actions/core'
 /**
  * Exports all the entity-related functions and classes.
  */
-export * as Entitity from './actions/entity'
+export * as Entity from './actions/entity'
 
 /**
  * Exports all the entity-related functions and classes.
  */
 export * as Symbol from './actions/symbol'
 
-// default export is the Handler class
-
+/**
+ * Exports the Handler class.
+*/
 import Handler from './handler'
 
+// default export is the Handler class
 export default Handler

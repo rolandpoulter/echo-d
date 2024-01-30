@@ -44,7 +44,7 @@ export async function updater(context, options, tick = now()) {
      * @param {string | number} action - The action associated with the message.
      * @param {any} payload - The payload of the message.
      */
-    const queueMessage = (action, payload) => {
+    const queueMessage = async (action, payload) => {
         if (batched) {
             // batchBlock.push(payload)
             batchBlock = batchBlock.concat(payload);
@@ -56,7 +56,7 @@ export async function updater(context, options, tick = now()) {
             if (compressStringsAsInts) {
                 action = ensureSymbolIndex(action, context, options);
             }
-            responder([action, payload], type);
+            await responder([action, payload], type);
         }
     };
     /**
@@ -75,7 +75,7 @@ export async function updater(context, options, tick = now()) {
         const groups = isGroupedComponents ? {} : null;
         for (const id in (pendingComponents ?? {})) {
             const components = isAsyncStorage ? await store.findComponents(id) : store.findComponents(id);
-            if (!components) {
+            if (components === null || components === undefined) {
                 break;
             }
             const updatedComponents = pendingComponents ? pendingComponents[id] : {};
@@ -96,6 +96,7 @@ export async function updater(context, options, tick = now()) {
                     };
                 }
                 let value = isAsyncStorage ? await store.findComponent(id, key) : store.findComponent(id, key);
+                // TODO: Fix !true
                 if (isDiffed && context.changes && (state === 'updated' || !true)) {
                     value = context.changes.getValue(id, key, value);
                 }
@@ -124,10 +125,10 @@ export async function updater(context, options, tick = now()) {
                     payload.push(isDiffed ? -tick : tick);
                 }
                 if (isDiffed) {
-                    queueMessage(enumDefaultSymbols.changeComponent, payload);
+                    await queueMessage(enumDefaultSymbols.changeComponent, payload);
                 }
                 else {
-                    queueMessage(enumDefaultSymbols.upsertComponent, payload);
+                    await queueMessage(enumDefaultSymbols.upsertComponent, payload);
                 }
             }
             // delete pendingComponents[id];
@@ -152,10 +153,10 @@ export async function updater(context, options, tick = now()) {
                         payload.push(bufferTicks);
                     }
                     if (isDiffed) {
-                        queueMessage(enumDefaultSymbols.changeComponent, payload);
+                        await queueMessage(enumDefaultSymbols.changeComponent, payload);
                     }
                     else {
-                        queueMessage(enumDefaultSymbols.upsertComponent, payload);
+                        await queueMessage(enumDefaultSymbols.upsertComponent, payload);
                     }
                 }
             }
@@ -170,7 +171,7 @@ export async function updater(context, options, tick = now()) {
     if (!mask || !mask.entities) {
         for (const key of created.entities ?? []) {
             const nkey = ensureSymbol(key);
-            queueMessage(enumDefaultSymbols.createEntity, nkey);
+            await queueMessage(enumDefaultSymbols.createEntity, nkey);
         }
         mergeBatch(enumDefaultSymbols.createEntity);
         created.entities = [];
@@ -183,7 +184,7 @@ export async function updater(context, options, tick = now()) {
     if (!mask || !mask.actors) {
         for (const id in (created.actors ?? {})) {
             const nid = ensureSymbol(id);
-            queueMessage(enumDefaultSymbols.spawnActor, nid);
+            await queueMessage(enumDefaultSymbols.spawnActor, nid);
         }
         mergeBatch(enumDefaultSymbols.spawnActor);
         created.actors = {};
@@ -196,7 +197,7 @@ export async function updater(context, options, tick = now()) {
     if (!mask || !mask.entities) {
         for (const key of removed.entities ?? []) {
             const nkey = ensureSymbol(key);
-            queueMessage(enumDefaultSymbols.removeEntity, nkey);
+            await queueMessage(enumDefaultSymbols.removeEntity, nkey);
         }
         mergeBatch(enumDefaultSymbols.removeEntity);
         removed.entities = [];
@@ -209,7 +210,7 @@ export async function updater(context, options, tick = now()) {
     if (!mask || !mask.actors) {
         for (const id in (removed.actors ?? {})) {
             const nid = ensureSymbol(id);
-            queueMessage(enumDefaultSymbols.removeActor, nid);
+            await queueMessage(enumDefaultSymbols.removeActor, nid);
         }
         mergeBatch(enumDefaultSymbols.removeActor);
         removed.actors = {};
@@ -232,7 +233,7 @@ export async function updater(context, options, tick = now()) {
                 }
                 const nkey = ensureSymbol(key);
                 const payload = [nid, nkey];
-                queueMessage(enumDefaultSymbols.removeComponent, payload);
+                await queueMessage(enumDefaultSymbols.removeComponent, payload);
             }
             // delete removed.components[key]
         }
@@ -274,7 +275,7 @@ export async function updater(context, options, tick = now()) {
                 const isTuple = Array.isArray(payload);
                 const input = isTuple ? payload[0] : payload;
                 const tick_ = isTuple ? payload[1] : tick;
-                queueMessage(enumDefaultSymbols.actorInput, isTuple || enableRollback ? [input, tick_] : input);
+                await queueMessage(enumDefaultSymbols.actorInput, isTuple || enableRollback ? [input, tick_] : input);
             }
             // delete created.inputs[id];
         }

@@ -5,4 +5,4 @@ if [ $# -eq 0 ]
     npm run build
 fi
 
-deno task test --allow-hrtime
+deno task test

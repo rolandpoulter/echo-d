@@ -108,7 +108,7 @@ const store = context.store
    * @param {string | number} action - The action associated with the message.
    * @param {any} payload - The payload of the message.
    */
-  const queueMessage = (action: string | number, payload: any) => {
+  const queueMessage = async (action: string | number, payload: any) => {
     if (batched) {
       // batchBlock.push(payload)
       batchBlock = batchBlock.concat(payload)
@@ -118,7 +118,7 @@ const store = context.store
       if (compressStringsAsInts) {
         action = ensureSymbolIndex(action, context, options)
       }
-      responder([action, payload], type)
+      await responder([action, payload], type)
     }
   }
 
@@ -140,7 +140,8 @@ const store = context.store
     
     for (const id in (pendingComponents ?? {})) {
       const components = isAsyncStorage ? await store.findComponents(id) : store.findComponents(id)
-      if (!components) {
+
+      if (components === null || components === undefined) {
         break
       }
 
@@ -166,6 +167,7 @@ const store = context.store
         }
 
         let value = isAsyncStorage ? await store.findComponent(id, key) : store.findComponent(id, key)
+        // TODO: Fix !true
         if (isDiffed && context.changes && (state === 'updated' || !true)) {
           value = context.changes.getValue(id, key, value)
         }
@@ -203,9 +205,9 @@ const store = context.store
         }
 
         if (isDiffed) {
-          queueMessage(enumDefaultSymbols.changeComponent, payload)
+          await queueMessage(enumDefaultSymbols.changeComponent, payload)
         } else {
-          queueMessage(enumDefaultSymbols.upsertComponent, payload)
+          await queueMessage(enumDefaultSymbols.upsertComponent, payload)
         }
       }
 
@@ -235,9 +237,9 @@ const store = context.store
           }
 
           if (isDiffed) {
-            queueMessage(enumDefaultSymbols.changeComponent, payload)
+            await queueMessage(enumDefaultSymbols.changeComponent, payload)
           } else {
-            queueMessage(enumDefaultSymbols.upsertComponent, payload)
+            await queueMessage(enumDefaultSymbols.upsertComponent, payload)
           }
         }
       }
@@ -255,7 +257,7 @@ const store = context.store
     for (const key of created.entities ?? []) {
       const nkey = ensureSymbol(key)
 
-      queueMessage(enumDefaultSymbols.createEntity, nkey)
+      await queueMessage(enumDefaultSymbols.createEntity, nkey)
     }
 
     mergeBatch(enumDefaultSymbols.createEntity)
@@ -271,7 +273,7 @@ const store = context.store
     for (const id in (created.actors ?? {})) {
       const nid = ensureSymbol(id)
 
-      queueMessage(enumDefaultSymbols.spawnActor, nid)
+      await queueMessage(enumDefaultSymbols.spawnActor, nid)
     }
 
     mergeBatch(enumDefaultSymbols.spawnActor)
@@ -287,7 +289,7 @@ const store = context.store
     for (const key of removed.entities ?? []) {
       const nkey = ensureSymbol(key)
 
-      queueMessage(enumDefaultSymbols.removeEntity, nkey)
+      await queueMessage(enumDefaultSymbols.removeEntity, nkey)
     }
 
     mergeBatch(enumDefaultSymbols.removeEntity)
@@ -303,7 +305,7 @@ const store = context.store
     for (const id in (removed.actors ?? {})) {
       const nid = ensureSymbol(id)
 
-      queueMessage(enumDefaultSymbols.removeActor, nid)
+      await queueMessage(enumDefaultSymbols.removeActor, nid)
     }
 
     mergeBatch(enumDefaultSymbols.removeActor)
@@ -333,7 +335,7 @@ const store = context.store
 
         const payload = [nid, nkey]
 
-        queueMessage(enumDefaultSymbols.removeComponent, payload)
+        await queueMessage(enumDefaultSymbols.removeComponent, payload)
       }
 
       // delete removed.components[key]
@@ -385,7 +387,7 @@ const store = context.store
         const input = isTuple ? payload[0] : payload
         const tick_ = isTuple ? payload[1] : tick
 
-        queueMessage(
+        await queueMessage(
           enumDefaultSymbols.actorInput,
           isTuple || enableRollback ? [input, tick_] : input
         )

@@ -2683,9 +2683,12 @@ __webpack_require__.r(__webpack_exports__);
  * @returns {number[]} The index of the inserted value
  */
 function binaryInsertID(items, value, id) {
+    if (!items) {
+        return [0, 0];
+    }
     const low = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.binaryInsert)(items, value, (item) => item[0]);
     const item = items[low];
-    const v = item[0];
+    const v = item; // [0] || item;
     if (v === value) {
         const ids = item[1];
         const i = ids.indexOf(id);
@@ -2713,9 +2716,12 @@ function binaryInsertID(items, value, id) {
  * @returns {number[]} The index of the removed value
  */
 function binaryRemoveID(items, value, id) {
+    if (!items) {
+        return [-1, -1];
+    }
     const low = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.binaryInsert)(items, value, (item) => item[0]);
     const item = items[low];
-    const v = item[0];
+    const v = item; // [0] || item;
     if (v === value) {
         const ids = item[1];
         const i = ids.lastIndexOf(id);
@@ -4362,7 +4368,7 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
      * @param {string | number} action - The action associated with the message.
      * @param {any} payload - The payload of the message.
      */
-    const queueMessage = (action, payload) => {
+    const queueMessage = async (action, payload) => {
         if (batched) {
             // batchBlock.push(payload)
             batchBlock = batchBlock.concat(payload);
@@ -4374,7 +4380,7 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
             if (compressStringsAsInts) {
                 action = (0,_symbols_js__WEBPACK_IMPORTED_MODULE_1__.ensureSymbolIndex)(action, context, options);
             }
-            responder([action, payload], type);
+            await responder([action, payload], type);
         }
     };
     /**
@@ -4393,7 +4399,7 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
         const groups = isGroupedComponents ? {} : null;
         for (const id in (pendingComponents ?? {})) {
             const components = isAsyncStorage ? await store.findComponents(id) : store.findComponents(id);
-            if (!components) {
+            if (components === null || components === undefined) {
                 break;
             }
             const updatedComponents = pendingComponents ? pendingComponents[id] : {};
@@ -4414,6 +4420,7 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
                     };
                 }
                 let value = isAsyncStorage ? await store.findComponent(id, key) : store.findComponent(id, key);
+                // TODO: Fix !true
                 if (isDiffed && context.changes && (state === 'updated' || !true)) {
                     value = context.changes.getValue(id, key, value);
                 }
@@ -4442,10 +4449,10 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
                     payload.push(isDiffed ? -tick : tick);
                 }
                 if (isDiffed) {
-                    queueMessage(enumDefaultSymbols.changeComponent, payload);
+                    await queueMessage(enumDefaultSymbols.changeComponent, payload);
                 }
                 else {
-                    queueMessage(enumDefaultSymbols.upsertComponent, payload);
+                    await queueMessage(enumDefaultSymbols.upsertComponent, payload);
                 }
             }
             // delete pendingComponents[id];
@@ -4470,10 +4477,10 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
                         payload.push(bufferTicks);
                     }
                     if (isDiffed) {
-                        queueMessage(enumDefaultSymbols.changeComponent, payload);
+                        await queueMessage(enumDefaultSymbols.changeComponent, payload);
                     }
                     else {
-                        queueMessage(enumDefaultSymbols.upsertComponent, payload);
+                        await queueMessage(enumDefaultSymbols.upsertComponent, payload);
                     }
                 }
             }
@@ -4488,7 +4495,7 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
     if (!mask || !mask.entities) {
         for (const key of created.entities ?? []) {
             const nkey = ensureSymbol(key);
-            queueMessage(enumDefaultSymbols.createEntity, nkey);
+            await queueMessage(enumDefaultSymbols.createEntity, nkey);
         }
         mergeBatch(enumDefaultSymbols.createEntity);
         created.entities = [];
@@ -4501,7 +4508,7 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
     if (!mask || !mask.actors) {
         for (const id in (created.actors ?? {})) {
             const nid = ensureSymbol(id);
-            queueMessage(enumDefaultSymbols.spawnActor, nid);
+            await queueMessage(enumDefaultSymbols.spawnActor, nid);
         }
         mergeBatch(enumDefaultSymbols.spawnActor);
         created.actors = {};
@@ -4514,7 +4521,7 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
     if (!mask || !mask.entities) {
         for (const key of removed.entities ?? []) {
             const nkey = ensureSymbol(key);
-            queueMessage(enumDefaultSymbols.removeEntity, nkey);
+            await queueMessage(enumDefaultSymbols.removeEntity, nkey);
         }
         mergeBatch(enumDefaultSymbols.removeEntity);
         removed.entities = [];
@@ -4527,7 +4534,7 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
     if (!mask || !mask.actors) {
         for (const id in (removed.actors ?? {})) {
             const nid = ensureSymbol(id);
-            queueMessage(enumDefaultSymbols.removeActor, nid);
+            await queueMessage(enumDefaultSymbols.removeActor, nid);
         }
         mergeBatch(enumDefaultSymbols.removeActor);
         removed.actors = {};
@@ -4550,7 +4557,7 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
                 }
                 const nkey = ensureSymbol(key);
                 const payload = [nid, nkey];
-                queueMessage(enumDefaultSymbols.removeComponent, payload);
+                await queueMessage(enumDefaultSymbols.removeComponent, payload);
             }
             // delete removed.components[key]
         }
@@ -4592,7 +4599,7 @@ async function updater(context, options, tick = (0,_utils_js__WEBPACK_IMPORTED_M
                 const isTuple = Array.isArray(payload);
                 const input = isTuple ? payload[0] : payload;
                 const tick_ = isTuple ? payload[1] : tick;
-                queueMessage(enumDefaultSymbols.actorInput, isTuple || enableRollback ? [input, tick_] : input);
+                await queueMessage(enumDefaultSymbols.actorInput, isTuple || enableRollback ? [input, tick_] : input);
             }
             // delete created.inputs[id];
         }
@@ -5032,96 +5039,79 @@ var __webpack_exports__ = {};
   \**********************/
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   Actions: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.Actions),
-/* harmony export */   Actor: () => (/* reexport module object */ _actions_actor_js__WEBPACK_IMPORTED_MODULE_18__),
-/* harmony export */   ArrayTypes: () => (/* reexport safe */ _types_js__WEBPACK_IMPORTED_MODULE_13__.ArrayTypes),
-/* harmony export */   BasicTypes: () => (/* reexport safe */ _types_js__WEBPACK_IMPORTED_MODULE_13__.BasicTypes),
-/* harmony export */   Changes: () => (/* reexport safe */ _changes_js__WEBPACK_IMPORTED_MODULE_4__.Changes),
-/* harmony export */   Client: () => (/* reexport module object */ _client_js__WEBPACK_IMPORTED_MODULE_17__),
-/* harmony export */   CommonComponents: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.CommonComponents),
-/* harmony export */   Component: () => (/* reexport module object */ _actions_component_js__WEBPACK_IMPORTED_MODULE_19__),
-/* harmony export */   Context: () => (/* reexport safe */ _context_js__WEBPACK_IMPORTED_MODULE_5__.Context),
-/* harmony export */   Core: () => (/* reexport module object */ _actions_core_js__WEBPACK_IMPORTED_MODULE_20__),
-/* harmony export */   DefaultSymbols: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.DefaultSymbols),
-/* harmony export */   Emitter: () => (/* reexport safe */ _emitter_js__WEBPACK_IMPORTED_MODULE_6__.Emitter),
-/* harmony export */   Entitity: () => (/* reexport module object */ _actions_entity_js__WEBPACK_IMPORTED_MODULE_21__),
-/* harmony export */   Handler: () => (/* reexport safe */ _handler_js__WEBPACK_IMPORTED_MODULE_7__.Handler),
-/* harmony export */   Index: () => (/* reexport safe */ _indexes_index_js__WEBPACK_IMPORTED_MODULE_1__.Index),
-/* harmony export */   IndexMap: () => (/* reexport safe */ _storage_js__WEBPACK_IMPORTED_MODULE_11__.IndexMap),
-/* harmony export */   Node: () => (/* reexport module object */ _node_js__WEBPACK_IMPORTED_MODULE_16__),
-/* harmony export */   Options: () => (/* reexport safe */ _options_js__WEBPACK_IMPORTED_MODULE_8__.Options),
-/* harmony export */   Ordered: () => (/* reexport safe */ _ordered_js__WEBPACK_IMPORTED_MODULE_9__.Ordered),
-/* harmony export */   Pending: () => (/* reexport safe */ _pending_js__WEBPACK_IMPORTED_MODULE_10__.Pending),
-/* harmony export */   SortedIndex: () => (/* reexport safe */ _indexes_sorted_js__WEBPACK_IMPORTED_MODULE_2__.SortedIndex),
-/* harmony export */   SpatialIndex: () => (/* reexport safe */ _indexes_spatial_js__WEBPACK_IMPORTED_MODULE_3__.SpatialIndex),
-/* harmony export */   Storage: () => (/* reexport safe */ _storage_js__WEBPACK_IMPORTED_MODULE_11__.Storage),
-/* harmony export */   Symbol: () => (/* reexport module object */ _actions_symbol_js__WEBPACK_IMPORTED_MODULE_22__),
-/* harmony export */   Symbols: () => (/* reexport safe */ _symbols_js__WEBPACK_IMPORTED_MODULE_12__.Symbols),
-/* harmony export */   batchActionPayloadSizes: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.batchActionPayloadSizes),
-/* harmony export */   createStorageProps: () => (/* reexport safe */ _storage_js__WEBPACK_IMPORTED_MODULE_11__.createStorageProps),
+/* harmony export */   Actor: () => (/* reexport module object */ _actions_actor_js__WEBPACK_IMPORTED_MODULE_19__),
+/* harmony export */   ArrayTypes: () => (/* reexport safe */ _types_js__WEBPACK_IMPORTED_MODULE_14__.ArrayTypes),
+/* harmony export */   BasicTypes: () => (/* reexport safe */ _types_js__WEBPACK_IMPORTED_MODULE_14__.BasicTypes),
+/* harmony export */   Changes: () => (/* reexport safe */ _changes_js__WEBPACK_IMPORTED_MODULE_5__.Changes),
+/* harmony export */   Client: () => (/* reexport module object */ _client_js__WEBPACK_IMPORTED_MODULE_18__),
+/* harmony export */   Component: () => (/* reexport module object */ _actions_component_js__WEBPACK_IMPORTED_MODULE_20__),
+/* harmony export */   ComponentsIndex: () => (/* reexport safe */ _indexes_components_js__WEBPACK_IMPORTED_MODULE_1__.ComponentsIndex),
+/* harmony export */   Constants: () => (/* reexport module object */ _constants_js__WEBPACK_IMPORTED_MODULE_0__),
+/* harmony export */   Context: () => (/* reexport safe */ _context_js__WEBPACK_IMPORTED_MODULE_6__.Context),
+/* harmony export */   Core: () => (/* reexport module object */ _actions_core_js__WEBPACK_IMPORTED_MODULE_21__),
+/* harmony export */   Emitter: () => (/* reexport safe */ _emitter_js__WEBPACK_IMPORTED_MODULE_7__.Emitter),
+/* harmony export */   Entity: () => (/* reexport module object */ _actions_entity_js__WEBPACK_IMPORTED_MODULE_22__),
+/* harmony export */   Handler: () => (/* reexport safe */ _handler_js__WEBPACK_IMPORTED_MODULE_8__.Handler),
+/* harmony export */   Index: () => (/* reexport safe */ _indexes_index_js__WEBPACK_IMPORTED_MODULE_2__.Index),
+/* harmony export */   IndexMap: () => (/* reexport safe */ _storage_js__WEBPACK_IMPORTED_MODULE_12__.IndexMap),
+/* harmony export */   Node: () => (/* reexport module object */ _node_js__WEBPACK_IMPORTED_MODULE_17__),
+/* harmony export */   Options: () => (/* reexport safe */ _options_js__WEBPACK_IMPORTED_MODULE_9__.Options),
+/* harmony export */   Ordered: () => (/* reexport safe */ _ordered_js__WEBPACK_IMPORTED_MODULE_10__.Ordered),
+/* harmony export */   Pending: () => (/* reexport safe */ _pending_js__WEBPACK_IMPORTED_MODULE_11__.Pending),
+/* harmony export */   SortedIndex: () => (/* reexport safe */ _indexes_sorted_js__WEBPACK_IMPORTED_MODULE_3__.SortedIndex),
+/* harmony export */   SpatialIndex: () => (/* reexport safe */ _indexes_spatial_js__WEBPACK_IMPORTED_MODULE_4__.SpatialIndex),
+/* harmony export */   Storage: () => (/* reexport safe */ _storage_js__WEBPACK_IMPORTED_MODULE_12__.Storage),
+/* harmony export */   Symbol: () => (/* reexport module object */ _actions_symbol_js__WEBPACK_IMPORTED_MODULE_23__),
+/* harmony export */   Symbols: () => (/* reexport safe */ _symbols_js__WEBPACK_IMPORTED_MODULE_13__.Symbols),
+/* harmony export */   createStorageProps: () => (/* reexport safe */ _storage_js__WEBPACK_IMPORTED_MODULE_12__.createStorageProps),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
-/* harmony export */   defaultGetActorId: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultGetActorId),
-/* harmony export */   defaultGetGroupedValue: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultGetGroupedValue),
-/* harmony export */   defaultOptions: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultOptions),
-/* harmony export */   defaultSetGroupedValue: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultSetGroupedValue),
-/* harmony export */   defaultUpdateOptions: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultUpdateOptions),
-/* harmony export */   defaultValidKeys: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.defaultValidKeys),
-/* harmony export */   ensureSymbolIndex: () => (/* reexport safe */ _symbols_js__WEBPACK_IMPORTED_MODULE_12__.ensureSymbolIndex),
-/* harmony export */   enumActions: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.enumActions),
-/* harmony export */   enumCommonComponents: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.enumCommonComponents),
-/* harmony export */   enumDefaultSymbols: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.enumDefaultSymbols),
-/* harmony export */   extractSymbol: () => (/* reexport safe */ _symbols_js__WEBPACK_IMPORTED_MODULE_12__.extractSymbol),
-/* harmony export */   getActionHandler: () => (/* reexport safe */ _handler_js__WEBPACK_IMPORTED_MODULE_7__.getActionHandler),
-/* harmony export */   getSymbolAction: () => (/* reexport safe */ _handler_js__WEBPACK_IMPORTED_MODULE_7__.getSymbolAction),
-/* harmony export */   handler: () => (/* reexport safe */ _handler_js__WEBPACK_IMPORTED_MODULE_7__.handler),
-/* harmony export */   manyHandler: () => (/* reexport safe */ _handler_js__WEBPACK_IMPORTED_MODULE_7__.manyHandler),
-/* harmony export */   oneHandler: () => (/* reexport safe */ _handler_js__WEBPACK_IMPORTED_MODULE_7__.oneHandler),
-/* harmony export */   padEnum: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.padEnum),
-/* harmony export */   recursiveSymbolExtraction: () => (/* reexport safe */ _symbols_js__WEBPACK_IMPORTED_MODULE_12__.recursiveSymbolExtraction),
-/* harmony export */   recursiveSymbolIndexesEnsured: () => (/* reexport safe */ _symbols_js__WEBPACK_IMPORTED_MODULE_12__.recursiveSymbolIndexesEnsured),
-/* harmony export */   updater: () => (/* reexport safe */ _updater_js__WEBPACK_IMPORTED_MODULE_14__.updater),
-/* harmony export */   utils: () => (/* reexport module object */ _utils_js__WEBPACK_IMPORTED_MODULE_15__),
-/* harmony export */   voidResponder: () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_0__.voidResponder)
+/* harmony export */   ensureSymbolIndex: () => (/* reexport safe */ _symbols_js__WEBPACK_IMPORTED_MODULE_13__.ensureSymbolIndex),
+/* harmony export */   extractSymbol: () => (/* reexport safe */ _symbols_js__WEBPACK_IMPORTED_MODULE_13__.extractSymbol),
+/* harmony export */   getActionHandler: () => (/* reexport safe */ _handler_js__WEBPACK_IMPORTED_MODULE_8__.getActionHandler),
+/* harmony export */   getSymbolAction: () => (/* reexport safe */ _handler_js__WEBPACK_IMPORTED_MODULE_8__.getSymbolAction),
+/* harmony export */   handler: () => (/* reexport safe */ _handler_js__WEBPACK_IMPORTED_MODULE_8__.handler),
+/* harmony export */   manyHandler: () => (/* reexport safe */ _handler_js__WEBPACK_IMPORTED_MODULE_8__.manyHandler),
+/* harmony export */   oneHandler: () => (/* reexport safe */ _handler_js__WEBPACK_IMPORTED_MODULE_8__.oneHandler),
+/* harmony export */   recursiveSymbolExtraction: () => (/* reexport safe */ _symbols_js__WEBPACK_IMPORTED_MODULE_13__.recursiveSymbolExtraction),
+/* harmony export */   recursiveSymbolIndexesEnsured: () => (/* reexport safe */ _symbols_js__WEBPACK_IMPORTED_MODULE_13__.recursiveSymbolIndexesEnsured),
+/* harmony export */   updater: () => (/* reexport safe */ _updater_js__WEBPACK_IMPORTED_MODULE_15__.updater),
+/* harmony export */   utils: () => (/* reexport module object */ _utils_js__WEBPACK_IMPORTED_MODULE_16__)
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./constants.js */ "./lib/constants.js");
-/* harmony import */ var _indexes_index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./indexes/index.js */ "./lib/indexes/index.js");
-/* harmony import */ var _indexes_sorted_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./indexes/sorted.js */ "./lib/indexes/sorted.js");
-/* harmony import */ var _indexes_spatial_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./indexes/spatial.js */ "./lib/indexes/spatial.js");
-/* harmony import */ var _changes_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./changes.js */ "./lib/changes.js");
-/* harmony import */ var _context_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./context.js */ "./lib/context.js");
-/* harmony import */ var _emitter_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./emitter.js */ "./lib/emitter.js");
-/* harmony import */ var _handler_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./handler.js */ "./lib/handler.js");
-/* harmony import */ var _options_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./options.js */ "./lib/options.js");
-/* harmony import */ var _ordered_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./ordered.js */ "./lib/ordered.js");
-/* harmony import */ var _pending_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./pending.js */ "./lib/pending.js");
-/* harmony import */ var _storage_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./storage.js */ "./lib/storage.js");
-/* harmony import */ var _symbols_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./symbols.js */ "./lib/symbols.js");
-/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./types.js */ "./lib/types.js");
-/* harmony import */ var _updater_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./updater.js */ "./lib/updater.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./utils.js */ "./lib/utils.js");
-/* harmony import */ var _node_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./node.js */ "./lib/node.js");
-/* harmony import */ var _client_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./client.js */ "./lib/client.js");
-/* harmony import */ var _actions_actor_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./actions/actor.js */ "./lib/actions/actor.js");
-/* harmony import */ var _actions_component_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./actions/component.js */ "./lib/actions/component.js");
-/* harmony import */ var _actions_core_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./actions/core.js */ "./lib/actions/core.js");
-/* harmony import */ var _actions_entity_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./actions/entity.js */ "./lib/actions/entity.js");
-/* harmony import */ var _actions_symbol_js__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ./actions/symbol.js */ "./lib/actions/symbol.js");
+/* harmony import */ var _indexes_components_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./indexes/components.js */ "./lib/indexes/components.js");
+/* harmony import */ var _indexes_index_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./indexes/index.js */ "./lib/indexes/index.js");
+/* harmony import */ var _indexes_sorted_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./indexes/sorted.js */ "./lib/indexes/sorted.js");
+/* harmony import */ var _indexes_spatial_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./indexes/spatial.js */ "./lib/indexes/spatial.js");
+/* harmony import */ var _changes_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./changes.js */ "./lib/changes.js");
+/* harmony import */ var _context_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./context.js */ "./lib/context.js");
+/* harmony import */ var _emitter_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./emitter.js */ "./lib/emitter.js");
+/* harmony import */ var _handler_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./handler.js */ "./lib/handler.js");
+/* harmony import */ var _options_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./options.js */ "./lib/options.js");
+/* harmony import */ var _ordered_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./ordered.js */ "./lib/ordered.js");
+/* harmony import */ var _pending_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./pending.js */ "./lib/pending.js");
+/* harmony import */ var _storage_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./storage.js */ "./lib/storage.js");
+/* harmony import */ var _symbols_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./symbols.js */ "./lib/symbols.js");
+/* harmony import */ var _types_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./types.js */ "./lib/types.js");
+/* harmony import */ var _updater_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./updater.js */ "./lib/updater.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./utils.js */ "./lib/utils.js");
+/* harmony import */ var _node_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./node.js */ "./lib/node.js");
+/* harmony import */ var _client_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./client.js */ "./lib/client.js");
+/* harmony import */ var _actions_actor_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./actions/actor.js */ "./lib/actions/actor.js");
+/* harmony import */ var _actions_component_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./actions/component.js */ "./lib/actions/component.js");
+/* harmony import */ var _actions_core_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./actions/core.js */ "./lib/actions/core.js");
+/* harmony import */ var _actions_entity_js__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ./actions/entity.js */ "./lib/actions/entity.js");
+/* harmony import */ var _actions_symbol_js__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ./actions/symbol.js */ "./lib/actions/symbol.js");
 /**
  * Exports all the constants.
  */
 
 // Index Classes
 /**
- * Exports all the indexes-related functions and classes.
+ * Exports all the indexes-related classes.
  */
 
-/**
- * Exports all the indexes-related functions and classes.
- */
 
-/**
- * Exports all the indexes-related functions and classes.
- */
+
 
 // Main Classes
 /**
@@ -5203,25 +5193,27 @@ __webpack_require__.r(__webpack_exports__);
  * Exports all the entity-related functions and classes.
  */
 
-// default export is the Handler class
+/**
+ * Exports the Handler class.
+*/
 
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_handler_js__WEBPACK_IMPORTED_MODULE_7__["default"]);
+// default export is the Handler class
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_handler_js__WEBPACK_IMPORTED_MODULE_8__["default"]);
 
 })();
 
-var __webpack_exports__Actions = __webpack_exports__.Actions;
 var __webpack_exports__Actor = __webpack_exports__.Actor;
 var __webpack_exports__ArrayTypes = __webpack_exports__.ArrayTypes;
 var __webpack_exports__BasicTypes = __webpack_exports__.BasicTypes;
 var __webpack_exports__Changes = __webpack_exports__.Changes;
 var __webpack_exports__Client = __webpack_exports__.Client;
-var __webpack_exports__CommonComponents = __webpack_exports__.CommonComponents;
 var __webpack_exports__Component = __webpack_exports__.Component;
+var __webpack_exports__ComponentsIndex = __webpack_exports__.ComponentsIndex;
+var __webpack_exports__Constants = __webpack_exports__.Constants;
 var __webpack_exports__Context = __webpack_exports__.Context;
 var __webpack_exports__Core = __webpack_exports__.Core;
-var __webpack_exports__DefaultSymbols = __webpack_exports__.DefaultSymbols;
 var __webpack_exports__Emitter = __webpack_exports__.Emitter;
-var __webpack_exports__Entitity = __webpack_exports__.Entitity;
+var __webpack_exports__Entity = __webpack_exports__.Entity;
 var __webpack_exports__Handler = __webpack_exports__.Handler;
 var __webpack_exports__Index = __webpack_exports__.Index;
 var __webpack_exports__IndexMap = __webpack_exports__.IndexMap;
@@ -5234,31 +5226,19 @@ var __webpack_exports__SpatialIndex = __webpack_exports__.SpatialIndex;
 var __webpack_exports__Storage = __webpack_exports__.Storage;
 var __webpack_exports__Symbol = __webpack_exports__.Symbol;
 var __webpack_exports__Symbols = __webpack_exports__.Symbols;
-var __webpack_exports__batchActionPayloadSizes = __webpack_exports__.batchActionPayloadSizes;
 var __webpack_exports__createStorageProps = __webpack_exports__.createStorageProps;
 var __webpack_exports__default = __webpack_exports__["default"];
-var __webpack_exports__defaultGetActorId = __webpack_exports__.defaultGetActorId;
-var __webpack_exports__defaultGetGroupedValue = __webpack_exports__.defaultGetGroupedValue;
-var __webpack_exports__defaultOptions = __webpack_exports__.defaultOptions;
-var __webpack_exports__defaultSetGroupedValue = __webpack_exports__.defaultSetGroupedValue;
-var __webpack_exports__defaultUpdateOptions = __webpack_exports__.defaultUpdateOptions;
-var __webpack_exports__defaultValidKeys = __webpack_exports__.defaultValidKeys;
 var __webpack_exports__ensureSymbolIndex = __webpack_exports__.ensureSymbolIndex;
-var __webpack_exports__enumActions = __webpack_exports__.enumActions;
-var __webpack_exports__enumCommonComponents = __webpack_exports__.enumCommonComponents;
-var __webpack_exports__enumDefaultSymbols = __webpack_exports__.enumDefaultSymbols;
 var __webpack_exports__extractSymbol = __webpack_exports__.extractSymbol;
 var __webpack_exports__getActionHandler = __webpack_exports__.getActionHandler;
 var __webpack_exports__getSymbolAction = __webpack_exports__.getSymbolAction;
 var __webpack_exports__handler = __webpack_exports__.handler;
 var __webpack_exports__manyHandler = __webpack_exports__.manyHandler;
 var __webpack_exports__oneHandler = __webpack_exports__.oneHandler;
-var __webpack_exports__padEnum = __webpack_exports__.padEnum;
 var __webpack_exports__recursiveSymbolExtraction = __webpack_exports__.recursiveSymbolExtraction;
 var __webpack_exports__recursiveSymbolIndexesEnsured = __webpack_exports__.recursiveSymbolIndexesEnsured;
 var __webpack_exports__updater = __webpack_exports__.updater;
 var __webpack_exports__utils = __webpack_exports__.utils;
-var __webpack_exports__voidResponder = __webpack_exports__.voidResponder;
-export { __webpack_exports__Actions as Actions, __webpack_exports__Actor as Actor, __webpack_exports__ArrayTypes as ArrayTypes, __webpack_exports__BasicTypes as BasicTypes, __webpack_exports__Changes as Changes, __webpack_exports__Client as Client, __webpack_exports__CommonComponents as CommonComponents, __webpack_exports__Component as Component, __webpack_exports__Context as Context, __webpack_exports__Core as Core, __webpack_exports__DefaultSymbols as DefaultSymbols, __webpack_exports__Emitter as Emitter, __webpack_exports__Entitity as Entitity, __webpack_exports__Handler as Handler, __webpack_exports__Index as Index, __webpack_exports__IndexMap as IndexMap, __webpack_exports__Node as Node, __webpack_exports__Options as Options, __webpack_exports__Ordered as Ordered, __webpack_exports__Pending as Pending, __webpack_exports__SortedIndex as SortedIndex, __webpack_exports__SpatialIndex as SpatialIndex, __webpack_exports__Storage as Storage, __webpack_exports__Symbol as Symbol, __webpack_exports__Symbols as Symbols, __webpack_exports__batchActionPayloadSizes as batchActionPayloadSizes, __webpack_exports__createStorageProps as createStorageProps, __webpack_exports__default as default, __webpack_exports__defaultGetActorId as defaultGetActorId, __webpack_exports__defaultGetGroupedValue as defaultGetGroupedValue, __webpack_exports__defaultOptions as defaultOptions, __webpack_exports__defaultSetGroupedValue as defaultSetGroupedValue, __webpack_exports__defaultUpdateOptions as defaultUpdateOptions, __webpack_exports__defaultValidKeys as defaultValidKeys, __webpack_exports__ensureSymbolIndex as ensureSymbolIndex, __webpack_exports__enumActions as enumActions, __webpack_exports__enumCommonComponents as enumCommonComponents, __webpack_exports__enumDefaultSymbols as enumDefaultSymbols, __webpack_exports__extractSymbol as extractSymbol, __webpack_exports__getActionHandler as getActionHandler, __webpack_exports__getSymbolAction as getSymbolAction, __webpack_exports__handler as handler, __webpack_exports__manyHandler as manyHandler, __webpack_exports__oneHandler as oneHandler, __webpack_exports__padEnum as padEnum, __webpack_exports__recursiveSymbolExtraction as recursiveSymbolExtraction, __webpack_exports__recursiveSymbolIndexesEnsured as recursiveSymbolIndexesEnsured, __webpack_exports__updater as updater, __webpack_exports__utils as utils, __webpack_exports__voidResponder as voidResponder };
+export { __webpack_exports__Actor as Actor, __webpack_exports__ArrayTypes as ArrayTypes, __webpack_exports__BasicTypes as BasicTypes, __webpack_exports__Changes as Changes, __webpack_exports__Client as Client, __webpack_exports__Component as Component, __webpack_exports__ComponentsIndex as ComponentsIndex, __webpack_exports__Constants as Constants, __webpack_exports__Context as Context, __webpack_exports__Core as Core, __webpack_exports__Emitter as Emitter, __webpack_exports__Entity as Entity, __webpack_exports__Handler as Handler, __webpack_exports__Index as Index, __webpack_exports__IndexMap as IndexMap, __webpack_exports__Node as Node, __webpack_exports__Options as Options, __webpack_exports__Ordered as Ordered, __webpack_exports__Pending as Pending, __webpack_exports__SortedIndex as SortedIndex, __webpack_exports__SpatialIndex as SpatialIndex, __webpack_exports__Storage as Storage, __webpack_exports__Symbol as Symbol, __webpack_exports__Symbols as Symbols, __webpack_exports__createStorageProps as createStorageProps, __webpack_exports__default as default, __webpack_exports__ensureSymbolIndex as ensureSymbolIndex, __webpack_exports__extractSymbol as extractSymbol, __webpack_exports__getActionHandler as getActionHandler, __webpack_exports__getSymbolAction as getSymbolAction, __webpack_exports__handler as handler, __webpack_exports__manyHandler as manyHandler, __webpack_exports__oneHandler as oneHandler, __webpack_exports__recursiveSymbolExtraction as recursiveSymbolExtraction, __webpack_exports__recursiveSymbolIndexesEnsured as recursiveSymbolIndexesEnsured, __webpack_exports__updater as updater, __webpack_exports__utils as utils };
 
 //# sourceMappingURL=lib.echo-d.js.map

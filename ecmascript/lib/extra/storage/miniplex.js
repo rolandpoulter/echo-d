@@ -127,8 +127,11 @@ export class MiniplexStorage extends Storage {
         const entity = this.derefEntity(id);
         if (entity) {
             const prevValue = entity[key];
-            this.world.addComponent(entity, key, value);
-            // this.world.reindex(entity)
+            // if (entity[key] === undefined || entity[key] === null) {
+            //     this.world.addComponent(entity, key, value);
+            // }
+            entity[key] = value;
+            this.world.reindex(entity);
             this.updateComponentsIndex(id, key, prevValue, value);
         }
     }

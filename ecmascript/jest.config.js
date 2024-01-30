@@ -31,9 +31,6 @@ const config = {
     // "**/*.*"
     'lib/**/*.{js,mjs,cjs,jsx}',
     'examples/**/*.{js,mjs,cjs,jsx}',
-    // join(__dirname, 'src', '**', '*.{ts,tsx}'),
-    // join(__dirname, 'lib', '**', '*.{js,mjs,cjs,jsx}'),
-    // join(__dirname, 'examples', '**', '*.{js,mjs,cjs,jsx}'),
   ],
 
   // The directory where Jest should output its coverage files
@@ -144,11 +141,6 @@ const config = {
     // "src",
     "lib",
     "examples",
-    // join(__dirname, 'lib'),
-    // join(__dirname, 'examples'),
-    
-    // path.join(__dirname, 'test', 'env', 'node'),
-    // path.join(__dirname, 'test', 'env', 'web')
   ],
 
   // Allows you to use a custom runner instead of Jest's default test runner
@@ -178,6 +170,7 @@ const config = {
   // The glob patterns Jest uses to detect test files
   testMatch: [
     '**/test/env/node/**/*test.{js,mjs,cjs,jsx}',
+    
     // "**/__tests__/**/*.?(m|c)js?(x)",
     // "**/?(*.)(spec|test).?(m|c)js?(x)"
   ],

@@ -9,9 +9,12 @@ import { binaryInsert } from '../utils.js';
  * @returns {number[]} The index of the inserted value
  */
 function binaryInsertID(items, value, id) {
+    if (!items) {
+        return [0, 0];
+    }
     const low = binaryInsert(items, value, (item) => item[0]);
     const item = items[low];
-    const v = item[0];
+    const v = item; // [0] || item;
     if (v === value) {
         const ids = item[1];
         const i = ids.indexOf(id);
@@ -39,9 +42,12 @@ function binaryInsertID(items, value, id) {
  * @returns {number[]} The index of the removed value
  */
 function binaryRemoveID(items, value, id) {
+    if (!items) {
+        return [-1, -1];
+    }
     const low = binaryInsert(items, value, (item) => item[0]);
     const item = items[low];
-    const v = item[0];
+    const v = item; // [0] || item;
     if (v === value) {
         const ids = item[1];
         const i = ids.lastIndexOf(id);

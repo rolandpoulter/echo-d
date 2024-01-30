@@ -214,7 +214,7 @@ export class BecsyStorage extends AsyncStorage {
                 if (entity === null || entity === undefined) {
                     continue;
                 }
-                const compList = this.componentsIndex.get(id);
+                const compList = this.componentsIndex.get(id) ?? [];
                 const component = {};
                 for (let key of compList) {
                     component[key] = this.findComponentProcess(id, key, entity, _);
@@ -266,15 +266,15 @@ export class BecsyStorage extends AsyncStorage {
             if (!Component) {
                 return;
             }
-            if (!entity.has(Component)) {
-                entity.add(Component, {});
-            }
             let prevValue = [];
             if (Component instanceof Map) {
                 prevValue = Component.get(id);
                 Component.set(id, value);
             }
             else {
+                if (!entity.has(Component)) {
+                    entity.add(Component, {});
+                }
                 // entity[key] = value
                 const type = this.types[key];
                 const schema = type[3];

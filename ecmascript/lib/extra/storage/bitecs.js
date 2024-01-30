@@ -129,7 +129,7 @@ export class BitECSStorage extends Storage {
     }
     findComponents(id) {
         const eid = this.derefEntityId(id);
-        if (eid !== null && eid !== undefined) {
+        if (eid === null || eid === undefined) {
             return;
         }
         return eid;
@@ -193,7 +193,7 @@ export class BitECSStorage extends Storage {
                     continue;
                 }
                 const entity = {};
-                const compList = this.componentsIndex.get(id);
+                const compList = this.componentsIndex.get(id) ?? [];
                 for (let key of compList) {
                     entity[key] = this.findComponentProcess(id, key, eid, _);
                 }

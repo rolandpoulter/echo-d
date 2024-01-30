@@ -14,7 +14,11 @@ const __dirname = dirname(__filename);
 const config = {
   ...jestConfig,
 
-  rootDir: join(__dirname, 'test', 'env', 'web'),
+  // rootDir: join(__dirname, 'test', 'env', 'web'),
+
+  testMatch: [
+    '**/test/env/web/**/*test.{js,mjs,cjs,jsx}'
+  ],
 
   preset: "jest-puppeteer",
 };

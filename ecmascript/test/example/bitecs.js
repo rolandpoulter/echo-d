@@ -171,5 +171,142 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
                 actor1: {}
             }]);
         });
+
+        const basicEchoOtherExchange = async (echo, other, { typed, rollback, changes, log } = {}) => {
+            echo.spawnActor('actor1');
+
+            const updateComponent = changes ? 'changeComponent' : 'upsertComponent';
+            
+            echo[updateComponent]('actor1', 'collider', 'box');
+            echo[updateComponent]('actor1', 'hidden', false);
+            echo[updateComponent]('actor1', 'position', typed ? new Float32Array([0, 0, 0]) : [0, 0, 0]);
+            echo[updateComponent]('actor1', 'color', typed ? new Uint8Array([255, 0, 0, 255]) : [255, 0, 0, 255]);
+            
+            echo[updateComponent]('actor1', 'collider', 'box');
+            echo[updateComponent]('actor1', 'hidden', true);
+            echo[updateComponent](`actor1`, 'position', typed ? new Float32Array([1, 0, 0]) : [1, 0, 0]);
+            echo[updateComponent]('actor1', 'color', typed ? new Uint8Array([0, 255, 0, 255]) : [0, 255, 0, 255]);
+            
+            const responder = (payload) => {
+                if (log) {
+                    console.log('payload', payload)
+                }
+                other.many(payload);
+            }
+
+            if (log) {
+                console.log('updater')
+            }
+            let batch = await echo.updater({
+                responder
+            });
+            if (log) {
+                console.log('batch', batch)
+            }
+            
+            const expectUpdatedView = (view, a, e, c, i) => {
+                const actors = view.context.store.getActors();
+                const entities = view.context.store.getEntities();
+                const components = view.context.store.getComponents();
+                const inputs = view.context.store.getInputs();
+                expect(actors).toEqual(a);
+                expect(entities).toEqual(e);
+                expect(components).toEqual(c);
+                expect(inputs).toEqual(i);
+            }
+            
+            const expectUpdated = (a, e, c, i) => {
+                expectUpdatedView(echo, a, e, c, i);
+                expectUpdatedView(other, a, e, c, i);
+            }
+
+            expectUpdated(
+                [['actor1']],
+                [],
+                [{ actor1: {
+                    collider: 'box',
+                    hidden: true,
+                    position: typed ? new Float32Array([1, 0, 0]) : [1, 0, 0],
+                    color: typed ? new Uint8Array([0, 255, 0, 255]) : [0, 255, 0, 255]
+                } }],
+                []
+            )
+
+            echo[updateComponent]('actor1', 'collider', 'box');
+            echo[updateComponent]('actor1', 'hidden', false);
+            echo[updateComponent]('actor1', 'position', typed ? new Float32Array([0, 0, 0]) : [0, 0, 0]);
+            echo[updateComponent]('actor1', 'color', typed ? new Uint8Array([255, 0, 0, 255]) : [255, 0, 0, 255]);
+
+            const tick = rollback ? performance.timeOrigin + performance.now() : 0;
+            echo.actorInput('actor1', { type: 'jump' }, tick);
+            
+            if (log) {
+                console.log('updater')
+            }
+            batch = null
+            batch = await echo.updater({
+                responder
+            });
+            if (log) {
+                console.log('batch', batch)
+            }
+
+            expectUpdated(
+                [['actor1']],
+                [],
+                [{ actor1: {
+                    collider: 'box',
+                    hidden: false,
+                    position: typed ? new Float32Array([0, 0, 0]) : [0, 0, 0],
+                    color: typed ? new Uint8Array([255, 0, 0, 255]) : [255, 0, 0, 255]
+                } }],
+                [{
+                    actor1: [
+                        rollback ? [ { type: 'jump' }, tick ] : { type: 'jump' }
+                    ]
+                }]
+            )
+
+            echo.removeComponent('actor1', 'collider');
+            echo.removeComponent('actor1', 'hidden');
+            echo.removeComponent('actor1', 'position');
+            echo.removeComponent('actor1', 'color');
+            echo.removeActor('actor1')
+
+            echo.createEntity('entity1');
+            echo.createEntity('entity2');
+            
+            if (log) {
+                console.log('updater')
+            }
+            batch = null
+            batch = await echo.updater({
+                responder
+            });
+            if (log) {
+                console.log('batch', batch)
+            }
+
+            expectUpdated(
+                [],
+                [['entity1', 'entity2']],
+                [{ entity1: { }, entity2: { } }], // TODO: should be empty
+                [{ // TODO: should be empty
+                    actor1: [
+                        rollback ? [ { type: 'jump' }, tick ] : { type: 'jump' }
+                    ]
+                }],
+            )
+        }
+
+        it('should be able to broadcast updates', async () => {
+            const { echo } = echoExample();
+            const { echo: other } = echoExample()
+            
+            await basicEchoOtherExchange(echo, other, {
+                typed: true,
+                // log: true,
+            });
+        });
     });
 }

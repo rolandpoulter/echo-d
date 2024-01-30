@@ -1,5 +1,6 @@
 {
   "tasks": {
-    "test": "deno test test/env/deno"
+    "test": "deno test --allow-hrtime test/env/deno",
+    "build": "deno run --allow-write --allow-read --allow-run --allow-env --allow-net esbuild.deno.mjs"
   }
 }

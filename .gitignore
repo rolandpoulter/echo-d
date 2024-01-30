@@ -1,3 +1,7 @@
+# build waste
+ecmascript/dist/bun/
+ecmascript/dist/deno/
+
 # code coverage
 ecmascript/test/coverage/
 
