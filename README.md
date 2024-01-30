@@ -16,18 +16,20 @@ Add badges from somewhere like: [shields.io](https://shields.io/)
 
 ## Features
 
-- Light/dark mode toggle
-- Live previews
-- Fullscreen mode
-- Cross platform
+- Replicates entities and components
+- Actor inputs with rollback support
+- Efficient payload delivery
+- Stream data in real-time
+- Network Transport agnostic
+- Supports asynchronous storage adapters
+- Easily control data-flow
+- Last Write Wins and Diffed changes
+- Supports custom, asyncronous storage
+- Works with existing ECS libraries
 
 ## Contributing
 
 Contributions are always welcome!
-
-See `contributing.md` for ways to get started.
-
-Please adhere to this project's `code of conduct`.
 
 ## License
 
