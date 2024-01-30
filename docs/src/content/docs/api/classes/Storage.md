@@ -33,7 +33,7 @@ The properties of the store.
 
 #### Source
 
-ecmascript/src/storage.ts:120
+ecmascript/src/storage.ts:214
 
 ## Properties
 
@@ -49,7 +49,7 @@ The actors in the store.
 
 #### Source
 
-ecmascript/src/storage.ts:101
+ecmascript/src/storage.ts:195
 
 ***
 
@@ -65,13 +65,13 @@ The components in the store.
 
 #### Source
 
-ecmascript/src/storage.ts:103
+ecmascript/src/storage.ts:197
 
 ***
 
 ### componentsIndex
 
-> **componentsIndex**: `ComponentsIndex`\<`string`, `string`\>
+> **componentsIndex**: [`ComponentsIndex`](/api/classes/componentsindex/)\<`string`, `string`\>
 
 The components index in the store.
 
@@ -81,7 +81,7 @@ The components index in the store.
 
 #### Source
 
-ecmascript/src/storage.ts:110
+ecmascript/src/storage.ts:204
 
 ***
 
@@ -97,7 +97,7 @@ The entities in the store.
 
 #### Source
 
-ecmascript/src/storage.ts:102
+ecmascript/src/storage.ts:196
 
 ***
 
@@ -117,7 +117,7 @@ The indexes in the store.
 
 #### Source
 
-ecmascript/src/storage.ts:111
+ecmascript/src/storage.ts:205
 
 ***
 
@@ -133,7 +133,7 @@ The inputs in the store.
 
 #### Source
 
-ecmascript/src/storage.ts:105
+ecmascript/src/storage.ts:199
 
 ***
 
@@ -153,7 +153,7 @@ The type constructors in the store
 
 #### Source
 
-ecmascript/src/storage.ts:108
+ecmascript/src/storage.ts:202
 
 ***
 
@@ -173,7 +173,7 @@ The types in the store.
 
 #### Source
 
-ecmascript/src/storage.ts:107
+ecmascript/src/storage.ts:201
 
 ## Methods
 
@@ -201,7 +201,7 @@ True if the actor ID was removed, false otherwise.
 
 #### Source
 
-ecmascript/src/storage.ts:130
+ecmascript/src/storage.ts:224
 
 ***
 
@@ -231,7 +231,7 @@ The key of the component to remove.
 
 #### Source
 
-ecmascript/src/storage.ts:141
+ecmascript/src/storage.ts:235
 
 ***
 
@@ -259,7 +259,7 @@ True if the entity ID was removed, false otherwise.
 
 #### Source
 
-ecmascript/src/storage.ts:161
+ecmascript/src/storage.ts:247
 
 ***
 
@@ -291,7 +291,7 @@ True if the ID was removed, false otherwise.
 
 #### Source
 
-ecmascript/src/storage.ts:173
+ecmascript/src/storage.ts:259
 
 ***
 
@@ -323,7 +323,7 @@ The fetched component.
 
 #### Source
 
-ecmascript/src/storage.ts:200
+ecmascript/src/storage.ts:286
 
 ***
 
@@ -351,7 +351,7 @@ The fetched components container.
 
 #### Source
 
-ecmascript/src/storage.ts:188
+ecmascript/src/storage.ts:274
 
 ***
 
@@ -383,7 +383,7 @@ The fetched inputs.
 
 #### Source
 
-ecmascript/src/storage.ts:222
+ecmascript/src/storage.ts:308
 
 ***
 
@@ -411,7 +411,7 @@ The fetched inputs.
 
 #### Source
 
-ecmascript/src/storage.ts:211
+ecmascript/src/storage.ts:297
 
 ***
 
@@ -443,7 +443,7 @@ The actors.
 
 #### Source
 
-ecmascript/src/storage.ts:238
+ecmascript/src/storage.ts:324
 
 ***
 
@@ -475,7 +475,7 @@ The components.
 
 #### Source
 
-ecmascript/src/storage.ts:263
+ecmascript/src/storage.ts:349
 
 ***
 
@@ -507,7 +507,7 @@ The entities.
 
 #### Source
 
-ecmascript/src/storage.ts:290
+ecmascript/src/storage.ts:376
 
 ***
 
@@ -535,7 +535,7 @@ The inputs.
 
 #### Source
 
-ecmascript/src/storage.ts:313
+ecmascript/src/storage.ts:399
 
 ***
 
@@ -563,7 +563,7 @@ True if the ID is an actor, false otherwise.
 
 #### Source
 
-ecmascript/src/storage.ts:339
+ecmascript/src/storage.ts:425
 
 ***
 
@@ -591,7 +591,7 @@ True if the ID is an entity, false otherwise.
 
 #### Source
 
-ecmascript/src/storage.ts:350
+ecmascript/src/storage.ts:436
 
 ***
 
@@ -615,7 +615,37 @@ The entities.
 
 #### Source
 
-ecmascript/src/storage.ts:487
+ecmascript/src/storage.ts:565
+
+***
+
+### removeComponentsIndex()
+
+> **removeComponentsIndex**(`id`, `key`, `prevValue`): `void`
+
+Removes a component from the components index.
+
+#### Parameters
+
+• **id**: `string`
+
+The ID of the component to remove.
+
+• **key**: `string`
+
+The key of the component to remove.
+
+• **prevValue**: `any`
+
+The previous value of the component.
+
+#### Returns
+
+`void`
+
+#### Source
+
+ecmascript/src/storage.ts:577
 
 ***
 
@@ -643,7 +673,7 @@ The actors.
 
 #### Source
 
-ecmascript/src/storage.ts:361
+ecmascript/src/storage.ts:447
 
 ***
 
@@ -671,7 +701,7 @@ The components.
 
 #### Source
 
-ecmascript/src/storage.ts:372
+ecmascript/src/storage.ts:458
 
 ***
 
@@ -699,7 +729,7 @@ The entities.
 
 #### Source
 
-ecmascript/src/storage.ts:383
+ecmascript/src/storage.ts:469
 
 ***
 
@@ -727,7 +757,7 @@ The inputs.
 
 #### Source
 
-ecmascript/src/storage.ts:394
+ecmascript/src/storage.ts:480
 
 ***
 
@@ -755,7 +785,7 @@ True if the actor ID was stored, false otherwise.
 
 #### Source
 
-ecmascript/src/storage.ts:405
+ecmascript/src/storage.ts:491
 
 ***
 
@@ -789,7 +819,7 @@ The value of the component to store.
 
 #### Source
 
-ecmascript/src/storage.ts:417
+ecmascript/src/storage.ts:503
 
 ***
 
@@ -817,7 +847,7 @@ True if the entity ID was stored, false otherwise.
 
 #### Source
 
-ecmascript/src/storage.ts:437
+ecmascript/src/storage.ts:515
 
 ***
 
@@ -849,7 +879,7 @@ True if the ID was stored, false otherwise.
 
 #### Source
 
-ecmascript/src/storage.ts:449
+ecmascript/src/storage.ts:527
 
 ***
 
@@ -883,7 +913,41 @@ The new index of the stored input.
 
 #### Source
 
-ecmascript/src/storage.ts:465
+ecmascript/src/storage.ts:543
+
+***
+
+### updateComponentsIndex()
+
+> **updateComponentsIndex**(`id`, `key`, `prevValue`, `value`): `void`
+
+Updates a component in the components index.
+
+#### Parameters
+
+• **id**: `string`
+
+The ID of the component to update.
+
+• **key**: `string`
+
+The key of the component to update.
+
+• **prevValue**: `any`
+
+The previous value of the component.
+
+• **value**: `any`
+
+The new value of the component.
+
+#### Returns
+
+`void`
+
+#### Source
+
+ecmascript/src/storage.ts:598
 
 ***
 

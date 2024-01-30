@@ -5,95 +5,79 @@ description: A reference to echo.Storage.
 
 ## Summary
 
-The `Storage` class represents a store with actors, entities, components, and inputs. It provides methods for managing and querying these elements.
+The `Storage` class represents a store with actors, entities, components, and inputs. It provides methods to manipulate and retrieve data from the store.
 
 ## Example Usage
 
 ```javascript
-// Create a new storage
 const storage = new Storage();
 
-// Add actors to the storage
-storage.setActors(['actor1', 'actor2', 'actor3']);
+// Add actors to the store
+storage.storeActor('actor1');
+storage.storeActor('actor2');
 
-// Add entities to the storage
-storage.setEntities(['entity1', 'entity2', 'entity3']);
+// Add entities to the store
+storage.storeEntity('entity1');
+storage.storeEntity('entity2');
 
-// Add components to the storage
-storage.setComponents({
-  'entity1': { 'component1': 'value1', 'component2': 'value2' },
-  'entity2': { 'component1': 'value3', 'component2': 'value4' },
-  'entity3': { 'component1': 'value5', 'component2': 'value6' },
-});
+// Add components to an entity
+storage.storeComponent('entity1', 'component1', { prop1: 'value1' });
+storage.storeComponent('entity1', 'component2', { prop2: 'value2' });
 
-// Add inputs to the storage
-storage.storeInput('input1', { id: 'entity1', component: 'component1' });
-storage.storeInput('input2', { id: 'entity2', component: 'component2' });
-
-// Get actors from the storage
+// Get all actors in the store
 const actors = storage.getActors();
+console.log(actors); // [['actor1'], ['actor2']]
 
-// Get entities from the storage
-const entities = storage.getEntities();
-
-// Get components from the storage
+// Get all components in the store
 const components = storage.getComponents();
+console.log(components); // [[{ component1: { prop1: 'value1' }, component2: { prop2: 'value2' } }]]
 
-// Get inputs from the storage
-const inputs = storage.getInputs();
-
-// Remove an actor from the storage
-storage.destroyActor('actor1');
-
-// Remove an entity from the storage
-storage.destroyEntity('entity1');
-
-// Remove a component from the storage
-storage.destroyComponent('entity2', 'component1');
+// Get all entities in the store
+const entities = storage.getEntities();
+console.log(entities); // [['entity1'], ['entity2']]
 ```
-
-## Code Analysis
-
-### Main functionalities
-
-- Store and retrieve actors, entities, components, and inputs
-- Query actors and entities based on specific criteria
-- Add, update, and remove components from entities
 
 ___
 
 ### Methods
 
-- `constructor(store: Storage | StorageProps = {}, indexes: any = {})`: Constructs a new Storage object with optional initial data and indexes.
-- `destroyActor(id: string): boolean`: Removes an actor ID from the storage.
-- `destroyComponent(id: string, key: string): void`: Removes a component from an entity.
-- `destroyEntity(id: string): boolean`: Removes an entity ID from the storage.
-- `destroyId(list: string[], id: string): boolean`: Removes an ID from a list if it exists.
-- `fetchComponent(id: string, key: string): any`: Fetches a component from an entity.
-- `getActors(query: any = null, pageSize: number = Infinity): string[][]`: Gets the actors from the storage based on a query and page size.
-- `getComponents(query: any = null, pageSize: number = Infinity): Components[]`: Gets the components from the storage based on a query and page size.
-- `getEntities(query: any = null, pageSize: number = Infinity): string[][]`: Gets the entities from the storage based on a query and page size.
-- `getInputs(query: any = null, pageSize: number = Infinity): Inputs[]`: Gets the inputs from the storage based on a query and page size.
+- `destroyActor(id: string): boolean`: Removes an actor ID from the store.
+- `destroyComponent(id: string, key: string): void`: Removes a component from an entity in the store.
+- `destroyEntity(id: string): boolean`: Removes an entity ID from the store.
+- `findComponents(id: string): Components`: Fetches the components container for an entity.
+- `findComponent(id: string, key: string): any`: Fetches a component from an entity.
+- `findInputs(id: string): InputPayload`: Fetches the inputs for an actor.
+- `findInput(id: string, index: number): InputPayload`: Fetches an input for an actor.
+- `getActors(query: any = null, pageSize: number = Infinity): string[][]`: Gets the actors in the store.
+- `getComponents(query: any = null, pageSize: number = Infinity): Components[]`: Gets the components in the store.
+- `getEntities(query: any = null, pageSize: number = Infinity): string[][]`: Gets the entities in the store.
+- `getInputs(query: any = null, pageSize: number = Infinity): Inputs[]`: Gets the inputs in the store.
 - `isActor(id: string): boolean`: Checks if an ID is an actor.
 - `isEntity(id: string): boolean`: Checks if an ID is an entity.
-- `setActors(actors: string[]): string[]`: Sets the actors in the storage.
-- `setComponents(components: Components): Components`: Sets the components in the storage.
-- `setEntities(entities: string[]): string[]`: Sets the entities in the storage.
-- `setInputs(inputs: Inputs): Inputs`: Sets the inputs in the storage.
-- `storeActor(id: string): boolean`: Stores an actor ID in the storage.
-- `storeComponent(id: string, key: string, value: any): void`: Stores a component in an entity.
-- `storeEntity(id: string): boolean`: Stores an entity ID in the storage.
+- `setActors(actors: string[]): string[]`: Sets the actors in the store.
+- `setComponents(components: Components): Components`: Sets the components in the store.
+- `setEntities(entities: string[]): string[]`: Sets the entities in the store.
+- `setInputs(inputs: Inputs): Inputs`: Sets the inputs in the store.
+- `storeActor(id: string): boolean`: Stores an actor ID in the store.
+- `storeComponent(id: string, key: string, value: any): void`: Stores a component in an entity in the store.
+- `storeEntity(id: string): boolean`: Stores an entity ID in the store.
 - `storeId(list: string[], id: string): boolean`: Stores an ID in a list if it doesn't exist already.
-- `storeInput(id: string, input: InputPayload, tick: number = 0): number`: Stores an input in the storage.
+- `storeInput(id: string, input: InputPayload, tick: number = 0): number`: Stores an input for an actor in the store.
+- `queryComponents(query: any): Set<any>`: Queries the store for entities by component.
+- `removeComponentsIndex(id: string, key: string, prevValue: any): void`: Removes a component from the components index.
+- `updateComponentsIndex(id: string, key: string, prevValue: any, value: any): void`: Updates a component in the components index.
 
 ___
 
 ### Fields
 
-- `actors: string[]`: The actors in the storage.
-- `entities: string[]`: The entities in the storage.
-- `components: Components`: The components in the storage.
-- `inputs: Inputs`: The inputs in the storage.
-- `indexes: { [key: string]: { actors: Index<any, any>, entities: Index<any, any> } }`: Indexes for efficient querying of actors and entities.
+- `actors: string[]`: The actors in the store.
+- `entities: string[]`: The entities in the store.
+- `components: Components`: The components in the store.
+- `inputs: Inputs`: The inputs in the store.
+- `types: { [key: string]: any }`: The types in the store.
+- `typeCtors: { [key: string]: Function }`: The type constructors in the store.
+- `componentsIndex: ComponentsIndex<string, string>`: The components index in the store.
+- `indexes: { [key: string]: { actors: Index<any, any>, entities: Index<any, any> } }`: The indexes in the store.
 
 ___

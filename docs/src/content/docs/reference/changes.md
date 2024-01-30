@@ -26,18 +26,9 @@ changes.reset();
 changes.upsertComponent('componentId', 'propertyKey', 'newValue', '_prevValue');
 ```
 
-## Code Analysis
-
-### Main functionalities
-
-- Changing a component in the context
-- Retrieving the changes of a value
-- Resetting the changes to a new set of changes or an empty object
-- Updating or inserting a component in the context
-
 ___
 
-### Methods
+## Methods
 
 - `changeComponent(id, key, newValue, prevValue, isAsyncStorage)`: Changes a component in the current context. Returns a promise that resolves to the new value.
 - `getValue(id, key, storedValue)`: Retrieves the changes of a value. Returns the diffs.
@@ -46,7 +37,7 @@ ___
 
 ___
 
-### Fields
+## Fields
 
 - `context`: The context in which changes are to be managed.
 - `diffs`: The diffs of the changes.

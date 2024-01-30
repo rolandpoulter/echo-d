@@ -14,46 +14,33 @@ The `Symbols` class represents a collection of symbols and provides methods to m
 const symbols = new Symbols();
 
 // Add symbols to the Symbols object
-symbols.add('A'); // Returns 0
-symbols.add('B'); // Returns 1
-
-// Get the symbol at a specific index
-symbols.get(0); // Returns 'A'
-
-// Find the index of a symbol
-symbols.find('B'); // Returns 1
+symbols.add('symbol1'); // Returns the index of the added symbol
+symbols.add('symbol2'); // Returns the index of the added symbol
 
 // Get the list of symbols
-symbols.getSymbols(); // Returns ['A', 'B']
+const symbolList = symbols.getSymbols(); // Returns ['symbol1', 'symbol2']
 
 // Get the enum of symbols
-symbols.getSymbolsEnum(); // Returns { 'A': 0, 'B': 1 }
+const symbolEnum = symbols.getSymbolsEnum(); // Returns { 'symbol1': 0, 'symbol2': 1 }
+
+// Find the index of a symbol
+const symbolIndex = symbols.find('symbol1'); // Returns 0
+
+// Get the symbol at a specific index
+const symbol = symbols.get(1); // Returns 'symbol2'
 
 // Reset the Symbols object with a new array of symbols
-symbols.reset(2, ['C', 'D']); // Resets the Symbols object with symbols ['C', 'D']
+symbols.reset(2, ['symbol3', 'symbol4']); // Resets the Symbols object with ['symbol3', 'symbol4']
 ```
-
-## Code Analysis
-
-### Main functionalities
-
-The main functionalities of the `Symbols` class are:
-
-- Adding symbols to the collection
-- Finding the index of a symbol
-- Getting the symbol at a specific index
-- Getting the list of symbols
-- Getting the enum of symbols
-- Resetting the collection with a new array of symbols
 
 ___
 
 ### Methods
 
 - `constructor(object: { _list?: string[] } = {})`: Constructs a new Symbols object with an optional list of symbols.
-- `add(symbol: string): number | null`: Adds a symbol to the Symbols object and returns its index, or null if the symbol is not valid.
+- `add(symbol: string): number | null`: Adds a symbol to the Symbols object and returns the index of the added symbol, or null if the symbol is not valid.
 - `copyEnum(enumObj: Enum | Object = {}): void`: Copies an enum into the Symbols object.
-- `fetch(payload: number | string): [string, number]`: Fetches a symbol and its index based on a payload.
+- `fetch(payload: number | string): [string, number]`: Fetches a symbol and its index based on a payload, which can be either a symbol or an index.
 - `find(symbol: string): number | undefined`: Finds the index of a symbol.
 - `get(index: number): string | undefined`: Gets the symbol at a specific index.
 - `getSymbols(): string[]`: Returns the list of symbols.
@@ -65,7 +52,7 @@ ___
 
 ### Fields
 
-- `_list: string[]`: The list of symbols.
-- `_enum: Enum`: The enum of symbols.
+- `_list: string[]`: An array that stores the symbols.
+- `_enum: Enum`: An object that represents the enum of symbols.
 
 ___

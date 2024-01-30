@@ -65,7 +65,7 @@ ecmascript/src/handler.ts:131
 
 ### actorInput()
 
-> **actorInput**(`id`, `input`, `tick`, `extendOptions`): `void`
+> **actorInput**(`id`, `input`, `tick`, `extendOptions`): `number` \| `Promise`\<`number`\>
 
 Updates an actor with an input.
 
@@ -89,7 +89,7 @@ Custom options to extend the options for the handler.
 
 #### Returns
 
-`void`
+`number` \| `Promise`\<`number`\>
 
 #### Source
 
@@ -99,7 +99,7 @@ ecmascript/src/handler.ts:223
 
 ### changeComponent()
 
-> **changeComponent**(`id`, `key`, `value`, `tick`, `extendOptions`): `void`
+> **changeComponent**(`id`, `key`, `value`, `tick`, `extendOptions`): `void` \| `Promise`\<`any`\>
 
 Changes a component of an entity.
 
@@ -127,7 +127,7 @@ Custom options to extend the options for the handler.
 
 #### Returns
 
-`void`
+`void` \| `Promise`\<`any`\>
 
 #### Source
 
@@ -137,7 +137,7 @@ ecmascript/src/handler.ts:269
 
 ### createEntity()
 
-> **createEntity**(`id`, `extendOptions`): `void`
+> **createEntity**(`id`, `extendOptions`): `boolean` \| `Promise`\<`boolean`\>
 
 Creates an entity.
 
@@ -153,7 +153,7 @@ Custom options to extend the options for the handler.
 
 #### Returns
 
-`void`
+`boolean` \| `Promise`\<`boolean`\>
 
 #### Source
 
@@ -296,7 +296,7 @@ ecmascript/src/handler.ts:290
 
 ### removeActor()
 
-> **removeActor**(`id`, `extendOptions`): `void`
+> **removeActor**(`id`, `extendOptions`): `boolean` \| `Promise`\<`boolean`\>
 
 Despawns an actor.
 
@@ -312,7 +312,7 @@ Custom options to extend the options for the handler.
 
 #### Returns
 
-`void`
+`boolean` \| `Promise`\<`boolean`\>
 
 #### Source
 
@@ -322,7 +322,7 @@ ecmascript/src/handler.ts:211
 
 ### removeComponent()
 
-> **removeComponent**(`id`, `key`, `extendOptions`): `void`
+> **removeComponent**(`id`, `key`, `extendOptions`): `boolean` \| `Promise`\<`boolean`\>
 
 Removes a component from an entity.
 
@@ -342,7 +342,7 @@ Custom options to extend the options for the handler.
 
 #### Returns
 
-`void`
+`boolean` \| `Promise`\<`boolean`\>
 
 #### Source
 
@@ -352,7 +352,7 @@ ecmascript/src/handler.ts:280
 
 ### removeEntity()
 
-> **removeEntity**(`id`, `extendOptions`): `void`
+> **removeEntity**(`id`, `extendOptions`): `boolean` \| `Promise`\<`boolean`\>
 
 Removes an entity.
 
@@ -368,7 +368,7 @@ Custom options to extend the options for the handler.
 
 #### Returns
 
-`void`
+`boolean` \| `Promise`\<`boolean`\>
 
 #### Source
 
@@ -378,7 +378,7 @@ ecmascript/src/handler.ts:243
 
 ### spawnActor()
 
-> **spawnActor**(`id`, `extendOptions`): `void`
+> **spawnActor**(`id`, `extendOptions`): `boolean` \| `Promise`\<`boolean`\>
 
 Spawns an actor.
 
@@ -394,7 +394,7 @@ Custom options to extend the options for the handler.
 
 #### Returns
 
-`void`
+`boolean` \| `Promise`\<`boolean`\>
 
 #### Source
 
@@ -432,7 +432,7 @@ ecmascript/src/handler.ts:189
 
 ### upsertComponent()
 
-> **upsertComponent**(`id`, `key`, `value`, `tick`, `extendOptions`): `void`
+> **upsertComponent**(`id`, `key`, `value`, `tick`, `extendOptions`): `void` \| `Promise`\<`any`\>
 
 Sets a component to an entity.
 
@@ -460,7 +460,7 @@ Custom options to extend the options for the handler.
 
 #### Returns
 
-`void`
+`void` \| `Promise`\<`any`\>
 
 #### Source
 

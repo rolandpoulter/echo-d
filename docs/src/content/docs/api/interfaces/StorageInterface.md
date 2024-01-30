@@ -15,7 +15,7 @@ The StorageInterface interface represents the interface of a store.
 
 #### Source
 
-ecmascript/src/storage/interface.ts:55
+ecmascript/src/storage.ts:60
 
 ***
 
@@ -25,17 +25,17 @@ ecmascript/src/storage/interface.ts:55
 
 #### Source
 
-ecmascript/src/storage/interface.ts:57
+ecmascript/src/storage.ts:62
 
 ***
 
 ### componentsIndex
 
-> **componentsIndex**: `ComponentsIndex`\<`string`, `string`\>
+> **componentsIndex**: [`ComponentsIndex`](/api/classes/componentsindex/)\<`string`, `string`\>
 
 #### Source
 
-ecmascript/src/storage/interface.ts:64
+ecmascript/src/storage.ts:69
 
 ***
 
@@ -45,7 +45,7 @@ ecmascript/src/storage/interface.ts:64
 
 #### Source
 
-ecmascript/src/storage/interface.ts:56
+ecmascript/src/storage.ts:61
 
 ***
 
@@ -59,7 +59,7 @@ ecmascript/src/storage/interface.ts:56
 
 #### Source
 
-ecmascript/src/storage/interface.ts:65
+ecmascript/src/storage.ts:70
 
 ***
 
@@ -69,7 +69,7 @@ ecmascript/src/storage/interface.ts:65
 
 #### Source
 
-ecmascript/src/storage/interface.ts:59
+ecmascript/src/storage.ts:64
 
 ***
 
@@ -83,7 +83,7 @@ ecmascript/src/storage/interface.ts:59
 
 #### Source
 
-ecmascript/src/storage/interface.ts:62
+ecmascript/src/storage.ts:67
 
 ***
 
@@ -97,7 +97,7 @@ ecmascript/src/storage/interface.ts:62
 
 #### Source
 
-ecmascript/src/storage/interface.ts:61
+ecmascript/src/storage.ts:66
 
 ## Methods
 
@@ -115,7 +115,7 @@ ecmascript/src/storage/interface.ts:61
 
 #### Source
 
-ecmascript/src/storage/interface.ts:74
+ecmascript/src/storage.ts:79
 
 ***
 
@@ -135,7 +135,7 @@ ecmascript/src/storage/interface.ts:74
 
 #### Source
 
-ecmascript/src/storage/interface.ts:75
+ecmascript/src/storage.ts:80
 
 ***
 
@@ -153,7 +153,7 @@ ecmascript/src/storage/interface.ts:75
 
 #### Source
 
-ecmascript/src/storage/interface.ts:76
+ecmascript/src/storage.ts:81
 
 ***
 
@@ -173,7 +173,7 @@ ecmascript/src/storage/interface.ts:76
 
 #### Source
 
-ecmascript/src/storage/interface.ts:77
+ecmascript/src/storage.ts:82
 
 ***
 
@@ -193,7 +193,7 @@ ecmascript/src/storage/interface.ts:77
 
 #### Source
 
-ecmascript/src/storage/interface.ts:80
+ecmascript/src/storage.ts:85
 
 ***
 
@@ -211,7 +211,7 @@ ecmascript/src/storage/interface.ts:80
 
 #### Source
 
-ecmascript/src/storage/interface.ts:79
+ecmascript/src/storage.ts:84
 
 ***
 
@@ -231,7 +231,7 @@ ecmascript/src/storage/interface.ts:79
 
 #### Source
 
-ecmascript/src/storage/interface.ts:83
+ecmascript/src/storage.ts:88
 
 ***
 
@@ -249,7 +249,7 @@ ecmascript/src/storage/interface.ts:83
 
 #### Source
 
-ecmascript/src/storage/interface.ts:82
+ecmascript/src/storage.ts:87
 
 ***
 
@@ -269,7 +269,7 @@ ecmascript/src/storage/interface.ts:82
 
 #### Source
 
-ecmascript/src/storage/interface.ts:85
+ecmascript/src/storage.ts:90
 
 ***
 
@@ -289,7 +289,7 @@ ecmascript/src/storage/interface.ts:85
 
 #### Source
 
-ecmascript/src/storage/interface.ts:86
+ecmascript/src/storage.ts:91
 
 ***
 
@@ -309,7 +309,7 @@ ecmascript/src/storage/interface.ts:86
 
 #### Source
 
-ecmascript/src/storage/interface.ts:87
+ecmascript/src/storage.ts:92
 
 ***
 
@@ -329,7 +329,7 @@ ecmascript/src/storage/interface.ts:87
 
 #### Source
 
-ecmascript/src/storage/interface.ts:89
+ecmascript/src/storage.ts:94
 
 ***
 
@@ -347,7 +347,7 @@ ecmascript/src/storage/interface.ts:89
 
 #### Source
 
-ecmascript/src/storage/interface.ts:91
+ecmascript/src/storage.ts:96
 
 ***
 
@@ -365,7 +365,7 @@ ecmascript/src/storage/interface.ts:91
 
 #### Source
 
-ecmascript/src/storage/interface.ts:92
+ecmascript/src/storage.ts:97
 
 ***
 
@@ -383,7 +383,7 @@ ecmascript/src/storage/interface.ts:92
 
 #### Source
 
-ecmascript/src/storage/interface.ts:94
+ecmascript/src/storage.ts:99
 
 ***
 
@@ -401,7 +401,7 @@ ecmascript/src/storage/interface.ts:94
 
 #### Source
 
-ecmascript/src/storage/interface.ts:95
+ecmascript/src/storage.ts:100
 
 ***
 
@@ -419,7 +419,7 @@ ecmascript/src/storage/interface.ts:95
 
 #### Source
 
-ecmascript/src/storage/interface.ts:96
+ecmascript/src/storage.ts:101
 
 ***
 
@@ -437,7 +437,7 @@ ecmascript/src/storage/interface.ts:96
 
 #### Source
 
-ecmascript/src/storage/interface.ts:98
+ecmascript/src/storage.ts:103
 
 ***
 
@@ -455,7 +455,7 @@ ecmascript/src/storage/interface.ts:98
 
 #### Source
 
-ecmascript/src/storage/interface.ts:100
+ecmascript/src/storage.ts:105
 
 ***
 
@@ -477,7 +477,7 @@ ecmascript/src/storage/interface.ts:100
 
 #### Source
 
-ecmascript/src/storage/interface.ts:101
+ecmascript/src/storage.ts:106
 
 ***
 
@@ -495,7 +495,7 @@ ecmascript/src/storage/interface.ts:101
 
 #### Source
 
-ecmascript/src/storage/interface.ts:102
+ecmascript/src/storage.ts:107
 
 ***
 
@@ -515,7 +515,7 @@ ecmascript/src/storage/interface.ts:102
 
 #### Source
 
-ecmascript/src/storage/interface.ts:103
+ecmascript/src/storage.ts:108
 
 ***
 
@@ -537,7 +537,7 @@ ecmascript/src/storage/interface.ts:103
 
 #### Source
 
-ecmascript/src/storage/interface.ts:105
+ecmascript/src/storage.ts:110
 
 ***
 

@@ -24,20 +24,9 @@ if (handler) {
 }
 ```
 
-## Code Analysis
-
-### Main functionalities
-
-The main functionalities of the `NodeActions` class are:
-
-- Combining actions from different modules into a single object.
-- Providing a convenient way to access and perform actions on actors, components, entities, and symbols in the current context.
-
 ___
 
 ### Methods
-
-The `NodeActions` class has the following methods:
 
 - `actorInput`: Handles input for a specific actor in the current context.
 - `actors`: Retrieves actors from the current context.

@@ -5,92 +5,82 @@ description: A reference to echo.Handler.
 
 ## Summary
 
-The `Handler` class is responsible for handling messages and performing various actions on the context based on those messages.
+The `Handler` class is responsible for handling messages and performing various actions on the context. It provides methods for handling single and multiple messages, getting the action handler, updating other nodes in the network, spawning and removing actors, updating actors with input, creating and removing entities, and manipulating components of entities.
 
 ## Example Usage
 
 ```javascript
-// Creating a new instance of Handler
+// Create a new handler instance
 const handler = new Handler(context, options, actions);
 
-// Handling a single message
+// Handle a single message
 handler.one(message, extendOptions);
 
-// Handling multiple messages
+// Handle multiple messages
 handler.many(messages, extendOptions);
 
-// Getting the action handler
+// Get the action handler
 const actionHandler = handler.getActionHandler();
 
-// Getting the symbol action
+// Get the symbol action
 const symbolAction = handler.getSymbolAction(action);
 
-// Updating other nodes in the network
+// Update other nodes in the network
 handler.updater(extendOptions, tick);
 
-// Spawning an actor
+// Spawn an actor
 handler.spawnActor(id, extendOptions);
 
-// Despawning an actor
+// Despawn an actor
 handler.removeActor(id, extendOptions);
 
-// Updating an actor with an input
+// Update an actor with input
 handler.actorInput(id, input, tick, extendOptions);
 
-// Creating an entity
+// Create an entity
 handler.createEntity(id, extendOptions);
 
-// Removing an entity
+// Remove an entity
 handler.removeEntity(id, extendOptions);
 
-// Setting a component to an entity
+// Set a component to an entity
 handler.upsertComponent(id, key, value, tick, extendOptions);
 
-// Changing a component of an entity
+// Change a component of an entity
 handler.changeComponent(id, key, value, tick, extendOptions);
 
-// Removing a component from an entity
+// Remove a component from an entity
 handler.removeComponent(id, key, extendOptions);
 
-// Querying components
-const queriedComponents = handler.queryComponents(query);
+// Query components
+const components = handler.queryComponents(query);
 ```
-
-## Code Analysis
-
-### Main functionalities
-
-- Handles messages and performs actions on the context based on those messages.
-- Provides methods for handling single and multiple messages.
-- Retrieves the action handler and symbol action.
-- Updates other nodes in the network.
-- Performs various actions on actors and entities.
-- Queries components.
 
 ___
 
-### Methods
+## Methods
 
 - `one(message: Message | any[], extendOptions: Options | any)`: Handles a single message.
 - `many(message: Message | any[], extendOptions: Options | any)`: Handles multiple messages.
-- `getActionHandler(): ActionHandler`: Retrieves the action handler.
-- `getSymbolAction(action: string | number): SymbolAction`: Retrieves the symbol action.
-- `updater(extendOptions: OptionsProps | any, tick: number = Date.now()): Promise<void>`: Updates other nodes in the network.
-- `spawnActor(id: string, extendOptions: OptionsProps | any)`: Spawns an actor.
-- `removeActor(id: string, extendOptions: OptionsProps | any)`: Despawns an actor.
-- `actorInput(id: string, input: any, tick: number = Date.now(), extendOptions: OptionsProps | any)`: Updates an actor with an input.
-- `createEntity(id: string, extendOptions: OptionsProps | any)`: Creates an entity.
-- `removeEntity(id: string, extendOptions: OptionsProps | any)`: Removes an entity.
-- `upsertComponent(id: string, key: string, value: any, tick: number = Date.now(), extendOptions: OptionsProps | any)`: Sets a component to an entity.
-- `changeComponent(id: string, key: string, value: any, tick: number = Date.now(), extendOptions: OptionsProps | any)`: Changes a component of an entity.
-- `removeComponent(id: string, key: any, extendOptions: OptionsProps | any)`: Removes a component from an entity.
+- `getActionHandler(): any`: Gets the action handler.
+- `getSymbolAction(action: string | number): any`: Gets the symbol action.
+- `updater(extendOptions: OptionsProps | any, tick: number = now()): Promise<any[]>`: Updates other nodes in the network.
+- `spawnActor(id: string, extendOptions: OptionsProps | any): Promise<boolean> | boolean`: Spawns an actor.
+- `removeActor(id: string, extendOptions: OptionsProps | any): Promise<boolean> | boolean`: Despawns an actor.
+- `actorInput(id: string, input: any, tick: number = now(), extendOptions: OptionsProps | any): Promise<number> | number`: Updates an actor with an input.
+- `createEntity(id: string, extendOptions: OptionsProps | any): Promise<boolean> | boolean`: Creates an entity.
+- `removeEntity(id: string, extendOptions: OptionsProps | any): Promise<boolean> | boolean`: Removes an entity.
+- `upsertComponent(id: string, key: string, value: any, tick: number = now(), extendOptions: OptionsProps | any): Promise<any> | void`: Sets a component to an entity.
+- `changeComponent(id: string, key: string, value: any, tick: number = now(), extendOptions: OptionsProps | any): Promise<any> | void`: Changes a component of an entity.
+- `removeComponent(id: string, key: any, extendOptions: OptionsProps | any): Promise<boolean> | boolean`: Removes a component from an entity.
 - `queryComponents(query: any): Set<any>`: Queries components.
 
 ___
 
-### Fields
+## Fields
 
 - `context: Context`: The context for the handler.
 - `options: Options`: The options for the handler.
+- `store: AsyncStorage | Storage`: The store for the context of the handler.
 
 ___

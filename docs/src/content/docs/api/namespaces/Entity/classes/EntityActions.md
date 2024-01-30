@@ -16,11 +16,11 @@ This class encapsulates the logic for creating, merging, and removing entities.
 
 ### new EntityActions()
 
-> **new EntityActions**(): [`EntityActions`](/api/namespaces/entitity/classes/entityactions/)
+> **new EntityActions**(): [`EntityActions`](/api/namespaces/entity/classes/entityactions/)
 
 #### Returns
 
-[`EntityActions`](/api/namespaces/entitity/classes/entityactions/)
+[`EntityActions`](/api/namespaces/entity/classes/entityactions/)
 
 #### Inherited from
 

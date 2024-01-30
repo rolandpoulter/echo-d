@@ -31,7 +31,7 @@ The context for the actions.
 
 #### Source
 
-ecmascript/src/options.ts:125
+ecmascript/src/options.ts:128
 
 ## Properties
 
@@ -55,7 +55,7 @@ ecmascript/src/options.ts:125
 
 #### Source
 
-ecmascript/src/options.ts:75
+ecmascript/src/options.ts:77
 
 ***
 
@@ -65,7 +65,7 @@ ecmascript/src/options.ts:75
 
 #### Source
 
-ecmascript/src/options.ts:80
+ecmascript/src/options.ts:82
 
 ***
 
@@ -75,7 +75,7 @@ ecmascript/src/options.ts:80
 
 #### Source
 
-ecmascript/src/options.ts:81
+ecmascript/src/options.ts:83
 
 ***
 
@@ -85,7 +85,7 @@ ecmascript/src/options.ts:81
 
 #### Source
 
-ecmascript/src/options.ts:82
+ecmascript/src/options.ts:84
 
 ***
 
@@ -95,7 +95,7 @@ ecmascript/src/options.ts:82
 
 #### Source
 
-ecmascript/src/options.ts:84
+ecmascript/src/options.ts:86
 
 ***
 
@@ -105,7 +105,7 @@ ecmascript/src/options.ts:84
 
 #### Source
 
-ecmascript/src/options.ts:83
+ecmascript/src/options.ts:85
 
 ***
 
@@ -115,7 +115,7 @@ ecmascript/src/options.ts:83
 
 #### Source
 
-ecmascript/src/options.ts:85
+ecmascript/src/options.ts:87
 
 ***
 
@@ -125,7 +125,7 @@ ecmascript/src/options.ts:85
 
 #### Source
 
-ecmascript/src/options.ts:86
+ecmascript/src/options.ts:88
 
 ***
 
@@ -135,7 +135,7 @@ ecmascript/src/options.ts:86
 
 #### Source
 
-ecmascript/src/options.ts:87
+ecmascript/src/options.ts:89
 
 ***
 
@@ -145,7 +145,7 @@ ecmascript/src/options.ts:87
 
 #### Source
 
-ecmascript/src/options.ts:88
+ecmascript/src/options.ts:90
 
 ***
 
@@ -155,7 +155,7 @@ ecmascript/src/options.ts:88
 
 #### Source
 
-ecmascript/src/options.ts:90
+ecmascript/src/options.ts:92
 
 ***
 
@@ -165,7 +165,7 @@ ecmascript/src/options.ts:90
 
 #### Source
 
-ecmascript/src/options.ts:89
+ecmascript/src/options.ts:91
 
 ***
 
@@ -175,7 +175,7 @@ ecmascript/src/options.ts:89
 
 #### Source
 
-ecmascript/src/options.ts:91
+ecmascript/src/options.ts:93
 
 ***
 
@@ -185,7 +185,7 @@ ecmascript/src/options.ts:91
 
 #### Source
 
-ecmascript/src/options.ts:92
+ecmascript/src/options.ts:94
 
 ***
 
@@ -195,7 +195,7 @@ ecmascript/src/options.ts:92
 
 #### Source
 
-ecmascript/src/options.ts:93
+ecmascript/src/options.ts:95
 
 ***
 
@@ -205,7 +205,7 @@ ecmascript/src/options.ts:93
 
 #### Source
 
-ecmascript/src/options.ts:94
+ecmascript/src/options.ts:96
 
 ***
 
@@ -215,7 +215,7 @@ ecmascript/src/options.ts:94
 
 #### Source
 
-ecmascript/src/options.ts:95
+ecmascript/src/options.ts:97
 
 ***
 
@@ -225,7 +225,7 @@ ecmascript/src/options.ts:95
 
 #### Source
 
-ecmascript/src/options.ts:96
+ecmascript/src/options.ts:98
 
 ***
 
@@ -235,7 +235,7 @@ ecmascript/src/options.ts:96
 
 #### Source
 
-ecmascript/src/options.ts:97
+ecmascript/src/options.ts:99
 
 ***
 
@@ -245,7 +245,7 @@ ecmascript/src/options.ts:97
 
 #### Source
 
-ecmascript/src/options.ts:98
+ecmascript/src/options.ts:100
 
 ***
 
@@ -255,7 +255,7 @@ ecmascript/src/options.ts:98
 
 #### Source
 
-ecmascript/src/options.ts:99
+ecmascript/src/options.ts:101
 
 ***
 
@@ -265,7 +265,7 @@ ecmascript/src/options.ts:99
 
 #### Source
 
-ecmascript/src/options.ts:100
+ecmascript/src/options.ts:102
 
 ***
 
@@ -275,7 +275,7 @@ ecmascript/src/options.ts:100
 
 #### Source
 
-ecmascript/src/options.ts:103
+ecmascript/src/options.ts:105
 
 ***
 
@@ -285,7 +285,17 @@ ecmascript/src/options.ts:103
 
 #### Source
 
-ecmascript/src/options.ts:101
+ecmascript/src/options.ts:103
+
+***
+
+### storeOptions
+
+> **storeOptions**: `Object`
+
+#### Source
+
+ecmascript/src/options.ts:106
 
 ***
 
@@ -295,7 +305,7 @@ ecmascript/src/options.ts:101
 
 #### Source
 
-ecmascript/src/options.ts:102
+ecmascript/src/options.ts:104
 
 ***
 
@@ -305,7 +315,7 @@ ecmascript/src/options.ts:102
 
 #### Source
 
-ecmascript/src/options.ts:104
+ecmascript/src/options.ts:107
 
 ***
 
@@ -315,7 +325,7 @@ ecmascript/src/options.ts:104
 
 #### Source
 
-ecmascript/src/options.ts:105
+ecmascript/src/options.ts:108
 
 ## Methods
 
@@ -331,7 +341,7 @@ Creates a new Options object from the current one.
 
 #### Source
 
-ecmascript/src/options.ts:206
+ecmascript/src/options.ts:211
 
 ***
 
@@ -357,7 +367,7 @@ The context for the actions.
 
 #### Source
 
-ecmascript/src/options.ts:216
+ecmascript/src/options.ts:221
 
 ***
 
@@ -385,7 +395,7 @@ The context for the actions.
 
 #### Source
 
-ecmascript/src/options.ts:115
+ecmascript/src/options.ts:118
 
 ***
 

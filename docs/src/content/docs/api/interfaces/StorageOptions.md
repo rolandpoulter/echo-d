@@ -23,7 +23,7 @@ The StorageOptions interface represents the options of a store.
 
 #### Source
 
-ecmascript/src/storage/interface.ts:34
+ecmascript/src/storage.ts:39
 
 ***
 
@@ -33,7 +33,7 @@ ecmascript/src/storage/interface.ts:34
 
 #### Source
 
-ecmascript/src/storage/interface.ts:33
+ecmascript/src/storage.ts:38
 
 ***
 

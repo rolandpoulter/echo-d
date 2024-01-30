@@ -39,7 +39,7 @@ SortedIndex class represents a sorted index.
 
 #### Source
 
-ecmascript/src/indexes/sorted.ts:65
+ecmascript/src/indexes/sorted.ts:71
 
 ## Properties
 
@@ -53,7 +53,7 @@ ecmascript/src/indexes/sorted.ts:65
 
 #### Source
 
-ecmascript/src/indexes/sorted.ts:63
+ecmascript/src/indexes/sorted.ts:69
 
 ## Methods
 
@@ -73,7 +73,7 @@ The clear method clears the index.
 
 #### Source
 
-ecmascript/src/indexes/sorted.ts:72
+ecmascript/src/indexes/sorted.ts:78
 
 ***
 
@@ -93,7 +93,7 @@ The clone method clones the index.
 
 #### Source
 
-ecmascript/src/indexes/sorted.ts:79
+ecmascript/src/indexes/sorted.ts:85
 
 ***
 
@@ -121,7 +121,7 @@ The value from the index.
 
 #### Source
 
-ecmascript/src/indexes/sorted.ts:89
+ecmascript/src/indexes/sorted.ts:95
 
 ***
 
@@ -153,7 +153,7 @@ True if the value is in the index, false otherwise.
 
 #### Source
 
-ecmascript/src/indexes/sorted.ts:104
+ecmascript/src/indexes/sorted.ts:110
 
 ***
 
@@ -181,7 +181,7 @@ The result of the query.
 
 #### Source
 
-ecmascript/src/indexes/sorted.ts:146
+ecmascript/src/indexes/sorted.ts:152
 
 ***
 
@@ -211,7 +211,7 @@ The value removed from the index.
 
 #### Source
 
-ecmascript/src/indexes/sorted.ts:122
+ecmascript/src/indexes/sorted.ts:128
 
 ***
 
@@ -243,7 +243,7 @@ The index of the value being set.
 
 #### Source
 
-ecmascript/src/indexes/sorted.ts:135
+ecmascript/src/indexes/sorted.ts:141
 
 ***
 

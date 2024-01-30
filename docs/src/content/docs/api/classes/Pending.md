@@ -87,7 +87,7 @@ ecmascript/src/pending.ts:56
 
 ### actorInput()
 
-> **actorInput**(`id`, `newindex`): `void`
+> **actorInput**(`id`, `index`): `void`
 
 Adds an actor input to the created inputs state.
 
@@ -97,7 +97,7 @@ Adds an actor input to the created inputs state.
 
 The ID of the actor.
 
-• **newindex**: `number`
+• **index**: `number`
 
 The index of the new input.
 

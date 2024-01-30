@@ -35,7 +35,7 @@ The store.
 
 #### Source
 
-ecmascript/src/context.ts:75
+ecmascript/src/context.ts:74
 
 ## Properties
 
@@ -47,7 +47,7 @@ The changes.
 
 #### Source
 
-ecmascript/src/context.ts:48
+ecmascript/src/context.ts:47
 
 ***
 
@@ -59,7 +59,7 @@ The events.
 
 #### Source
 
-ecmascript/src/context.ts:45
+ecmascript/src/context.ts:44
 
 ***
 
@@ -71,7 +71,7 @@ The order.
 
 #### Source
 
-ecmascript/src/context.ts:47
+ecmascript/src/context.ts:46
 
 ***
 
@@ -83,7 +83,7 @@ The pending.
 
 #### Source
 
-ecmascript/src/context.ts:49
+ecmascript/src/context.ts:48
 
 ***
 
@@ -95,7 +95,7 @@ The store.
 
 #### Source
 
-ecmascript/src/context.ts:46
+ecmascript/src/context.ts:45
 
 ***
 
@@ -105,25 +105,25 @@ ecmascript/src/context.ts:46
 
 #### Source
 
-ecmascript/src/context.ts:50
+ecmascript/src/context.ts:49
 
 ## Accessors
 
 ### actors
 
-> **`get`** **actors**(): `string`[][] \| [`Emitter`](/api/classes/emitter/)\<`string`[][]\>
+> **`get`** **actors**(): `any`
 
 Gets the actors from the store.
 
 #### Returns
 
-`string`[][] \| [`Emitter`](/api/classes/emitter/)\<`string`[][]\>
+`any`
 
 The actors from the store.
 
 #### Source
 
-ecmascript/src/context.ts:144
+ecmascript/src/context.ts:143
 
 ***
 
@@ -141,7 +141,7 @@ The components from the store.
 
 #### Source
 
-ecmascript/src/context.ts:328
+ecmascript/src/context.ts:408
 
 ***
 
@@ -159,25 +159,25 @@ The entities from the store.
 
 #### Source
 
-ecmascript/src/context.ts:236
+ecmascript/src/context.ts:277
 
 ***
 
 ### inputs
 
-> **`get`** **inputs**(): [`Inputs`](/api/interfaces/inputs/)[] \| [`Emitter`](/api/classes/emitter/)\<[`Inputs`](/api/interfaces/inputs/)[]\>
+> **`get`** **inputs**(): `any`
 
 Gets the inputs from the store.
 
 #### Returns
 
-[`Inputs`](/api/interfaces/inputs/)[] \| [`Emitter`](/api/classes/emitter/)\<[`Inputs`](/api/interfaces/inputs/)[]\>
+`any`
 
 The inputs from the store.
 
 #### Source
 
-ecmascript/src/context.ts:537
+ecmascript/src/context.ts:725
 
 ***
 
@@ -195,7 +195,7 @@ The enum of symbols.
 
 #### Source
 
-ecmascript/src/context.ts:602
+ecmascript/src/context.ts:796
 
 ***
 
@@ -213,13 +213,13 @@ The list of symbols.
 
 #### Source
 
-ecmascript/src/context.ts:593
+ecmascript/src/context.ts:787
 
 ## Methods
 
 ### actorInput()
 
-> **actorInput**(`id`, `input`, `tick`, `options`): `void`
+> **actorInput**(`id`, `input`, `tick`, `options`): `number` \| `Promise`\<`number`\>
 
 Handles actor input with the given id, payload, and options.
 
@@ -243,11 +243,11 @@ The options for handling the actor input.
 
 #### Returns
 
-`void`
+`number` \| `Promise`\<`number`\>
 
 #### Source
 
-ecmascript/src/context.ts:560
+ecmascript/src/context.ts:752
 
 ***
 
@@ -275,13 +275,13 @@ The index of the added symbol or null if the symbol could not be added.
 
 #### Source
 
-ecmascript/src/context.ts:641
+ecmascript/src/context.ts:835
 
 ***
 
 ### changeComponent()
 
-> **changeComponent**(`id`, `key`, `value`, `tick`, `options`): `void`
+> **changeComponent**(`id`, `key`, `value`, `tick`, `options`): `any`
 
 Changes a component with the given id, key, value, and options.
 
@@ -309,17 +309,17 @@ The options for changing the component.
 
 #### Returns
 
-`void`
+`any`
 
 #### Source
 
-ecmascript/src/context.ts:352
+ecmascript/src/context.ts:436
 
 ***
 
 ### createEntity()
 
-> **createEntity**(`id`, `options`): `void`
+> **createEntity**(`id`, `options`): `boolean` \| `Promise`\<`boolean`\>
 
 Creates an entity with the given id and options.
 
@@ -335,11 +335,11 @@ The options for creating the entity.
 
 #### Returns
 
-`void`
+`boolean` \| `Promise`\<`boolean`\>
 
 #### Source
 
-ecmascript/src/context.ts:257
+ecmascript/src/context.ts:302
 
 ***
 
@@ -371,7 +371,7 @@ The fetched symbol tuple.
 
 #### Source
 
-ecmascript/src/context.ts:683
+ecmascript/src/context.ts:877
 
 ***
 
@@ -399,7 +399,7 @@ The actors from the store.
 
 #### Source
 
-ecmascript/src/context.ts:155
+ecmascript/src/context.ts:158
 
 ***
 
@@ -427,7 +427,7 @@ The components from the store.
 
 #### Source
 
-ecmascript/src/context.ts:339
+ecmascript/src/context.ts:423
 
 ***
 
@@ -455,7 +455,7 @@ The entities from the store.
 
 #### Source
 
-ecmascript/src/context.ts:247
+ecmascript/src/context.ts:292
 
 ***
 
@@ -483,7 +483,7 @@ The inputs from the store.
 
 #### Source
 
-ecmascript/src/context.ts:548
+ecmascript/src/context.ts:740
 
 ***
 
@@ -511,13 +511,13 @@ The symbol.
 
 #### Source
 
-ecmascript/src/context.ts:622
+ecmascript/src/context.ts:816
 
 ***
 
 ### mergeActors()
 
-> **mergeActors**(`payload`, `options`): `void`
+> **mergeActors**(`payload`, `options`): `void` \| `Promise`\<`any`[]\>
 
 Merges actors with the given payload and options.
 
@@ -533,17 +533,17 @@ The options for merging the actors.
 
 #### Returns
 
-`void`
+`void` \| `Promise`\<`any`[]\>
 
 #### Source
 
-ecmascript/src/context.ts:215
+ecmascript/src/context.ts:240
 
 ***
 
 ### mergeComponents()
 
-> **mergeComponents**(`payload`, `options`): `void`
+> **mergeComponents**(`payload`, `options`): `void` \| `Promise`\<`any`[]\>
 
 Merges components with the given payload and options.
 
@@ -559,17 +559,17 @@ The options for merging the components.
 
 #### Returns
 
-`void`
+`void` \| `Promise`\<`any`[]\>
 
 #### Source
 
-ecmascript/src/context.ts:510
+ecmascript/src/context.ts:683
 
 ***
 
 ### mergeEntities()
 
-> **mergeEntities**(`payload`, `options`): `void`
+> **mergeEntities**(`payload`, `options`): `void` \| `Promise`\<`any`[]\>
 
 Merges entities with the given payload and options.
 
@@ -585,11 +585,11 @@ The options for merging the entities.
 
 #### Returns
 
-`void`
+`void` \| `Promise`\<`any`[]\>
 
 #### Source
 
-ecmascript/src/context.ts:307
+ecmascript/src/context.ts:372
 
 ***
 
@@ -615,13 +615,13 @@ The options for merging the symbol.
 
 #### Source
 
-ecmascript/src/context.ts:718
+ecmascript/src/context.ts:912
 
 ***
 
 ### removeActor()
 
-> **removeActor**(`id`, `options`): `void`
+> **removeActor**(`id`, `options`): `boolean` \| `Promise`\<`boolean`\>
 
 Removes an actor with the given id and options.
 
@@ -637,17 +637,17 @@ The options for removing the actor.
 
 #### Returns
 
-`void`
+`boolean` \| `Promise`\<`boolean`\>
 
 #### Source
 
-ecmascript/src/context.ts:190
+ecmascript/src/context.ts:205
 
 ***
 
 ### removeComponent()
 
-> **removeComponent**(`id`, `key`, `options`): `void`
+> **removeComponent**(`id`, `key`, `options`): `boolean` \| `Promise`\<`boolean`\>
 
 Removes a component with the given id, key, and options.
 
@@ -667,17 +667,17 @@ The options for removing the component.
 
 #### Returns
 
-`void`
+`boolean` \| `Promise`\<`boolean`\>
 
 #### Source
 
-ecmascript/src/context.ts:482
+ecmascript/src/context.ts:639
 
 ***
 
 ### removeEntity()
 
-> **removeEntity**(`id`, `options`): `void`
+> **removeEntity**(`id`, `options`): `boolean` \| `Promise`\<`boolean`\>
 
 Removes an entity with the given id and options.
 
@@ -693,11 +693,11 @@ The options for removing the entity.
 
 #### Returns
 
-`void`
+`boolean` \| `Promise`\<`boolean`\>
 
 #### Source
 
-ecmascript/src/context.ts:282
+ecmascript/src/context.ts:337
 
 ***
 
@@ -713,7 +713,7 @@ Resets the current frame state.
 
 #### Source
 
-ecmascript/src/context.ts:763
+ecmascript/src/context.ts:957
 
 ***
 
@@ -739,7 +739,7 @@ The options for resetting the symbols.
 
 #### Source
 
-ecmascript/src/context.ts:742
+ecmascript/src/context.ts:936
 
 ***
 
@@ -761,13 +761,13 @@ The symbols to set.
 
 #### Source
 
-ecmascript/src/context.ts:611
+ecmascript/src/context.ts:805
 
 ***
 
 ### spawnActor()
 
-> **spawnActor**(`id`, `options`): `void`
+> **spawnActor**(`id`, `options`): `boolean` \| `Promise`\<`boolean`\>
 
 Spawns an actor with the given id and options.
 
@@ -783,17 +783,17 @@ The options for spawning the actor.
 
 #### Returns
 
-`void`
+`boolean` \| `Promise`\<`boolean`\>
 
 #### Source
 
-ecmascript/src/context.ts:165
+ecmascript/src/context.ts:168
 
 ***
 
 ### upsertComponent()
 
-> **upsertComponent**(`id`, `key`, `value`, `tick`, `options`): `void`
+> **upsertComponent**(`id`, `key`, `value`, `tick`, `options`): `any`
 
 Upserts a component with the given id, key, value, and options.
 
@@ -821,11 +821,11 @@ The options for upserting the component.
 
 #### Returns
 
-`void`
+`any`
 
 #### Source
 
-ecmascript/src/context.ts:421
+ecmascript/src/context.ts:541
 
 ***
 
@@ -857,7 +857,7 @@ The context.
 
 #### Source
 
-ecmascript/src/context.ts:60
+ecmascript/src/context.ts:59
 
 ***
 

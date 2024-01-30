@@ -27,7 +27,7 @@ An object containing the `addSymbol` and `getSymbol` functions.
 
 #### Source
 
-ecmascript/src/options.ts:38
+ecmascript/src/options.ts:39
 
 ***
 
@@ -39,7 +39,7 @@ An object to specify the payload sizes for batch actions.
 
 #### Source
 
-ecmascript/src/options.ts:42
+ecmascript/src/options.ts:43
 
 ***
 
@@ -51,7 +51,7 @@ A flag to compress strings as integers.
 
 #### Source
 
-ecmascript/src/options.ts:43
+ecmascript/src/options.ts:44
 
 ***
 
@@ -63,7 +63,7 @@ An array of default symbols.
 
 #### Source
 
-ecmascript/src/options.ts:44
+ecmascript/src/options.ts:45
 
 ***
 
@@ -75,7 +75,7 @@ A flag to indicate if querying is enabled.
 
 #### Source
 
-ecmascript/src/options.ts:46
+ecmascript/src/options.ts:47
 
 ***
 
@@ -87,7 +87,7 @@ A flag to indicate if time rollback is enabled on inputs.
 
 #### Source
 
-ecmascript/src/options.ts:45
+ecmascript/src/options.ts:46
 
 ***
 
@@ -99,7 +99,7 @@ An object containing the default symbols.
 
 #### Source
 
-ecmascript/src/options.ts:47
+ecmascript/src/options.ts:48
 
 ***
 
@@ -111,7 +111,7 @@ A function to get the actor ID.
 
 #### Source
 
-ecmascript/src/options.ts:48
+ecmascript/src/options.ts:49
 
 ***
 
@@ -123,7 +123,7 @@ A function to get the value from a group.
 
 #### Source
 
-ecmascript/src/options.ts:49
+ecmascript/src/options.ts:50
 
 ***
 
@@ -135,7 +135,7 @@ An object containing the indexes.
 
 #### Source
 
-ecmascript/src/options.ts:50
+ecmascript/src/options.ts:51
 
 ***
 
@@ -147,7 +147,7 @@ A flag to indicate if the node uses async storage.
 
 #### Source
 
-ecmascript/src/options.ts:52
+ecmascript/src/options.ts:53
 
 ***
 
@@ -159,7 +159,7 @@ A flag to indicate if the node is an authority.
 
 #### Source
 
-ecmascript/src/options.ts:51
+ecmascript/src/options.ts:52
 
 ***
 
@@ -171,7 +171,7 @@ A flag to indicate if the node is a component relay.
 
 #### Source
 
-ecmascript/src/options.ts:53
+ecmascript/src/options.ts:54
 
 ***
 
@@ -183,7 +183,7 @@ A flag to indicate if the node is diffed.
 
 #### Source
 
-ecmascript/src/options.ts:54
+ecmascript/src/options.ts:55
 
 ***
 
@@ -195,7 +195,7 @@ A flag to indicate if the node uses grouped components.
 
 #### Source
 
-ecmascript/src/options.ts:55
+ecmascript/src/options.ts:56
 
 ***
 
@@ -207,7 +207,7 @@ A flag to indicate if the node is ticked.
 
 #### Source
 
-ecmascript/src/options.ts:56
+ecmascript/src/options.ts:57
 
 ***
 
@@ -219,7 +219,7 @@ A flag to indicate if the node is read only.
 
 #### Source
 
-ecmascript/src/options.ts:57
+ecmascript/src/options.ts:58
 
 ***
 
@@ -231,7 +231,7 @@ A flag to indicate if the node is a symbol leader.
 
 #### Source
 
-ecmascript/src/options.ts:58
+ecmascript/src/options.ts:59
 
 ***
 
@@ -243,7 +243,7 @@ A flag to indicate if the node is a symbol relay.
 
 #### Source
 
-ecmascript/src/options.ts:59
+ecmascript/src/options.ts:60
 
 ***
 
@@ -255,7 +255,7 @@ A function to call when the node is updated.
 
 #### Source
 
-ecmascript/src/options.ts:60
+ecmascript/src/options.ts:61
 
 ***
 
@@ -267,7 +267,7 @@ The page size.
 
 #### Source
 
-ecmascript/src/options.ts:61
+ecmascript/src/options.ts:62
 
 ***
 
@@ -279,7 +279,7 @@ A function to respond to actions.
 
 #### Source
 
-ecmascript/src/options.ts:62
+ecmascript/src/options.ts:63
 
 ***
 
@@ -291,7 +291,7 @@ A function to set the value in a group.
 
 #### Source
 
-ecmascript/src/options.ts:65
+ecmascript/src/options.ts:66
 
 ***
 
@@ -303,7 +303,19 @@ A flag to skip pending actions.
 
 #### Source
 
-ecmascript/src/options.ts:63
+ecmascript/src/options.ts:64
+
+***
+
+### storeOptions?
+
+> **storeOptions**?: `Object`
+
+An object containing the store options.
+
+#### Source
+
+ecmascript/src/options.ts:67
 
 ***
 
@@ -315,7 +327,7 @@ An object containing the types.
 
 #### Source
 
-ecmascript/src/options.ts:64
+ecmascript/src/options.ts:65
 
 ***
 
@@ -327,7 +339,7 @@ An object containing the valid keys for updates and any other options.
 
 #### Source
 
-ecmascript/src/options.ts:66
+ecmascript/src/options.ts:68
 
 ***
 
@@ -339,7 +351,7 @@ An object containing the world options.
 
 #### Source
 
-ecmascript/src/options.ts:67
+ecmascript/src/options.ts:69
 
 ***
 

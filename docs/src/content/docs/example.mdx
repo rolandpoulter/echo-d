@@ -4,63 +4,374 @@ description: High level example of the Echo-D usage.
 ---
 import echoD from '../../../../ecmascript/dist/module/lib.echo-d.js'
 
-Import Echo-D:
+This example is split into two parts, the server and the client.
+
+## Basic Server
+
+Create a new EchoD instance, and pass in an EventEmitter instance to handle inputs.
 
 ```js
-import EchoD, {
-    Node as EchoDNode
-    Options as EchoDOptions,
-    Context as EchoDContext,
-    Storage as EchoDStorage,
-} from 'echo-d'
+// Server.js
+const events = new EventEmitter()
+
+const echoD = new EchoD({
+    events, // optional
+}, {
+    isAuthority: true, // server is authority
+    compressStringsAsInts: true, // optional
+    types: {
+        // ... other types ...
+        position: ['f32', 3]
+    },
+    // ... other options ...
+})
 ```
 
-Configure options:
+### Transport Layer
+
+Create a websocket server, or use a different network transport layer.
 
 ```js
-const customOptions = {}
-
-const echoDOptions = new EchoDOptions(customOptions, EchoDNode.actions)
+const wss = new WebSocketServer({
+    // ... websocket server options ...
+});
 ```
 
-Create a new context:
+A list of clients that will be used to broadcast updates.
 
 ```js
-const customContext = {}
-
-const echoDContext = new EchoDContext(customContext, echoDOptions, EchoDStorage)
+const clients = [];
 ```
 
-Setting up an instance of Echo-D:
+Handle messages from clients by decoding them, and passing them to the EchoD instance.
 
 ```js
-const echoD = new EchoD(
-    echoDContext,
-    echoDOptions,
-)
+function echoMessageHandler (data) => {
+    try {
+        data = msgpack.decode(data) // msgpack is recommended
+    } catch (err) {
+        console.error(err)
+        return
+    }
+
+    echoD.many(data) // handle message(s)
+}
 ```
 
-Using Echo-D to synchornize entity-component state:
+Handle websocket connections, add them to the list of clients, and **send an init message to the client.**
+When a message is received, pass it to the message handler.
+After a client disconnects, remove them from the list of clients.
+
 
 ```js
-// create pending state
+wss.on('connection', (ws) => {
+    // Add client to list
+    clients.push(ws);
+    
+    // Handle errors
+    ws.on('error', console.error)
+    
+    // Handle messages
+    ws.on('message', echoMessageHandler)
+
+    // Remove client on close
+    ws.on('close', () => {
+        const index = clients.indexOf(ws)
+        if (index !== -1) {
+            clients.splice(index, 1)
+        }
+    })
+
+    // Send init message to client
+    const init = msgpack.encode(['init']) // msgpack is recommended
+    ws.send(init)
+});
+```
+
+
+
+```js
+events.on('actorInput', (id, input, index, tick) => {
+    // ... handle actor input ...
+    const position = entity.position
+
+    // Get movement vector from input
+    const movement = new Float32Array([
+        input.x || 0,
+        input.y || 0,
+        input.z || 0,
+    ])
+
+    // Calculate next position
+    const nextPosition = new Float32Array([
+        position[0] + movement[0],
+        position[1] + movement[1],
+        position[2] + movement[2],
+    ])
+
+    // Update position component
+    echoD.upsertComponent(id, 'position', nextPosition)
+})
+```
+
+```js
+function gameLoop () {
+    // ... perform physics, game logic, etc ...
+
+    // Send update messages to clients
+    echoD.updater({
+        responder: (message) => {
+            const data = msgpack.encode(message) // msgpack is recommended
+            clients.forEach((client) => {
+                client.send(data)
+            })
+        },
+        updateOptions:  {
+            // ... other update options ...
+            mask: {
+                // ... other masks ...
+                inputs: true, // input updates should only come from clients
+            },
+            validkeys: {
+                // ... other validkeys ...
+                position: true, // only send position updates in this example
+            }
+        }
+    })
+}
+```
+
+```js
+let loopInterval = null;
+
+// Start game loop, using setInterval for example
+function start() {
+    loopInterval = setInterval(gameLoop, 1000 / 30);
+}
+
+// Stop game loop, using clearInterval for example
+function stop() {
+    clearInterval(loopInterval);
+}
+
+start() // begin
+```
+
+```js
+// Create pending state for next loop
 echoD.spawnActor('actor') // spawn an actor
 echoD.upsertComponent('actor', 'position', [0, 0, 0]) // position actor
+echoD.actorInput('actor', {x: 1, y: 1, z: 0}, 0, 0) // move actor up
 ```
 
+___
+
+## Basic Client
+
 ```js
-events.on('echoD', (messages) => {
-  other_echoD.many(messages) // handle message(s)
-  // Now our other Echo-D instance will have
-  // an 'actor' with a 'position' of [0, 0, 0]
+const events = new EventEmitter()
+
+let renderTimer = null
+
+// Create echoD instance
+const echoD = new EchoD({}, {
+    isAuthority: false, // client is not authority
+    compressStringsAsInts: true, // optional
+    onUpdate: () => {
+        // ... handle render update ...
+        clearTimeout(renerTimer)
+        renderTimer = setTimeout(updateRender, 0)
+    }
+    // ... other options ...
 })
 ```
 
 ```js
-// send pending messages to other echoDs
-echoD.updater({
-    responder: (message) => {
-        events.emit('echoD', message) // send message(s)
-    },
+// Create websocket client, or use a different network transport layer
+const ws = new WebSocket(wsUrl);
+
+// Handle errors
+ws.on('error', console.error)
+```
+
+```js
+// Handle messages
+ws.on('message', (data) => {
+    try {
+        data = msgpack.decode(data) // msgpack is recommended
+    } catch (err) {
+        console.error(err)
+        return
+    }
+
+    if (data[0] === 'init') {
+        // ... handle init message ...
+        // again, msgpack is recommended
+        ws.send(msgpack.encode(['symbols'])) // request initial symbols
+        ws.send(msgpack.encode(['actors'])) // request initial actors
+        ws.send(msgpack.encode(['entities'])) // request initial entities
+        ws.send(msgpack.encode(['components'])) // request initial components
+        return
+    }
+
+    // Update echoD with message
+    echoD.many(data) // handle message(s)
 })
+```
+
+```js
+const renderViews = {};
+const renderObjects = {};
+
+function updateRender () {
+    let updated = false
+
+    const componentPages = echoD.store.getComponents()
+
+    const removedIds = Object.keys(renderViews)
+
+    // Iterate over all component pages
+    for (const componentsPage of componentsPages) {
+        // Iterate over all entities in component page
+        for (const entities of componentsPage) {
+            // Iterate over all entities in component page
+            for (const id in entities) {
+                const entity = entities[id]
+                
+                // Example of iterating over all component values
+                for (const component of entity) {
+                    // ... do something with component value ...
+                    const value = entity[component]
+                    console.log(id, component, value)
+                }
+
+                // Create react three fiber view if it doesn't exist
+                if (!renderViews[entity]) {
+                    renderViews[entity] = (
+                        <mesh
+                            ref={(r) => {
+                                renderObjects[id] = r
+                            }}
+                            position={entity.position || [0, 0, 0]}
+                        >
+                            <sphereGeometry args={[entity.size || 0.5]} />
+                            <meshStandardMaterial color={entity.color || 0xff4444} />
+                        </mesh>
+                    )
+                    updated = true
+                } else {
+                    // Remove id from removedIds if it exists
+                    const index = removedIds.indexOf(id)
+                    if (index !== -1) {
+                        removedIds.splice(index, 1)
+                    }
+
+                    // Update position of three object if it exists
+                    if (renderObjects[id] && entity.position) {
+                        renderObjects[id].position.x = entity.position[0] || 0
+                        renderObjects[id].position.y = entity.position[1] || 0
+                        renderObjects[id].position.z = entity.position[2] || 0
+                        // updated = true
+                    }
+                }
+            }
+        }
+    }
+
+    if (removedIds.length) {
+        // Remove views if they no longer exist
+        for (const id of removedIds) {
+            delete renderViews[id]
+            delete renderObjects[id]
+            updated = true
+        }
+    }
+
+    // Emit render event if views were updated
+    if (updated) {
+        const views = Object.keys(renderViews).map((id) => renderViews[id])
+        events.emit('render', views)
+    }
+}
+```
+
+```js
+// Use <EchoDThreeFibers /> to embed 3D objects into React Fiber tree
+function EchoDThreeFibers () {
+    const [views, setViews] = useState([])
+    useEffect(() => {
+        events.on('render', setViews)
+        return () => {
+            events.off('render', setViews)
+        }
+    }, [])
+    return views
+}
+```
+
+```js
+// Create react three fiber Canvas in document root
+createRoot(
+    document.getElementById('root')
+).render(
+  <Canvas>
+    <ambientLight intensity={Math.PI / 2} />
+    <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
+    <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
+    <EchoDThreeFibers />
+  </Canvas>
+)
+```
+    
+```js
+// Create WASD input handler for actor inputs
+document.addEventListener(`keydown`, e => {
+	const move = { x: 0, y: 0, z: 0 }
+
+    switch (e.code) {
+        case `KeyW`:
+        case `ArrowUp`:
+            move.y = 1
+            break
+        case `KeyS`:
+        case `ArrowDown`:
+            move.y = -1
+            break
+        case `KeyA`:
+        case `ArrowLeft`:
+            move.x = -1
+            break
+        case `KeyD`:
+        case `ArrowRight`:
+            move.x = 1
+            break
+        case `KeyQ`:
+            move.z = 1
+            break
+        case `KeyE`:
+            move.z = -1
+            break
+    }
+    
+    // Send actor input to server
+    echoD.actorInput('actor', move, 0, 0)
+    
+    // Send input message to server
+    echoD.updater({
+        responder: (message) => {
+            const data = msgpack.encode(message) // msgpack is recommended
+            ws.send(data)
+        },
+        updateOptions:  {
+            // ... other update options ...
+            mask: {
+                // ... other masks ...
+                actors: true,
+                entities: true,
+                components: true,
+                symbols: true
+            },
+        }
+    })
+});
 ```

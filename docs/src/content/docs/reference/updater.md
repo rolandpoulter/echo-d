@@ -5,47 +5,61 @@ description: A reference to echo.updater.
 
 ## Summary
 
-The `updater` function updates the context based on the provided options by processing different types of updates such as creating entities, spawning actors, removing entities and components, and updating components and inputs. It also handles batching of messages and indexing of symbols.
+The `updater` function updates the context based on the provided options. It processes various updates such as creating entities, spawning actors, removing entities and components, and updating components and inputs. It supports batching of updates and can handle different options such as compressing strings as integers, enabling rollback, and diffing changes.
 
 ## Example Usage
 
 ```javascript
-const context = {...}; // current context
-const options = {...}; // options for updating the context
-const tick = 123; // current tick
-updater(context, options, tick);
+const context = new Context();
+const options = new Options();
+const tick = 0;
+const updates = await updater(context, options, tick);
+console.log(updates);
 ```
 
-## Code Analysis
+The code above creates a new context and options, and then calls the `updater` function to update the context based on the options. The current tick is set to 0. The function returns a promise that resolves to an array of arrays, where each sub-array represents a batch of updates. The updates are logged to the console.
 
 ### Inputs
 
 - `context` (Context): The current context.
 - `options` (Options | any): The options for updating the context.
-- `tick` (number): The current tick (optional, default value is the current timestamp).
+- `tick` (number, optional): The current tick. Defaults to the current time.
 
 ___
 
 ### Flow
 
-1. Initialize variables and extract options and updateOptions from the provided options.
-2. Check if there are pending updates in the context. If not, return.
-3. Process batched updates by creating an array of arrays to store batches and an array to store the current batch.
-4. Process created entities by indexing and queuing messages to create each entity.
-5. Process created actors by indexing and queuing messages to spawn each actor.
-6. Process removed entities by indexing and queuing messages to remove each entity.
-7. Process removed actors by indexing and queuing messages to remove each actor.
-8. Process removed components by indexing and queuing messages to remove each component.
-9. Process created components by indexing and queuing messages to create each component.
-10. Process updated components by indexing and queuing messages to update each component.
-11. Process created inputs by queuing messages to create each input.
-12. Process symbols by queuing messages to add each symbol.
-13. Process batched updates by sending the batched messages.
-14. Return.
+1. The function checks if the `options` parameter is an instance of the `Options` class. If not, it creates a new `Options` instance.
+2. The function extracts various options and properties from the `options` object.
+3. The function extracts the `created`, `removed`, `symbols`, and `updated` properties from the `context.pending` object.
+4. The function extracts the `store` property from the `context` object.
+5. The function checks if the `mask` object or its `entities` property is not present. If so, it processes the creation of entities.
+6. The function checks if the `mask` object or its `actors` property is not present. If so, it processes the spawning of actors.
+7. The function checks if the `mask` object or its `entities` property is not present. If so, it processes the removal of entities.
+8. The function checks if the `mask` object or its `actors` property is not present. If so, it processes the removal of actors.
+9. The function checks if the `mask` object or its `components` property is not present. If so, it processes the removal of components.
+10. The function checks if the `mask` object or its `components` property is not present. If so, it processes the creation of components.
+11. The function checks if the `mask` object or its `components` property is not present. If so, it processes the update of components.
+12. The function checks if the `mask` object or its `inputs` property is not present. If so, it processes the creation of inputs.
+13. The function checks if the `mask` object or its `symbols` property is not present. If so, it processes the addition of symbols.
+14. The function checks if batching is enabled and there are batches to process. If so, it sends the batches of updates to the responder.
+15. The function returns the batch array.
+
+___
+
+### Closures
+
+1. The function initializes an empty `batch` array to store batches of updates.
+2. The function initializes an empty `batchBlock` array to store the current batch of updates.
+3. The function defines a helper function `mergeBatch` to merge the current batch block into the batch array.
+4. The function defines a helper function `queueMessage` to queue a message for later processing.
+5. The function defines a helper function `ensureSymbol` to ensure that a symbol is indexed if the `compressStringsAsInts` option is enabled.
+6. The function defines a helper function `upsertComponents` to handle the creation and update of components.
 
 ___
 
 ### Outputs
 
-None. The function updates the context based on the provided options.
+- A promise that resolves to an array of arrays, where each sub-array represents a batch of updates.
+
 ___

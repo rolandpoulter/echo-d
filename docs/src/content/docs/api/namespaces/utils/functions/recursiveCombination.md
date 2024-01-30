@@ -29,7 +29,7 @@ A tuple with a boolean indicating success/failure and the combined object/array.
 
 ## Source
 
-ecmascript/src/utils.ts:266
+ecmascript/src/utils.ts:269
 
 ***
 

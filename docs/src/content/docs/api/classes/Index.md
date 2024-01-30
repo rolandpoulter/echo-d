@@ -9,6 +9,7 @@ The Index class represents an index.
 
 ## Extended By
 
+- [`ComponentsIndex`](/api/classes/componentsindex/)
 - [`SortedIndex`](/api/classes/sortedindex/)
 - [`SpatialIndex`](/api/classes/spatialindex/)
 

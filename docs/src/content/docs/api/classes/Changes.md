@@ -37,7 +37,7 @@ ecmascript/src/changes.ts:29
 
 ### changeComponent()
 
-> **changeComponent**(`id`, `key`, `newValue`, `prevValue`): `Promise`\<`any`[]\>
+> **changeComponent**(`id`, `key`, `newValue`, `prevValue`, `isAsyncStorage`): `Promise`\<`any`[]\>
 
 Changes a component in the current context.
 
@@ -59,6 +59,10 @@ The new value of the property.
 
 The previous value of the property.
 
+• **isAsyncStorage**: `boolean`= `false`
+
+Whether the storage is asynchronous.
+
 #### Returns
 
 `Promise`\<`any`[]\>
@@ -67,7 +71,7 @@ The new value.
 
 #### Source
 
-ecmascript/src/changes.ts:43
+ecmascript/src/changes.ts:44
 
 ***
 
@@ -99,7 +103,7 @@ The diffs.
 
 #### Source
 
-ecmascript/src/changes.ts:55
+ecmascript/src/changes.ts:56
 
 ***
 
@@ -123,13 +127,13 @@ The instance of the Changes class.
 
 #### Source
 
-ecmascript/src/changes.ts:71
+ecmascript/src/changes.ts:72
 
 ***
 
 ### upsertComponent()
 
-> **upsertComponent**(`id`, `key`, `newValue`, `_prevValue`): `Promise`\<`any`[]\>
+> **upsertComponent**(`id`, `key`, `newValue`, `_prevValue`, `isAsyncStorage`): `any`
 
 Updates an existing component or inserts a new one if it doesn't exist in the current context.
 
@@ -151,15 +155,19 @@ The new value of the property.
 
 The previous value of the property.
 
+• **isAsyncStorage**: `boolean`= `false`
+
+Whether the storage is asynchronous.
+
 #### Returns
 
-`Promise`\<`any`[]\>
+`any`
 
 The new value.
 
 #### Source
 
-ecmascript/src/changes.ts:85
+ecmascript/src/changes.ts:87
 
 ***
 

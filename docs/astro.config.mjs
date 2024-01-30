@@ -62,7 +62,7 @@ export default defineConfig({
 						{ label: 'Networking', link: '/guides/networking/' },
 						{ label: 'Performance', link: '/guides/performance/' },
 						{ label: 'Storage Adapters', link: '/guides/storage_adapters/' },
-						{ label: 'Common Issues', link: '/guides/common_issues/' },
+						// { label: 'Common Issues', link: '/guides/common_issues/' },
 					],
 					// autogenerate: { directory: 'guides' },
 				},

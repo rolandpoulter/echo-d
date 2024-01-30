@@ -144,6 +144,13 @@ export class Handler {
     }
 
     /**
+     * Gets the store from the context.
+     */
+    get store() {
+        return this.context.store
+    }
+
+    /**
      * Handles a single message.
      * 
      * @param {Message | any[]} message - The message to handle. 

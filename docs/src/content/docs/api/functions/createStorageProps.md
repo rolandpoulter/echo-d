@@ -21,7 +21,7 @@ title: "createStorageProps"
 
 ## Source
 
-ecmascript/src/storage.ts:36
+ecmascript/src/storage.ts:130
 
 ***
 

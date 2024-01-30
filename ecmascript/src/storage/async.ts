@@ -112,7 +112,7 @@ export class AsyncStorage implements StorageInterface {
     }
 
     /**
-     * Fetches an actors inputs
+     * Fetches an actors inputs asynchronously.
      * 
      * @param {string} id - The ID of the actor.
      * @returns {InputPayload} The fetched inputs.
@@ -122,7 +122,7 @@ export class AsyncStorage implements StorageInterface {
     }
 
     /**
-     * Fetches an actors input
+     * Fetches an actors input asynchronously.
      * 
      * @param {string} id - The ID of the actor.
      * @param {number} index - The index of the input.
@@ -217,7 +217,7 @@ export class AsyncStorage implements StorageInterface {
     }
 
     /**
-     * Sets the components.
+     * Sets the components asynchronously.
      *
      * @param {Components} components - The components to set.
      * @returns {Components} The components.
@@ -227,7 +227,7 @@ export class AsyncStorage implements StorageInterface {
     }
 
     /**
-     * Sets the entities.
+     * Sets the entities asynchronously.
      *
      * @param {string[]} entities - The entities to set.
      * @returns {string[]} The entities.
@@ -237,7 +237,7 @@ export class AsyncStorage implements StorageInterface {
     }
 
     /**
-     * Sets the inputs.
+     * Sets the inputs asynchronously.
      *
      * @param {Inputs} inputs - The inputs to set.
      * @returns {Inputs} The inputs.
@@ -247,7 +247,7 @@ export class AsyncStorage implements StorageInterface {
     }
 
     /**
-     * Stores an actor ID.
+     * Stores an actor ID asynchronously.
      *
      * @param {string} id - The ID of the actor to store.
      * @returns {boolean} True if the actor ID was stored, false otherwise.
@@ -257,7 +257,7 @@ export class AsyncStorage implements StorageInterface {
     }
 
     /**
-     * Stores a component.
+     * Stores a component asynchronously.
      *
      * @param {string} id - The ID of the component to store.
      * @param {string} key - The key of the component to store.
@@ -268,7 +268,7 @@ export class AsyncStorage implements StorageInterface {
     }
 
     /**
-     * Stores an entity ID.
+     * Stores an entity ID asynchronously.
      *
      * @param {string} id - The ID of the entity to store.
      * @returns {boolean} True if the entity ID was stored, false otherwise.
@@ -278,7 +278,7 @@ export class AsyncStorage implements StorageInterface {
     }
 
     /**
-     * Stores an ID in a list if it doesn't exist already.
+     * Stores an ID in a list if it doesn't exist already asynchronously.
      *
      * @param {string[]} list - The list to store the ID in.
      * @param {string} id - The ID to store.
@@ -289,7 +289,7 @@ export class AsyncStorage implements StorageInterface {
     }
 
     /**
-     * Stores an input.
+     * Stores an input asynchronously.
      *
      * @param {string} id - The ID of the input to store.
      * @param {InputPayload} input - The payload of the input to store.

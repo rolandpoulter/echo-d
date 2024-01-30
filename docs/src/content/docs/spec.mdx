@@ -2,33 +2,20 @@
 version: 1.0.0
 title: Specification v1.0.0
 description: Implementation instructions for Echo-D
-#template: splash
-#hero:
-#  title: <span class='hero-gradient-text'>Echo-D</span> <br/> <span class=''>Specification</span>
-#  tagline: Fast, simple network layer for Entity-Component Systems
-#  image:
-#    alt: Dolphin wearing heaphones
-#    dark: ../../assets/dolphin/echo-d-dolphin-blur-medium-night.png
-#    light: ../../assets/dolphin/echo-d-dolphin-blur-medium.png
-#  actions:
-#    - text: Get Started
-#      link: /guides/quick_start/
-#      icon: right-arrow
-#      variant: primary
-#    - text: View Example
-#      link: /example
-#    - text: See the Spec
-#      link: /spec # https://github.com/rolantpoulter/echo-d/SPEC.md
-#      variant: secondary
 ---
 
 **Echo-D** is a library for distributing Entity-Component state in real-time.
 
-**Echo-D** is network transport and storage agnostic. For example WebRTC and it can integrate into existing ECS libraries or databases.
+**Echo-D** is network transport and storage agnostic.
+For example WebRTC and it can integrate into existing ECS libraries or
+databases.
 
-**Echo-D** is designed for cloud-based game engines. It is ideal for session-based multiplayer games with server-side physics or rendering.
+**Echo-D** is designed for cloud-based game engines.
+It is ideal for session-based multiplayer games with server-side physics or
+rendering.
 
-This document describes the **Echo-D** protocol, as well as the main **Echo-D** APIs and data structures.
+This document describes the **Echo-D** protocol,
+as well as the main **Echo-D** APIs and data structures.
 
 ---
 
@@ -116,6 +103,8 @@ This document describes the **Echo-D** protocol, as well as the main **Echo-D** 
         <li> [symbols](#symbols) </li>
       </ul>
   * [Storage](#storage)
+    * [Async](#async)
+    * [Queries](#queries)
     * [Indexes](#indexes)
       * [Components Index](#components-index)
       * [Sorted Index](#sorted-index)
@@ -129,17 +118,33 @@ This document describes the **Echo-D** protocol, as well as the main **Echo-D** 
 
 ## Options
 
-Related: [Context](#context), [Action Handler](#action-handler), and [Actions](#actions)
+Related: [Context](#context), [Action Handler](#action-handler),
+and [Actions](#actions)
 
-There are many possible configurations for an **Echo-D** node. All of the parameters are encapsulated by an `Options` class.
-This class should have an `extend` method to make it easy to create a new instance of an existing set of options, while applying new custom options.
+Represents the options for a **Echo-D** node.
+It provides a way to configure various settings and behaviors for the node.
+
+There are many possible configurations for an **Echo-D** node.
+All of the parameters are encapsulated by a `Options`.
+There should be a static `extend` method to make it easy to
+create a new instance of an existing set of options, while
+applying new custom options.
+
+### Main functionalities
+
+- Allows configuring various options for a node
+- Provides default values for the options
+- Ensures that the provided options are an instance of Options
+- Clones and extends the options object
+
+### Option Definitions
 
 > #### actions : `Object`
 >
 > Related: [Action Handler](#action-handler), and [Actions](#actions)
 >
-> A map of actions that is used by an `Action Handler` in order to repond to messages that are recieved.
-> They can be overriden in this reference.
+> A map of actions that is used by an `Action Handler` in order to repond
+> to messages that are recieved. They can be overriden in this reference.
 >
 > ```js
 > {
@@ -152,14 +157,15 @@ This class should have an `extend` method to make it easy to create a new instan
 >
 > Related: [Batch Message Structure](#batch-message-structure)
 >
-> In order to serialize and deserialize batched messages, the size of the message payload needs to be known.
-> However there is a necessary complexity that requires there be a way to indicate a different size
+> In order to serialize and deserialize batched messages, the size of the
+> message payload needs to be known. However there is a necessary complexity
+> that requires there be a way to indicate a different size
 > if certain flags in options are true:
 >
 > ```js
 >   {
 >     actorInput: { default: 1, rollback: 2 }, // if isRollback 2, otherwise 1
->     changeComponent: { default: 3, ordered: 4 }, // if isOrdered 4, otherwise 3
+>     changeComponent: { default: 3, ordered: 4 }, // if isOrdered 4, else 3
 >     mergeSymbols: 2, // always 2
 >     removeComponent: 2,
 >     upsertComponent: { default: 3, ordered: 4 }
@@ -168,15 +174,21 @@ This class should have an `extend` method to make it easy to create a new instan
 
 > #### compressStringsAsInts : `Boolean`
 >
-> Related: [Symbols](#symbols), [Numeric Reference Table](#numeric-reference-table), and [Updater](#updater)
+> Related: [Symbols](#symbols),
+> [Numeric Reference Table](#numeric-reference-table), and [Updater](#updater)
 >
-> The protocol uses `Symbols` which are strings that have been mapped to a unique integer. This allows them to be referenced by the associated integer from an index and compresses the size of strings being sent and recieved.
+> The protocol uses `Symbols` which are strings that have been mapped to a
+> unique integer.
+> This allows them to be referenced by the associated integer from an index
+> and compresses the size of strings being sent and recieved.
 
 > #### defaultSymbols : `Array[String]`
 >
 > Related: [Numeric Reference Table](#numeric-reference-table)
 >
-> An array that maps the default set of symbols by number. The values of the array are strings that represent symbols and the indexes of the values are the unique number IDs for the symbol.
+> An array that maps the default set of symbols by number.
+> The values of the array are strings that represent symbols and the indexes
+> of the values are the unique number IDs for the symbol.
 >
 > ```js
 > [ 'symbol1', 'symbol2' ]
@@ -186,7 +198,9 @@ This class should have an `extend` method to make it easy to create a new instan
 >
 > Related: [Numeric Reference Table](#numeric-reference-table)
 >
-> An object that maps the default symbols by string. The keys of the object are string that represent symbols and the values are the unique number IDs for each key (symbol).
+> An object that maps the default symbols by string. The keys of the object are
+> strings that represent symbols and the values are the unique number IDs for
+> each key (symbol).
 >
 > ```js
 > { symbol1: 0, symbol2: 1 }
@@ -194,27 +208,32 @@ This class should have an `extend` method to make it easy to create a new instan
 
 > #### enableQuerying : `Boolean`
 >
-> Related: [Indexes](#indexes), and [Storage](#storage)
+> Related: [Queries](#queries), [Indexes](#indexes), and [Storage](#storage)
 >
-> A flag to indicate if querying is enabled. When enabled the payload of `actors`, `entities`, and `components` can be
-> a query object that will filter out unwanted items.
+> A flag to indicate if querying is enabled. When enabled the payload of
+> `actors`, `entities`, and `components` can be a query object that
+> will filter out unwanted items.
 
 > #### enableRollback : `Boolean`
 >
 > Related: [Ticked Actions](#ticked-actions)
 >
-> A flag to indicate if time rollback is enabled on inputs. This expects an extra `tick` value in the payload of `actorInput`.
-> The `tick` can then be used to implment a rollback strategy on the client nodes.
+> A flag to indicate if time rollback is enabled on inputs.
+> This expects an extra `tick` value in the payload of `actorInput`.
+> The `tick` can then be used to implment a rollback strategy on the client
+> nodes.
 
 > #### getActorId : `Function`
 >
-> A function to get the actor ID. It is passed an ID string, the default behavior is to return it.
+> A function to get the actor ID. It is passed an ID string,
+> the default behavior is to return it.
 
 > #### getGroupedValue : `Function`
 >
 > Related: [Grouped Component Updates](#grouped-component-updates)
 >
-> A function to get the value from a group. By default it slices a section of an array that matches the defined type size.
+> A function to get the value from a group.
+> By default it slices a section of an array that matches the defined type size.
 > However it might be necessary for some Storage adapters to convert the values.
 >
 > ```js
@@ -226,9 +245,11 @@ This class should have an `extend` method to make it easy to create a new instan
 >
 > Related: [Indexes](#indexes), and [Storage](#storage)
 >
-> An object containing a mapping indexes. You can specify either `sorted` or `spatial` indexes.
+> An object containing a mapping indexes.
+> You can specify either `sorted` or `spatial` indexes.
 > A sorted index will organize values into a sorted array for indexing.
-> A spatial index will use a spatial hashing function to index nearby elements and allow effecient nearest neighbor queries.
+> A spatial index will use a spatial hashing function to index nearby elements
+> and allow effecient nearest neighbor queries.
 >
 > ```js
 > {
@@ -243,104 +264,131 @@ This class should have an `extend` method to make it easy to create a new instan
 >
 > Related: [Action Handler](#action-handler)
 >
-> A flag to indicate if the node is an authority. An authorative node can is authorized to send updates.
+> A flag to indicate if the node is an authority.
+> An authorative node can is authorized to send updates.
 
 > #### isAsyncStorage : `Boolean`
 >
-> Related: [Storage](#storage)
+> Related: [Storage](#storage), and [Async](#async)
 >
-> A flag to indicate if the node uses async storage. This is useful if the `Storage` adapter is custom and uses an
-> asynchronous API to read and write data. Note that actions that write to the store do not wait for the promise to finish,
-> therefore they do not handle errors.
+> A flag to indicate if the node uses async storage.
+> This is useful if the `Storage` adapter is custom and uses an
+> asynchronous API to read and write data.
+> Note that actions that write to the store do not wait for
+> the promise to finish, therefore they do not handle errors.
 
 > #### isComponentRelay : `Boolean`
 >
 > Related: [Action Handler](#action-handler), and [Updater](#updater)
 >
-> A flag to indicate if the node is a component relay. Disabling this means component updates will not be sent.
+> A flag to indicate if the node is a component relay.
+> Disabling this means component updates will not be sent.
 
 > #### isDiffed : `Boolean`
 >
 > Related: [Changes](#changes)
 >
-> A flag to indicate if the node is diffed. This uses `Changes` in order to track updates as differences.
-> For example setting a `position` component to `[0, 0, 0]` that was previously set to `[1, 1, 1]`
-> will result in `[-1, -1, -1]` being sent as an update to `changeComponent` instead of `upsertComponent` which will apply
-> the change elsewhere. This allows changes to happen in any order without changing the final value.
+> A flag to indicate if the node is diffed.
+> This uses `Changes` in order to track updates as differences.
+> For example setting a `position` component to `[0, 0, 0]`
+> that was previously set to `[1, 1, 1]` will result in `[-1, -1, -1]`
+> being sent as an update to `changeComponent` instead of `upsertComponent`
+> which will apply the change elsewhere.
+> This allows changes to happen in any order without changing the final value.
 
 > #### isGroupedComponents : `Boolean`
 >
 > Related: [Grouped Component Updates](#grouped-component-updates)
 >
-> A flag to indicate if the node uses grouped components. This allows for structure of
-> arrays (SoA) to be used to speed up grouped component updates.
+> A flag to indicate if the node uses grouped components.
+> This allows for structure of arrays (SoA) to be used to speed up
+> grouped component updates.
 
 > #### isOrdered : `Boolean`
 >
 > Related: [Ordered](#ordered)
 >
-> A flag to indicate if the node is ticked. This adds a `tick` value to the end of the payloads for `changeComponent` and `upsertComponent`. The `tick` is used to filter outdated values from being applied as an update.
+> A flag to indicate if the node is ticked.
+> This adds a `tick` value to the end of the payloads for `changeComponent` and
+> `upsertComponent`.
+> The `tick` is used to filter outdated values from being applied as an update.
 >
-> It is possible to enable `isDiffed` when this is also enabled, in order to differentiate from other node configurations
-> the `tick` value will be inverted in updates. It is not recommended to use both these settings at once.
+> It is possible to enable `isDiffed` when this is also enabled,
+> in order to differentiate from other node configurations
+> the `tick` value will be inverted in updates.
+> It is not recommended to use both these settings at once.
 
 > #### isReadOnly : `Boolean`
 >
 > Related: [Updater](#updater) and [Pending](#pending)
 >
-> A flag to indicate if the node is read only. A node that is read-only will not
-> be capable of sending updates to other nodes.
+> A flag to indicate if the node is read only.
+> A node that is read-only will not be capable of sending updates to other
+> nodes.
 
 > #### isSymbolLeader : `Boolean`
 >
 > Related: [Symbols](#symbols)
 >
-> A flag to indicate if the node is a symbol leader. Only a symbol leader can declare symbols in the network.
-> There should ideally only be one source of truth. This prevents inconsistencies.
+> A flag to indicate if the node is a symbol leader.
+> Only a symbol leader can declare symbols in the network.
+> There should ideally only be one source of truth.
+> This prevents inconsistencies.
 > In the future a CRDT G-Set maybe used instead, but that would add complexity.
 
 > #### isSymbolRelay : `Boolean`
 >
 > Related: [Symbols](#symbols)
 >
-> A flag to indicate if the node is a symbol relay. If disabled then the node will not forward symbol changes to other nodes.
+> A flag to indicate if the node is a symbol relay.
+> If disabled then the node will not forward symbol changes to other nodes.
 > A symbol relay sends symbols that are recieved from a leader to other nodes.
 
 > #### onUpdate : `Function`
 >
 > Related: [Action Handler](#action-handler)
 >
-> A function to call when the node is updated. It will be call once per update, it is recommended that this function be
+> A function to call when the node is updated.
+> It will be call once per update, it is recommended that this function be
 > manually throttled if it is being used in the client.
 
 > #### pageSize : `Number`
 >
 > Related: [Storage](#storage)
 >
-> The page size for list actions: `actors`, `components`, `entities`, `symbols`. This keeps very large lists from being
-> sent by one `responder` call. The pages are emitted until all items are sent by the `responder` in multiple calls.
+> The page size for list actions: `actors`, `components`, `entities`, `symbols`.
+> This keeps very large lists from being sent by one `responder` call.
+> The pages are emitted until all items are sent by
+> the `responder` in multiple calls.
 
 > #### responder : `Function`
 >
 > Related: [Updater](#updater)
 >
-> A function that is called by the `Updater` to send update actions to other nodes in the network.
-> This allows for any network transport, inter-process communication, or a Pub/Sub library to be used for responses.
+> A function that is called by the `Updater`
+> to send update actions to other nodes in the network.
+> This allows for any network transport, inter-process communication,
+> or a Pub/Sub library to be used for responses.
 
 > #### skipPending : `Boolean`
 >
 > Related: [Pending](#pending)
 >
-> A flag to skip pending actions. This is useful when component updates need to happen without causing a pending change that the `Updater` will then use to update the network.
+> A flag to skip pending actions.
+> This is useful when component updates need to happen without
+> causing a pending change that the `Updater` will then use to update the
+> network.
 
 > #### types : `Object`
 >
-> Related: [Component Value Types](#component-value-types), [isGroupedComponents](#isgroupedcomponents--boolean),
-> and [Storage](#storage)
+> Related: [Component Value Types](#component-value-types),
+> [isGroupedComponents](#isgroupedcomponents--boolean), and [Storage](#storage)
 >
-> An object that defines the component types. A component type can be a class, or a string that maps to a valid type.
-> If an array is provided as the component type, then the first value will be used as type, and the remaining values
-> will provide meta information. The second value will be the size of each section in a group.
+> An object that defines the component types. A component type can be a class,
+> or a string that maps to a valid type.
+> If an array is provided as the component type, then the first value will be
+> used as type, and the remaining values will provide meta information.
+> The second value will be the size of each section in a group.
 >
 > ```js
 > {
@@ -358,8 +406,10 @@ This class should have an `extend` method to make it easy to create a new instan
 >
 > Related: [Grouped Component Updates](#grouped-component-updates)
 >
-> A function to set the value in a group. By default this returns the value from the component value that is passed.
-> If the original structure is an object then it may be necessary to map values to an array here.
+> A function to set the value in a group. By default this returns the value
+> from the component value that is passed.
+> If the original structure is an object then it may be necessary to map values
+> to an array here.
 >
 > ```js
 > // Example
@@ -370,7 +420,8 @@ This class should have an `extend` method to make it easy to create a new instan
 >
 > Related: [Batch Message Structure](#batch-message-structure)
 >
-> An object containing options for the updater. See below for more details on each update option:
+> An object containing options for the updater.
+> See below for more details on each update option:
 >
 > ```js
 > {
@@ -421,11 +472,12 @@ This class should have an `extend` method to make it easy to create a new instan
 > > }
 > > ```
 
-> #### worldOptions : `Object`
+> #### storageOptions : `Object`
 >
 > Related: [Storage](#storage)
 >
-> An object containing the world options, this is added to make it easier to implement custom `Storage` adapters
+> An object containing the storage options,
+> this is added to make it easier to implement custom `Storage` adapters
 > that work with other ECS libraries.
 
 ---
@@ -434,7 +486,10 @@ This class should have an `extend` method to make it easy to create a new instan
 
 Related: [types](#types--object)
 
-**Echo-D** uses a types that are based on common JavaScript/TypeScript object types. Implementations must have access to basic `JSON` like data structures such as `String`, `Number`, and `Array`.
+**Echo-D** uses a types that are based on common JavaScript/TypeScript
+object types.
+Implementations must have access to basic `JSON` like data structures such as
+`String`, `Number`, and `Array`.
 
 A list of valid types for use in `types`:
 
@@ -445,22 +500,25 @@ A list of valid types for use in `types`:
 * **'set'** : `Set` -- unique sequence of objects
 * **'arr'** : `Array` -- list of objects
 
-> #### Typed Arrays
->
-> In order to better support web based platforms **Echo-D** only uses arrays of non-`Number` numbers.
-> These are used to group component updates into structure of array (SoA) buffers.
->
-> A list of valid typed arrays for effiently storing vectors, and matricies:
->
-> * **'i8'** : `Int8Array` -- array of 8 bit integers
-> * **'ui8'** : `Uint8Array` -- array of 8 bit unsigned integers
-> * **'ui8c'** : `Uint8ClampedArray` -- array of 8 bit unsigned integers clamped to (0-255)
-> * **'i16'** : `Int16Array` -- array of 16 bit integers
-> * **'ui16'** : `Uint16Array` -- array of 16 bit unsigned integers
-> * **'i32'** : `Int32Array` -- array of 32 bit integers
-> * **'ui32'** : `Uint32Array` -- array of 32 bit unsigned integers
-> * **'f32'** : `Float32Array` -- array of 32 bit floats
-> * **'f64'** : `Float64Array` -- array of 64 bit floats
+#### Typed Arrays
+
+In order to better support web based platforms **Echo-D** only uses arrays
+of non-`Number` numbers.
+These are used to group component updates into structure of
+array (SoA) buffers.
+
+A list of valid typed arrays for effiently storing vectors, and matricies:
+
+* **'i8'** : `Int8Array` -- array of 8 bit integers
+* **'ui8'** : `Uint8Array` -- array of 8 bit unsigned integers
+* **'ui8c'** : `Uint8ClampedArray`
+  -- array of 8 bit unsigned integers clamped to (0-255)
+* **'i16'** : `Int16Array` -- array of 16 bit integers
+* **'ui16'** : `Uint16Array` -- array of 16 bit unsigned integers
+* **'i32'** : `Int32Array` -- array of 32 bit integers
+* **'ui32'** : `Uint32Array` -- array of 32 bit unsigned integers
+* **'f32'** : `Float32Array` -- array of 32 bit floats
+* **'f64'** : `Float64Array` -- array of 64 bit floats
 
 ---
 
@@ -468,16 +526,46 @@ A list of valid types for use in `types`:
 
 Related: [Options](#options), and [Action Handler](#action-handler)
 
-Passes a context around to different objects that is used internally to handle logic between actions. Such as `Storage`, and the `Updater`.
+Passes a context around to different objects that is used internally to handle
+logic between actions. Such as `Storage`, and the `Updater`.
+
+### Main functionalities
+
+- Managing actors, entities, components, inputs, and symbols.
+- Creating and removing actors, entities, and components.
+- Changing and upserting components.
+- Handling actor inputs.
+- Managing symbols.
 
 ---
 
 ## Symbols
 
-Related: [compressStringsAsInts](#compressstringsasints--boolean), [isSymbolLeader](#issymbolleader--boolean),
+Related: [compressStringsAsInts](#compressstringsasints--boolean),
+[isSymbolLeader](#issymbolleader--boolean),
 and [isSymbolRelay](#issymbolrelay--boolean)
 
-**Echo-D** manages a list of symbols that are created from strings. Wherever a string is used in an action message, except in symbol actions, it is replaced by a unique number. This mapping between strings, and numbers is considered a `Symbol`. This significantly reduces the number of strings that will be sent over the network. This behavior is controlled by the `compressStringsAsInts` flag.
+Represents a collection of symbols and provides methods to
+manipulate and access these symbols.
+
+**Echo-D** manages a list of symbols that are created from strings.
+Wherever a string is used in an action message, except in symbol actions,
+it is replaced by a unique number.
+
+This mapping between strings, and numbers is considered a `Symbol`.
+
+This significantly reduces the number of strings that will be sent
+over the network.
+This behavior is controlled by the `compressStringsAsInts` flag.
+
+### Main functionalities
+
+- Adding symbols to the collection
+- Finding the index of a symbol
+- Getting the symbol at a specific index
+- Getting the list of symbols
+- Getting the enum of symbols
+- Resetting the collection with a new array of symbols
 
 ---
 
@@ -485,11 +573,12 @@ and [isSymbolRelay](#issymbolrelay--boolean)
 
 Related: [One Message Handler](#one-message-handler), and [Actions](#actions)
 
-**Echo-D** sends and recieves messages as either a tuple or an object. Each with two values, first the action, then the payload which is optional.
+**Echo-D** sends and recieves messages as either a tuple or an object.
+Each with two values, first the action, then the payload which is optional.
 
 ```js
 // Message Array
-[ 'upsertComponent,
+[ 'upsertComponent',
   [ 'entity', 'position', [0, 0, 0] ] ]
 
 // Message Object
@@ -497,118 +586,161 @@ Related: [One Message Handler](#one-message-handler), and [Actions](#actions)
   payload: ['entity', 'position', [0, 0, 0] ] }
 ```
 
-> ### Batch Message Structure
->
-> Related: [batchActionPayloadSizes](#batchactionpayloadsizes--object), [updateOptions](#updateoptions--object),
-> [batch](#batch), and [Many Message Handler](#many-message-handler)
->
-> Messages can be batched in **Echo-D**, the given action is being called multiple times but it is only provided once first, then the remaining elements of the payload which is a flat array contains all batched payloads for the provided action.
->
-> ```js
-> // Message Array
-> [ 'upsertComponent',
->   'entity1', 'position', [0, 0, 0],
->   'entity2', 'position', [1, 1, 1] ]
->
-> // Message Object
-> { action: 'upsertComponent',
->   payload: [ 'entity1', 'position', [0, 0, 0 ],
->              'entity2', 'position', [1, 1, 1] ] }
-> ```
+### Batch Message Structure
 
-> ### Grouped Component Updates
->
-> Related: [isGroupedComponent](#isgroupedcomponents--boolean), [getGroupedValue](#getgroupedvalue--function),
-> [setGroupedValue](#setgroupedvalue--function), [changeComponent](#changecomponent), and [upsertComponent](#upsertcomponent)
->
-> Component updates can be made in groups, which basically means they are grouped by an array of IDs that correlates to a flattened array of values.
->
-> ```js
-> // Message
-> [ 'upsertComponent',
->   [ ['entity1', 'entity2'], 'position', [0, 0, 0, 1, 1, 1] ] ]
-> ```
+Related: [batchActionPayloadSizes](#batchactionpayloadsizes--object),
+[updateOptions](#updateoptions--object), [batch](#batch),
+and [Many Message Handler](#many-message-handler)
 
-> ### Ticked Actions
->
-> Related: [enableRollback](#enablerollback--boolean), and [Ordered](#ordered)
->
-> The last value of `actorInput`, `changeComponent`, and `upsertComponent` is reserved for a `tick` which is a timestamp that represents the elapsed time from the begining of the world.
+Messages can be batched in **Echo-D**, the given action is being called
+multiple times but it is only provided once first, then the remaining
+elements of the payload which is a flat array contains all
+batched payloads for the provided action.
 
-> ### Numeric Reference Table
->
-> Related: [compressStringsAsInts](#compressstringsasints--boolean), [defaultSymbols](#defaultsymbols--arraystring),
-> [enumDefaultSymbols](#enumdefaultsymbols--object), [One Message Handler](#one-message-handler),
-> and [Many Message Handler](#many-message-handler)
->
-> To avoid strings being repeated for actions, by default, **Echo-D** should use a hardcoded index map in order to lookup actions by the numberic reference (index).
->
-> ```js
-> // Message
-> [ 21, [ 'entity', 'position', [0, 0, 0] ] ]
-> ```
->
-> Reference table that shows the default indexes for actions:
->
-> <ul style="columns: 2; list-style: none;"><li>
-> action name           | index
-> --------------------- | ----------
-> actorInput            | 0
-> actors                | 1
-> addSymbol             | 2
-> batch                 | 3
-> changeComponent       | 4
-> components            | 5
-> createEntity          | 6
-> entities              | 7
-> fetchSymbol           | 8
-> getSymbol             | 9
-> mergeActors           | 10
-> </li><li>
-> action name           | index
-> --------------------- | ----------
-> mergeComponents       | 11
-> mergeEntities         | 12
-> mergeSymbols          | 13
-> mergeSymbol           | 14
-> removeActor           | 15
-> removeComponent       | 16
-> removeEntity          | 17
-> spawnActor            | 18
-> symbol                | 19
-> symbols               | 20
-> upsertComponent       | 21
-> </li></ul>
+```js
+// Message Array
+[ 'upsertComponent',
+  'entity1', 'position', [0, 0, 0],
+  'entity2', 'position', [1, 1, 1] ]
+
+// Message Object
+{ action: 'upsertComponent',
+  payload: [ 'entity1', 'position', [0, 0, 0 ],
+             'entity2', 'position', [1, 1, 1] ] }
+```
+
+### Grouped Component Updates
+
+Related: [isGroupedComponent](#isgroupedcomponents--boolean),
+[getGroupedValue](#getgroupedvalue--function),
+[setGroupedValue](#setgroupedvalue--function),
+[changeComponent](#changecomponent), and [upsertComponent](#upsertcomponent)
+
+Component updates can be made in groups, which basically means they are
+grouped by an array of IDs that correlates to a flattened array of values.
+
+```js
+// Message
+[ 'upsertComponent',
+  [ ['entity1', 'entity2'], 'position', [0, 0, 0, 1, 1, 1] ] ]
+```
+
+### Ticked Actions
+
+Related: [enableRollback](#enablerollback--boolean), and [Ordered](#ordered)
+
+The last value of `actorInput`, `changeComponent`, and `upsertComponent`
+is reserved for a `tick` which is a timestamp that represents the
+elapsed time from the begining of the world.
+
+### Numeric Reference Table
+
+Related: [compressStringsAsInts](#compressstringsasints--boolean),
+[defaultSymbols](#defaultsymbols--arraystring),
+[enumDefaultSymbols](#enumdefaultsymbols--object), <br/>
+[One Message Handler](#one-message-handler),
+and [Many Message Handler](#many-message-handler)
+
+To avoid strings being repeated for actions, by default,
+**Echo-D** should use a hardcoded index map in order to
+lookup actions by the numberic reference (index).
+
+```js
+// Message
+[ 21, [ 'entity', 'position', [0, 0, 0] ] ]
+```
+
+Reference table that shows the default indexes for actions:
+
+<ul style="columns: 2; list-style: none;"><li>
+action name           | index
+--------------------- | ----------
+actorInput            | 0
+actors                | 1
+addSymbol             | 2
+batch                 | 3
+changeComponent       | 4
+components            | 5
+createEntity          | 6
+entities              | 7
+fetchSymbol           | 8
+getSymbol             | 9
+mergeActors           | 10
+</li><li>
+action name           | index
+--------------------- | ----------
+mergeComponents       | 11
+mergeEntities         | 12
+mergeSymbols          | 13
+mergeSymbol           | 14
+removeActor           | 15
+removeComponent       | 16
+removeEntity          | 17
+spawnActor            | 18
+symbol                | 19
+symbols               | 20
+upsertComponent       | 21
+</li></ul>
 
 ---
 
 ## Action Handler
 
-Related: [Options](#options), [Context](#context), [Action Handler](#action-handler), [actions](#actions--object),
-[isAuthoriy](#isauthority--boolean), [isComponentRelay](#iscomponentrelay--boolean),
+Related: [Options](#options), [Context](#context),
+[Action Handler](#action-handler), [actions](#actions--object),
+[isAuthoriy](#isauthority--boolean),
+[isComponentRelay](#iscomponentrelay--boolean),
 and [onUpdate](#onupdate--function)
 
-Handler helpers are needed to make it easier to call actions by their numeric reference. This is done by using `defaultSymbols` which should contain an entry for every action.
+Responsible for handling messages and performing various actions on the context.
+It provides methods for handling single and multiple messages, getting the
+action handler, updating other nodes in the network,
+spawning and removing actors, updating actors with input,
+creating and removing entities, and manipulating components of entities.
 
-> ### One Message Handler
->
-> Related: [Message Structure](#message-structure), and [Numeric Reference Table](#numeric-reference-table)
->
-> Calls one action based on a single message and payload.
+Handler helpers are needed to make it easier to call actions by their numeric
+reference. This is done by using `defaultSymbols` which should contain an
+entry for every action.
 
-> ### Many Message Handler
->
-> Related: [Batch Message Structure](#batch-message-structure), and [Numeric Reference Table](#numeric-reference-table)
->
-> Calls many actions based on a possible batch of payloads from a single message.
+### Main functionalities
+
+- Handles messages and performs actions on the context.
+- Provides methods for handling single and multiple messages.
+- Provides methods for updating other nodes in the network.
+- Provides methods for spawning and removing actors.
+- Provides methods for updating actors with input.
+- Provides methods for creating and removing entities.
+- Provides methods for manipulating components of entities.
+
+### One Message Handler
+
+Related: [Message Structure](#message-structure),
+and [Numeric Reference Table](#numeric-reference-table)
+
+Calls one action based on a single message and payload.
+
+### Many Message Handler
+
+Related: [Batch Message Structure](#batch-message-structure),
+and [Numeric Reference Table](#numeric-reference-table)
+
+Calls many actions based on a possible batch of payloads from a single message.
 
 ---
 
 ## Actions
 
-Related: [Options](#options), [Action Handler](#action-handler), [Message Structure](#message-structure) and [actions](#actions)
+Related: [Options](#options), [Action Handler](#action-handler),
+[Message Structure](#message-structure), and [actions](#actions)
 
-An Actions `Object` contains all the handler functions for each action that can be called by a action handler.
+An Actions `Object` contains all the handler functions for each action
+that can be called by a action handler.
+
+### Main functionalities
+
+- Combining actions from different modules into a single object.
+- Providing a convenient way to access and perform actions on actors,
+components, entities, and symbols in the current context.
 
 ### Actor Actions
 
@@ -685,7 +817,7 @@ An Actions `Object` contains all the handler functions for each action that can 
 > // Payload
 > [ 18, { actor: { position: [0, 0, 0] }, entity: { position: [0, 0, 0] } } ]
 > ```
-> If `isGroupedComponent` is true then the following payload is also supported. 
+> If `isGroupedComponent` is true then the following payload is also supported.
 >
 > TODO: Support using grouped upsertComponent when isGroupedComponent
 > ```js
@@ -704,7 +836,8 @@ An Actions `Object` contains all the handler functions for each action that can 
 
 > #### upsertComponent
 >
-> Updates an existing component or inserts a new one if it doesn't exist in the current context.
+> Updates an existing component or inserts a new one if it doesn't exist in
+> the current context.
 >
 > ```js
 > // Payload
@@ -829,60 +962,201 @@ An Actions `Object` contains all the handler functions for each action that can 
 
 ## Storage
 
-Related: [isAsyncStorage](#isasyncstorage--boolean), [enableQuerying](#enablequerying--boolean),
-[pageSize](#pagesize--number), [indexes](#indexes--object), [types](#types--object),
-and [worldOptions](#worldoptions--object)
+Related: [isAsyncStorage](#isasyncstorage--boolean),
+[enableQuerying](#enablequerying--boolean),
+[pageSize](#pagesize--number), [indexes](#indexes--object),
+[types](#types--object), and [worldOptions](#worldoptions--object)
 
-An adapter that is used to provide a backend storage layer for actors, entities, components, inputs, and symbols.
-The default `Storage` class uses an array of structures (AoS) that is kept in memory.
+Represents a store with actors, entities, components, and inputs.
+It provides methods to manipulate and retrieve data from the store.
 
-It is possible to implement custom storage adapters that use other `ECS` libraries or integrate with other software
-such as databases.
+An adapter that is used to provide a backend storage layer for actors, entities,
+components, inputs, and symbols.
+`Storage` by default uses an array of structures (AoS) that is kept
+in memory.
+
+It is possible to implement custom storage adapters that use other
+`ECS` libraries or integrate with other software such as databases.
+
+### Main functionalities
+
+- Store and retrieve actors, entities, components, and inputs in the store.
+- Query the store for entities by component.
+- Remove actors, entities, and components from the store.
+
+### Async
+
+Related: [isAsyncStorage](#isasyncstorage--boolean)
+
+Represents an asynchronous store with actors, entities, components, and inputs.
+It provides methods for manipulating and retrieving data from the store.
+
+#### Main functionalities
+
+- Store and retrieve actors, entities, components, and inputs asynchronously.
+- Query the store for entities by component.
+- Update and remove components in the components index.
+
+### Queries
+
+Related: [enableQuerying](#enablequerying--boolean)
+
+Represents a query that is used to filter actors or entities by component.
+For example, it can be used to find all entities that have a `position`
+component.
+Furthermore, it can be used to find nearby elements to a specific position.
 
 ### Indexes
 
-Related: [enableQuerying](#enablequerying--boolean), and [indexes](#indexes--object)
+Related: [enableQuerying](#enablequerying--boolean),
+and [indexes](#indexes--object)
 
-Indexes are used by the `Storage` class to allow querying of actors, components, and entities.
+represents an index and provides methods for manipulating and
+querying the index.
+
+Indexes are used by `Storage` to allow querying of actors,
+components, and entities.
+
+#### Main functionalities
+
+- Storing values in the index with corresponding IDs
+- Checking if a value is in the index
+- Getting a value from the index
+- Removing a value from the index
+- Querying the index
 
 > #### Components Index
 >
-> An basic index that is used to find a list of components that belong to a given entity
+> Represents an index that stores values and their corresponding IDs.
+> It provides methods for adding, removing, and querying values in the index.
+>
+> An basic index that is used to find a list of components that belong to a
+> given entity
+>
+> ##### Main functionalities
+>
+> - Stores values and their corresponding IDs in an index
+> - Provides methods for adding, removing, and querying values in the index
+> - Supports operations like union, difference, and intersection of indexes
 
 > #### Sorted Index
 >
-> An sorted index that is used to find a list of actors or entities by a specific component and value range.
+> Represents a sorted index. It provides methods to add, remove,
+> and query values in the index.
+>
+> An sorted index that is used to find a list of actors or entities by a
+> specific component and value range.
+>
+> ##### Main functionalities
+>
+> - Maintains a sorted index of values.
+> - It maintains a sorted list of values and their associated IDs.
+> - Values can be added, removed, and queried in the index.
 
 > #### Spatial Index
 >
-> A spatial index that is used to find a list of actors or entities by a specific component and value area.
+> Represents a spatial index. It provides methods for storing,
+> retrieving, and querying values based on their spatial coordinates.
+>
+> A spatial index that is used to find a list of actors or entities by a
+> specific component and value area.
+>
+> ##### Main functionalities
+>
+> - Store values in the index based on their spatial coordinates
+> - Retrieve values from the index based on their spatial coordinates
+> - Check if a value is present in the index based on its spatial coordinates
+> - Remove values from the index based on their spatial coordinates
+> - Query the index to retrieve values within a specified range of spatial coordinates
 
 ---
 
 ## Updater
 
-Related: [compressStringsAsInts](#compressstringsasints--boolean), [isComponentRelay](#iscomponentrelay--boolean)
+Related: [compressStringsAsInts](#compressstringsasints--boolean),
+[isComponentRelay](#iscomponentrelay--boolean)
 [isReadOnly](#isreadonly--boolean), and [responder](#responder--function)
 
-**Echo-D** has an update cycle that can be inserted at the end of a run loop, or just used to
-dispatch pending updates to a responder. It relies on the `Pending` object in `Context` to determine what updates to
-call the responder with.
+**Echo-D** has an update cycle that can be inserted at the end of a run loop,
+or just used to dispatch pending updates to a responder.
+It relies on the `Pending` object in `Context` to determine what
+updates to call the responder with.
+
+The `updater` function updates the context based on the provided options.
+It processes various updates such as creating entities, spawning actors,
+removing entities and components, and updating components and inputs.
+It supports batching of updates and can handle different options such as
+compressing strings as integers, enabling rollback, and diffing changes.
+
+#### Main functionalities
+
+- Updating other Echo-D nodes based on the provided options.
+- Processing various updates such as:
+  - creating entities
+  - spawning actors
+  - removing entities and components
+  - updating components
+  - appending actor inputs
 
 ### Pending
 
-Related: [skipPending](#skippending--boolean), and [isReadOnly](#isreadonly--boolean)
+Related: [skipPending](#skippending--boolean),
+and [isReadOnly](#isreadonly--boolean)
 
-A list of pending updates needs to be managed so the updater can efficiently send updates to other nodes in the network.
-The pending object is used to flag elements that need to be updated. When the updater reponds with an update the pending flag for that element is cleared.
+Represents a pending state with removed, updated, and created states.
+It keeps track of changes made to actors, entities, and components.
+
+A list of pending updates needs to be managed so the updater can efficiently
+send updates to other nodes in the network.
+The pending object is used to flag elements that need to be updated.
+When the updater reponds with an update the pending flag for that element
+is cleared.
+
+#### Main functionalities
+
+- Keeping track of changes made to actors, entities, and components
+- Adding and removing actors, entities, and components
+- Marking entities as created or removed
+- Resetting the state of the `Pending` object
+- Adding and replacing symbol tuples in the symbols array
 
 ### Ordered
 
 Related: [Ticked Actions](#ticked-actions), and [isOrdered](#isordered--boolean)
 
-Component updates should not be applied unless they have the latest `tick`. In order to determine if the change should be applied a history of previous `tick` values for each component is needed. Then the last latest `tick` can be compared to new `ticks` to see which is greater. If a new `tick` is greater than the last then the update will be applied.
+Represents a collection of tick values and provides methods to change, reset,
+and insert/update tick values for components.
+
+Component updates should not be applied unless they have the latest `tick`.
+In order to determine if the change should be applied a history of
+previous `tick` values for each component is needed.
+Then the last latest `tick` can be compared to new `ticks` to see which is
+greater.
+If a new `tick` is greater than the last then the update will be applied.
+
+#### Main functionalities
+
+- Storing and managing tick values for components.
+- Changing the tick value of a component.
+- Resetting the tick values.
+- Inserting or updating the tick value of a component.
 
 ### Changes
 
 Related: [isDiffed](#isdiffed--boolean)
 
-Tracked differences between the last outgoing update for every component change that is made and accumulates the difference into temporary cache. When the `Updater` is called then it will send the difference to `changeComponent` which will apply the difference elsewhere.
+Responsible for managing changes in a `Context`.
+It provides methods for changing components,
+retrieving values, resetting changes, and updating or inserting components.
+
+Tracks differences between the last outgoing update for every component
+change that is made and accumulates the difference into temporary cache.
+When the `Updater` is called then it will send the difference to
+`changeComponent` which will apply the difference elsewhere.
+
+#### Main functionalities
+
+- Changing a component in the context
+- Retrieving the changes of a value
+- Resetting the changes to a new set of changes or an empty object
+- Updating or inserting a component in the context

@@ -10,8 +10,9 @@ title: "echo-d"
 - [Actor](/api/namespaces/actor/index/)
 - [Client](/api/namespaces/client/index/)
 - [Component](/api/namespaces/component/index/)
+- [Constants](/api/namespaces/constants/index/)
 - [Core](/api/namespaces/core/index/)
-- [Entitity](/api/namespaces/entitity/index/)
+- [Entity](/api/namespaces/entity/index/)
 - [Node](/api/namespaces/node/index/)
 - [Symbol](/api/namespaces/symbol/index/)
 - [utils](/api/namespaces/utils/index/)
@@ -19,6 +20,7 @@ title: "echo-d"
 ## Classes
 
 - [Changes](/api/classes/changes/)
+- [ComponentsIndex](/api/classes/componentsindex/)
 - [Context](/api/classes/context/)
 - [Emitter](/api/classes/emitter/)
 - [Handler](/api/classes/handler/)
@@ -49,27 +51,13 @@ title: "echo-d"
 
 ## Variables
 
-- [Actions](/api/variables/actions/)
 - [ArrayTypes](/api/variables/arraytypes/)
 - [BasicTypes](/api/variables/basictypes/)
-- [CommonComponents](/api/variables/commoncomponents/)
-- [DefaultSymbols](/api/variables/defaultsymbols/)
 - [IndexMap](/api/variables/indexmap/)
-- [batchActionPayloadSizes](/api/variables/batchactionpayloadsizes/)
-- [defaultOptions](/api/variables/defaultoptions/)
-- [defaultUpdateOptions](/api/variables/defaultupdateoptions/)
-- [defaultValidKeys](/api/variables/defaultvalidkeys/)
-- [enumActions](/api/variables/enumactions/)
-- [enumCommonComponents](/api/variables/enumcommoncomponents/)
-- [enumDefaultSymbols](/api/variables/enumdefaultsymbols/)
-- [padEnum](/api/variables/padenum/)
 
 ## Functions
 
 - [createStorageProps](/api/functions/createstorageprops/)
-- [defaultGetActorId](/api/functions/defaultgetactorid/)
-- [defaultGetGroupedValue](/api/functions/defaultgetgroupedvalue/)
-- [defaultSetGroupedValue](/api/functions/defaultsetgroupedvalue/)
 - [ensureSymbolIndex](/api/functions/ensuresymbolindex/)
 - [extractSymbol](/api/functions/extractsymbol/)
 - [getActionHandler](/api/functions/getactionhandler/)
@@ -80,7 +68,6 @@ title: "echo-d"
 - [recursiveSymbolExtraction](/api/functions/recursivesymbolextraction/)
 - [recursiveSymbolIndexesEnsured](/api/functions/recursivesymbolindexesensured/)
 - [updater](/api/functions/updater/)
-- [voidResponder](/api/functions/voidresponder/)
 
 ## References
 

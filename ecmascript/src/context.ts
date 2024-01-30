@@ -6,7 +6,6 @@ import { Pending } from './pending'
 import { Symbols } from './symbols'
 import { Storage, Components, Inputs } from './storage'
 import { AsyncStorage } from './storage/async'
-// import { StorageInterface } from './storage/interface'
 import { combineValues, now } from './utils'
 import { InputPayload } from './actions/actor'
 import { allActions } from './node'
@@ -36,14 +35,14 @@ interface ContextProps {
  * The Context class provides methods for managing the context.
 *
 * @property {any} events - The events.
-* @property {StorageInterface} store - The store.
+* @property {AsyncStorage | Storage} store - The store.
 * @property {Ordered | null} order - The order.
 * @property {Changes | null} changes - The changes.
 * @property {Pending | null} pending - The pending.
 */
 export class Context {
     declare events: any;
-    declare store: AsyncStorage | Storage; // | StorageInterface;
+    declare store: AsyncStorage | Storage;
     declare order: Ordered | null;
     declare changes: Changes | null;
     declare pending: Pending | null;

@@ -2,28 +2,28 @@
 editUrl: false
 next: true
 prev: true
-title: "Entitity"
+title: "Entity"
 ---
 
 Exports all the entity-related functions and classes.
 
 ## Classes
 
-- [EntityActions](/api/namespaces/entitity/classes/entityactions/)
+- [EntityActions](/api/namespaces/entity/classes/entityactions/)
 
 ## Variables
 
-- [actions](/api/namespaces/entitity/variables/actions/)
+- [actions](/api/namespaces/entity/variables/actions/)
 
 ## Functions
 
-- [EntityActionsFactory](/api/namespaces/entitity/functions/entityactionsfactory/)
+- [EntityActionsFactory](/api/namespaces/entity/functions/entityactionsfactory/)
 
 ## References
 
 ### default
 
-Renames and re-exports [actions](/api/namespaces/entitity/variables/actions/)
+Renames and re-exports [actions](/api/namespaces/entity/variables/actions/)
 
 ***
 
