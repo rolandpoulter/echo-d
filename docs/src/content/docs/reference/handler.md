@@ -3,8 +3,6 @@ title: Handler
 description: A reference to echo.Handler.
 ---
 
-## Summary
-
 The `Handler` class is responsible for handling messages and performing various actions on the context. It provides methods for handling single and multiple messages, getting the action handler, updating other nodes in the network, spawning and removing actors, updating actors with input, creating and removing entities, and manipulating components of entities.
 
 ## Example Usage

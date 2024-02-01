@@ -122,6 +122,12 @@ export class Handler {
         this.context = Context.ensure(context, options, _Storage);
     }
     /**
+     * Gets the store from the context.
+     */
+    get store() {
+        return this.context.store;
+    }
+    /**
      * Handles a single message.
      *
      * @param {Message | any[]} message - The message to handle.
@@ -249,7 +255,7 @@ export class Handler {
      * @returns {Set<any>} The components queried.
      */
     queryComponents(query) {
-        return this.context.store.queryComponents(query);
+        return this.store.queryComponents(query);
     }
 }
 export default Handler;

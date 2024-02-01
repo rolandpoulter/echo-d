@@ -3,8 +3,6 @@ title: Node
 description: A reference to echo.Node.
 ---
 
-## Summary
-
 The `NodeActions` class is a collection of actions that can be performed on different entities in a context. It combines actions from different modules and provides a convenient way to access and manipulate actors, components, entities, and symbols in the current context.
 
 ## Example Usage

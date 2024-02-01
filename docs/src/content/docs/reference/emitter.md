@@ -3,8 +3,6 @@ title: Emitter
 description: A reference to echo.Emitter.
 ---
 
-## Summary
-
 The `Emitter` class is a class that emits values to its handlers. It allows you to add handlers, emit values to the handlers, and remove handlers and emissions.
 
 ## Example Usage

@@ -3,8 +3,6 @@ title: Pending
 description: A reference to echo.Pending.
 ---
 
-## Summary
-
 The `Pending` class represents a pending state with removed, updated, and created states. It keeps track of changes made to actors, entities, and components.
 
 ## Example Usage

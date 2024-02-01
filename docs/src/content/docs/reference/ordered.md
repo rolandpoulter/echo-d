@@ -3,8 +3,6 @@ title: Ordered
 description: A reference to echo.Ordered.
 ---
 
-## Summary
-
 The `Ordered` class represents a collection of tick values and provides methods to change, reset, and insert/update tick values for components.
 
 ## Example Usage

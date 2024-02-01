@@ -75,7 +75,7 @@ export class AsyncStorage {
         return StoragePrototype.findComponent.call(this, id, key);
     }
     /**
-     * Fetches an actors inputs
+     * Fetches an actors inputs asynchronously.
      *
      * @param {string} id - The ID of the actor.
      * @returns {InputPayload} The fetched inputs.
@@ -84,7 +84,7 @@ export class AsyncStorage {
         return StoragePrototype.findInputs.call(this, id);
     }
     /**
-     * Fetches an actors input
+     * Fetches an actors input asynchronously.
      *
      * @param {string} id - The ID of the actor.
      * @param {number} index - The index of the input.
@@ -171,7 +171,7 @@ export class AsyncStorage {
         return StoragePrototype.setActors.call(this, actors);
     }
     /**
-     * Sets the components.
+     * Sets the components asynchronously.
      *
      * @param {Components} components - The components to set.
      * @returns {Components} The components.
@@ -180,7 +180,7 @@ export class AsyncStorage {
         return StoragePrototype.setComponents.call(this, components);
     }
     /**
-     * Sets the entities.
+     * Sets the entities asynchronously.
      *
      * @param {string[]} entities - The entities to set.
      * @returns {string[]} The entities.
@@ -189,7 +189,7 @@ export class AsyncStorage {
         return StoragePrototype.setEntities.call(this, entities);
     }
     /**
-     * Sets the inputs.
+     * Sets the inputs asynchronously.
      *
      * @param {Inputs} inputs - The inputs to set.
      * @returns {Inputs} The inputs.
@@ -198,7 +198,7 @@ export class AsyncStorage {
         return StoragePrototype.setInputs.call(this, inputs);
     }
     /**
-     * Stores an actor ID.
+     * Stores an actor ID asynchronously.
      *
      * @param {string} id - The ID of the actor to store.
      * @returns {boolean} True if the actor ID was stored, false otherwise.
@@ -207,7 +207,7 @@ export class AsyncStorage {
         return StoragePrototype.storeActor.call(this, id);
     }
     /**
-     * Stores a component.
+     * Stores a component asynchronously.
      *
      * @param {string} id - The ID of the component to store.
      * @param {string} key - The key of the component to store.
@@ -217,7 +217,7 @@ export class AsyncStorage {
         return StoragePrototype.storeComponent.call(this, id, key, value);
     }
     /**
-     * Stores an entity ID.
+     * Stores an entity ID asynchronously.
      *
      * @param {string} id - The ID of the entity to store.
      * @returns {boolean} True if the entity ID was stored, false otherwise.
@@ -226,7 +226,7 @@ export class AsyncStorage {
         return StoragePrototype.storeEntity.call(this, id);
     }
     /**
-     * Stores an ID in a list if it doesn't exist already.
+     * Stores an ID in a list if it doesn't exist already asynchronously.
      *
      * @param {string[]} list - The list to store the ID in.
      * @param {string} id - The ID to store.
@@ -236,7 +236,7 @@ export class AsyncStorage {
         return StoragePrototype.storeId.call(this, list, id);
     }
     /**
-     * Stores an input.
+     * Stores an input asynchronously.
      *
      * @param {string} id - The ID of the input to store.
      * @param {InputPayload} input - The payload of the input to store.

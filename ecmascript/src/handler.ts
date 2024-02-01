@@ -295,7 +295,7 @@ export class Handler {
      * @returns {Set<any>} The components queried.
      */
     queryComponents(query: any) {
-        return this.context.store.queryComponents(query)
+        return this.store.queryComponents(query)
     }
 }
 

@@ -5,14 +5,13 @@ import { Ordered } from './ordered.js';
 import { Pending } from './pending.js';
 import { Symbols } from './symbols.js';
 import { Storage } from './storage.js';
-// import { StorageInterface } from './storage/interface'
 import { combineValues, now } from './utils.js';
 import { allActions } from './node.js';
 /**
  * The Context class provides methods for managing the context.
 *
 * @property {any} events - The events.
-* @property {StorageInterface} store - The store.
+* @property {AsyncStorage | Storage} store - The store.
 * @property {Ordered | null} order - The order.
 * @property {Changes | null} changes - The changes.
 * @property {Pending | null} pending - The pending.

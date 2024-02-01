@@ -3,8 +3,6 @@ title: AsyncStorage
 description: A reference to echo.AsyncStorage.
 ---
 
-## Summary
-
 The `AsyncStorage` class represents an asynchronous store with actors, entities, components, and inputs. It provides methods for manipulating and retrieving data from the store.
 
 ## Example Usage

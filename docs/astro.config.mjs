@@ -50,15 +50,13 @@ export default defineConfig({
 				}),
 			],
 			sidebar: [
-				{ label: 'Specification', link: '/spec' },
-				{ label: 'Example', link: '/example' },
 				{
 					label: 'Guides',
 					collapsed: true,
 					items: [
 						// Each item here is one entry in the navigation menu.
 						{ label: 'Quick Start', link: '/guides/quick_start/' },
-						{ label: 'Configuration', link: '/guides/configuration/' },
+						// { label: 'Configuration', link: '/guides/configuration/' },
 						{ label: 'Networking', link: '/guides/networking/' },
 						{ label: 'Performance', link: '/guides/performance/' },
 						{ label: 'Storage Adapters', link: '/guides/storage_adapters/' },
@@ -66,6 +64,8 @@ export default defineConfig({
 					],
 					// autogenerate: { directory: 'guides' },
 				},
+				{ label: 'Example', link: '/example' },
+				{ label: 'Specification', link: '/spec' },
 				{
 					label: 'Reference',
 					collapsed: true,

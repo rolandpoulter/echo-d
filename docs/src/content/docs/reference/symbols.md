@@ -3,8 +3,6 @@ title: Symbols
 description: A reference to echo.Symbols.
 ---
 
-## Summary
-
 The `Symbols` class represents a collection of symbols and provides methods to manipulate and access these symbols.
 
 ## Example Usage

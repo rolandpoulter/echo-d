@@ -4,7 +4,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
     const becsyExample = extras.becsy.becsyExample
 
     const cleanup = (echo) => {
-        const store = echo.context.store
+        const store = echo.store
         if (store.cleanup) {
             store.cleanup()
         }
@@ -28,7 +28,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
         it('should be able to create an entity', async () => {
             const { echo } = becsyExample({});
             await echo.createEntity('entity1');
-            const entities = echo.context.store.getEntities();
+            const entities = echo.store.getEntities();
             await cleanup(echo)
             expect(entities).toEqual([['entity1']]);
         });
@@ -37,7 +37,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             const { echo } = becsyExample({});
             await echo.createEntity('entity1');
             await echo.removeEntity('entity1');
-            const entities = echo.context.store.getEntities();
+            const entities = echo.store.getEntities();
             await cleanup(echo)
             expect(entities).toEqual([]);
         });
@@ -51,7 +51,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
                     resolve()
                 }, 100)
             })
-            const entities = echo.context.store.getEntities();
+            const entities = echo.store.getEntities();
             await cleanup(echo)
             expect(entities).toEqual([['entity1', 'entity2']]);
         });
@@ -59,7 +59,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
         it('should be able to create an actor', async () => {
             const { echo } = becsyExample({});
             await echo.createEntity('actor1');
-            const entities = echo.context.store.getEntities();
+            const entities = echo.store.getEntities();
             await cleanup(echo)
             expect(entities).toEqual([['actor1']]);
         });
@@ -68,7 +68,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             const { echo } = becsyExample({});
             await echo.createEntity('actor1');
             await echo.removeEntity('actor1');
-            const actors = echo.context.store.getActors();
+            const actors = echo.store.getActors();
             await cleanup(echo)
             expect(actors).toEqual([]);
         });
@@ -81,7 +81,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             await echo.createEntity('actor1');
             const now = performance.timeOrigin + performance.now();
             await echo.actorInput('actor1', { type: 'jump' }, now);
-            const inputs = echo.context.store.getInputs();
+            const inputs = echo.store.getInputs();
             await cleanup(echo)
             expect(inputs).toEqual([{
                 actor1: [ [ { type: 'jump' }, now ] ]
@@ -92,7 +92,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             const { echo } = becsyExample({});
             await echo.spawnActor('actor1');
             await echo.spawnActor('actor2');
-            const actors = echo.context.store.getActors();
+            const actors = echo.store.getActors();
             await cleanup(echo)
             expect(actors).toEqual([['actor1', 'actor2']]);
         });
@@ -102,8 +102,8 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             await echo.createEntity('entity1');
             await echo.upsertComponent('entity1', 'position', new Float32Array([0, 0, 0]));
             
-            const entities = echo.context.store.getEntities();
-            const components = echo.context.store.getComponents();
+            const entities = echo.store.getEntities();
+            const components = echo.store.getComponents();
             await cleanup(echo)
             expect(entities).toEqual([['entity1']]);
             expect(components).toEqual([{
@@ -116,8 +116,8 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             await echo.spawnActor('actor1');
             await echo.upsertComponent('actor1', 'position', new Float32Array([0, 0, 0]));
             
-            const actors = echo.context.store.getActors();
-            const components = echo.context.store.getComponents();
+            const actors = echo.store.getActors();
+            const components = echo.store.getComponents();
             await cleanup(echo)
             expect(actors).toEqual([['actor1']]);
             expect(components).toEqual([{
@@ -136,9 +136,9 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             await echo.upsertComponent('entity1', 'position', new Float32Array([0, 0, 0]));
             await echo.upsertComponent('entity2', 'position', new Float32Array([0, 0, 0]));
             
-            const actors = echo.context.store.getActors();
-            const entities = echo.context.store.getEntities();
-            const components = echo.context.store.getComponents();
+            const actors = echo.store.getActors();
+            const entities = echo.store.getEntities();
+            const components = echo.store.getComponents();
             await cleanup(echo)
             expect(actors).toEqual([['actor1', 'actor2']]);
             expect(entities).toEqual([['entity1', 'entity2']]);
@@ -156,7 +156,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             await echo.upsertComponent('actor1', 'position', new Float32Array([0, 0, 0]));
             await echo.removeComponent('actor1', 'position');
             
-            const components = echo.context.store.getComponents();
+            const components = echo.store.getComponents();
             await cleanup(echo)
             expect(components).toEqual([{
                 actor1: {}

@@ -3,8 +3,6 @@ title: Storage
 description: A reference to echo.Storage.
 ---
 
-## Summary
-
 The `Storage` class represents a store with actors, entities, components, and inputs. It provides methods to manipulate and retrieve data from the store.
 
 ## Example Usage

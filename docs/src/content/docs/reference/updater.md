@@ -3,8 +3,6 @@ title: Updater
 description: A reference to echo.updater.
 ---
 
-## Summary
-
 The `updater` function updates the context based on the provided options. It processes various updates such as creating entities, spawning actors, removing entities and components, and updating components and inputs. It supports batching of updates and can handle different options such as compressing strings as integers, enabling rollback, and diffing changes.
 
 ## Example Usage

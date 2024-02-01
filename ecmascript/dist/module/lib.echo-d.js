@@ -1227,14 +1227,13 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-// import { StorageInterface } from './storage/interface'
 
 
 /**
  * The Context class provides methods for managing the context.
 *
 * @property {any} events - The events.
-* @property {StorageInterface} store - The store.
+* @property {AsyncStorage | Storage} store - The store.
 * @property {Ordered | null} order - The order.
 * @property {Changes | null} changes - The changes.
 * @property {Pending | null} pending - The pending.
@@ -2274,6 +2273,12 @@ class Handler {
         this.context = _context_js__WEBPACK_IMPORTED_MODULE_0__.Context.ensure(context, options, _Storage);
     }
     /**
+     * Gets the store from the context.
+     */
+    get store() {
+        return this.context.store;
+    }
+    /**
      * Handles a single message.
      *
      * @param {Message | any[]} message - The message to handle.
@@ -2401,7 +2406,7 @@ class Handler {
      * @returns {Set<any>} The components queried.
      */
     queryComponents(query) {
-        return this.context.store.queryComponents(query);
+        return this.store.queryComponents(query);
     }
 }
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Handler);

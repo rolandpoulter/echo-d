@@ -41,7 +41,7 @@ export function gameExample(
     return {
         events,
         world: getWorld(echo),
-        store: echo.context.store,
+        store: echo.store,
         echo,
         loop,
     }

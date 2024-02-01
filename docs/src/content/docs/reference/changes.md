@@ -3,8 +3,6 @@ title: Changes
 description: A reference to echo.Changes.
 ---
 
-## Summary
-
 The `Changes` class is responsible for managing changes in a context. It provides methods for changing components, retrieving values, resetting changes, and updating or inserting components.
 
 ## Example Usage

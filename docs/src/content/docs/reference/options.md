@@ -3,8 +3,6 @@ title: Options
 description: A reference to echo.Options.
 ---
 
-## Summary
-
 The `Options` class represents the options for a node in a TypeScript code. It provides a way to configure various settings and behaviors for the node.
 
 ## Example Usage

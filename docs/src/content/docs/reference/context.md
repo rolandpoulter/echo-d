@@ -3,8 +3,6 @@ title: Context
 description: A reference to echo.Context.
 ---
 
-## Summary
-
 The `Context` class is responsible for managing the context of an application. It provides methods for handling actors, entities, components, inputs, and symbols.
 
 ## Example Usage

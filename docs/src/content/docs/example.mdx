@@ -2,376 +2,698 @@
 title: Example
 description: High level example of the Echo-D usage.
 ---
-import echoD from '../../../../ecmascript/dist/module/lib.echo-d.js'
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-This example is split into two parts, the server and the client.
+This example is split into two parts, the `./host.js` and the `./client.js`.
+However it is possible to use **Echo-D** in other network topologies.
+It is important to prevent the flow of data from the various nodes to not cycle
+around or else it will create an infinite loop.
+To prevent this, it is recommended to use the `mask` option in the `updater` method
+as well as the other options in the `EchoD` constructor.
 
-## Basic Server
+___
 
-Create a new EchoD instance, and pass in an EventEmitter instance to handle inputs.
+### Events
+
+<Tabs><TabItem label="Node.js Supported">
+Uses `EventEmitter` from `node:events` to create an `events` object.
+This can be bundled for use in browsers with a bundler such as
+`esbuild`, `webpack`, `bun build`, or another bundler.
 
 ```js
-// Server.js
-const events = new EventEmitter()
+// events.js
+import { EventEmitter } from 'node:events';
+export const events = new EventEmitter( );
+```
+</TabItem><TabItem label="Browser">
+Here is an example of barebones `events` implementation.
+It is recommended to use a library such as `mitt` for handling events.
+However this illustrates that **Echo-D** only uses `on` and `emit` methods.
 
-const echoD = new EchoD({
-    events, // optional
-}, {
-    isAuthority: true, // server is authority
-    compressStringsAsInts: true, // optional
-    types: {
-        // ... other types ...
-        position: ['f32', 3]
+```js
+// events.js
+export const events = { evo: { },
+    on( ev, cb ) {
+        if ( Array.isArray( this.evo[ ev ] ) )
+            this.evo[ ev ].push( cb );
+        else this.evo[ ev ] = [ cb ];
     },
-    // ... other options ...
-})
+    emit( ev, ...data ) {
+        if ( Array.isArray( this.evo[ ev ] ) )
+            for ( const cb of this.evo[ ev ] )
+                cb.call( this, ...data );
+    }
+};
+```
+</TabItem></Tabs>
+
+___
+
+## Host
+
+In this example a host node is used to handle game logic, physics, and network updates.
+It is the authority for the game state, and is responsible for broadcasting updates to the clients.
+
+```js
+// host.js
+import EchoD from 'echo-d';
 ```
 
-### Transport Layer
-
-Create a websocket server, or use a different network transport layer.
+Prepare an `events` object to handle events such as `actorInput`.
 
 ```js
-const wss = new WebSocketServer({
-    // ... websocket server options ...
-});
+// host.js
+import { events } from './events.js';
+```
+
+Include the `listenToClients` and `broadcastClients` methods from the transport layer.
+
+```js
+// host.js
+import { listenToClients, broadcastClients } from './transport.js';
+```
+
+### Echo-D Host Instance
+
+Create a new **Echo-D** instance, and pass in the `events` along with options.
+The `events` will be used to handle events such as `actorInput`.
+
+In this example we are using `f32` for `position` components, and compressing
+strings as integers.
+We are also setting `isAuthority` to `true`, and `isSymbolLeader` to `true`.
+`compressStringsAsInts` is enabled to reduce the size of messages.
+
+The `updateOptions` are used to specify which updates to send to the clients.
+In this example we are only sending `position` updates
+and `inputs` are masked from the host becayse they are only
+allowed from clients.
+
+```js
+// host.js
+const echoOptions =  {
+    compressStringsAsInts: true,
+    isAuthority: true,
+    isSymbolLeader: true,
+    types: { position: [ 'f32', 3 ] },
+    updateOptions: {
+        mask: { inputs: true },
+        validkeys: { position: true }
+    }
+};
+const echoD = new EchoD( { events }, echoOptions );
+```
+
+### Listen to Clients
+
+Import the `listenToClients` and `broadcastClients` methods from the transport layer.
+Listen to clients and handle incoming messages with **Echo-D**.
+
+```js
+// host.js
+listenToClients( echoD );
+```
+
+### Game Loop
+
+Use **Echo-D** to perform a game network update by broadcasting
+updates to the clients.
+
+```js
+// host.js
+function gameNetworkUpdate ( ) {
+    echoD.updater( { responder: broadcastClients } );
+}
+```
+
+Create a game loop function to handle game logic, physics, and network updates.
+
+```js
+// host.js
+function gameLoop ( ) {
+    // gamePhysicsOrOther();
+    gameNetworkUpdate( );
+}
+```
+
+Setup the game loop using `setInterval`, or use a different
+game loop method.
+
+```js
+// host.js
+let gameInterval = null;
+export function gameStart ( ) {
+    gameInterval = setInterval( gameLoop, 1000 / 30 );
+}
+export function gameStop ( ) { clearInterval( gameInterval ); }
+
+gameStart( );
+```
+
+### Actor Input Handler
+
+Add an event listener for `actorInput` events. This will be used to handle
+actor inputs. In this example inputs are used to move the `position` of actors.
+
+```js
+// host.js
+events.on('actorInput', ( id, input, index, tick ) => {
+    const position = echoD.store.findComponent( id, 'position' );
+    echoD.upsertComponent( id, 'position', new Float32Array( [
+        position[ 0 ] + ( input.x || 0 ),
+        position[ 1 ] + ( input.y || 0 ),
+        position[ 2 ] + ( input.z || 0 ),
+    ] ) );
+} );
+```
+
+___
+
+## Host Transport Layer
+
+Choose a network transport layer such as
+`BroadcastChannel`, `WebSocket`, or `WebRTC`.
+
+<Tabs><TabItem label="BroadcasChannel">
+Create a `BroadcastChannel` instance for broadcasting to game clients.
+
+```js
+// host/transport/bc.js
+const bcGameClients = new BroadcastChannel( 'game-clients' );
+const bcGameHost = new BroadcastChannel( 'game-host' );
+```
+
+Now setup a message handler for the `bcGameClients`.
+This example only supports one host and multiple clients.
+Handle messages passing them to the **Echo-D** instance.
+
+```js
+// host/transport/bc.js
+bcGameHost.onmessage = ( { data } ) => echo.many( data );
+```
+
+Implement a `broadcastClients` method to broadcast a message to the clients.
+
+```js
+// host/transport/bc.js
+export function broadcastClients ( message ) {
+    bcGameClients.postMessage( message );
+}
+```
+</TabItem><TabItem label="WebSocket">
+
+Or use `WebSocketServer` from a `WebSocket` library such as `ws`
+in a supported JavaScript environments such as Node.js.
+
+`msgpack` is also recommended for reducing the size of messages.
+Especially when transporting over the network.
+
+```js
+// host/transport/ws.js
+import { WebSocketServer } from 'ws';
+import { decode, encode } from 'msgpack';
+```
+
+Create a `WebSocketServer` instance, and handle connections.
+
+```js
+// host/transport/ws.js
+const wssOptions = { port: 8080, host: 'localhost' };
+const wss = new WebSocketServer( wssOptions );
 ```
 
 A list of clients that will be used to broadcast updates.
 
 ```js
-const clients = [];
+// host/transport/ws.js
+const clients = [ ];
 ```
 
-Handle messages from clients by decoding them, and passing them to the EchoD instance.
+Handle messages from clients by decoding them, and passing them to the
+**Echo-D** instance.
 
 ```js
-function echoMessageHandler (data) => {
-    try {
-        data = msgpack.decode(data) // msgpack is recommended
-    } catch (err) {
-        console.error(err)
-        return
-    }
+// host/transport/ws.js
+function messageHandler ( data ) {
+    data = decode( data );
+    echoD.many( data );
+};
+```
 
-    echoD.many(data) // handle message(s)
+After a client disconnects, remove them from the list of clients.
+
+```js
+// host/transport/ws.js
+function closeHandler ( conn ) {
+    const index = clients.indexOf( conn );
+    if (index !== -1) { clients.splice( index, 1 ); }
 }
 ```
 
-Handle websocket connections, add them to the list of clients, and **send an init message to the client.**
+Handle websocket connections, add them to the list of clients,
+and **send an init message to the client.**
 When a message is received, pass it to the message handler.
-After a client disconnects, remove them from the list of clients.
-
 
 ```js
-wss.on('connection', (ws) => {
-    // Add client to list
-    clients.push(ws);
-    
-    // Handle errors
-    ws.on('error', console.error)
-    
-    // Handle messages
-    ws.on('message', echoMessageHandler)
-
-    // Remove client on close
-    ws.on('close', () => {
-        const index = clients.indexOf(ws)
-        if (index !== -1) {
-            clients.splice(index, 1)
-        }
-    })
-
-    // Send init message to client
-    const init = msgpack.encode(['init']) // msgpack is recommended
-    ws.send(init)
+// host/transport/ws.js
+wss.on( 'connection', ( conn ) => {
+    clients.push( conn );
+    conn.on( 'close', () => closeHandler( conn ) );
+    conn.on( 'message',  messageHandler );
+    conn.send( encode( [ 'init' ] ) );
 });
 ```
 
+Implement a `broadcastClients` method to broadcast a message to
+the `WebSocket` clients.
+Use `msgpack` to encode the message before sending it.
+
+```js
+// host/transport/ws.js
+export function broadcastClients ( message ) {
+    const data = encode( message );
+    clients.forEach( ( client ) => client.send( data ) );
+}
+```
+</TabItem></Tabs>
+
+___
+
+### Default Client Transport
+
+Provide a way to import the `broadcastClients` method from `./host/transport.js`.
+
+<Tabs><TabItem label="BroadcastChannel">
+
+```js
+// host/transport.js
+export * from './transport/bc.js';
+```
+
+</TabItem><TabItem label="WebSocket">
+
+```js
+// host/transport.js
+export * from './transport/ws.js';
+```
+</TabItem></Tabs>
+
+
+## Client
+
+Bundle with `esbuild`, `webpack`, `bun build`, or another bundler.
+
+```js
+// client.js
+import EchoD from 'echo-d'
+```
 
 
 ```js
-events.on('actorInput', (id, input, index, tick) => {
-    // ... handle actor input ...
-    const position = entity.position
+// client.js
+import { events } from './events.js';
+```
 
-    // Get movement vector from input
-    const movement = new Float32Array([
-        input.x || 0,
-        input.y || 0,
-        input.z || 0,
-    ])
+Include the `listenToHost` and `sendToHost` methods from the transport layer.
 
-    // Calculate next position
-    const nextPosition = new Float32Array([
-        position[0] + movement[0],
-        position[1] + movement[1],
-        position[2] + movement[2],
-    ])
-
-    // Update position component
-    echoD.upsertComponent(id, 'position', nextPosition)
-})
+```js
+// client.js
+import { listToHost, sendToHost } from './transport.js';
 ```
 
 ```js
-function gameLoop () {
-    // ... perform physics, game logic, etc ...
+// client.js
+import { updateRender } from './update.js';
+```
 
-    // Send update messages to clients
-    echoD.updater({
-        responder: (message) => {
-            const data = msgpack.encode(message) // msgpack is recommended
-            clients.forEach((client) => {
-                client.send(data)
-            })
-        },
-        updateOptions:  {
-            // ... other update options ...
-            mask: {
-                // ... other masks ...
-                inputs: true, // input updates should only come from clients
-            },
-            validkeys: {
-                // ... other validkeys ...
-                position: true, // only send position updates in this example
-            }
-        }
-    })
+```js
+// client.js
+let renderTimer = null
+function onUpdate (message) {
+    if ( renderTimer !== null ) { clearTimeout( renderTimer ); }
+    const update = () => updateRender( echoD, events )
+    renderTimer = setTimeout(update, 1000 / 30 );
 }
 ```
 
 ```js
-let loopInterval = null;
-
-// Start game loop, using setInterval for example
-function start() {
-    loopInterval = setInterval(gameLoop, 1000 / 30);
-}
-
-// Stop game loop, using clearInterval for example
-function stop() {
-    clearInterval(loopInterval);
-}
-
-start() // begin
+// client.js
+const echoOptions = {
+    compressStringsAsInts: true,
+    types: { position: [ 'f32', 3 ] },
+    updateOptions: {
+        mask: { entity: true, component: true },
+        validkeys: { }
+    },
+    onUpdate
+};
+const echoD = new EchoD( { events }, echoOptions );
 ```
 
+### Listen to Host
+
+Listen to host and handle incoming messages with **Echo-D**.
+
 ```js
-// Create pending state for next loop
-echoD.spawnActor('actor') // spawn an actor
-echoD.upsertComponent('actor', 'position', [0, 0, 0]) // position actor
-echoD.actorInput('actor', {x: 1, y: 1, z: 0}, 0, 0) // move actor up
+// client.js
+const ctx = { id: null };
+listenToHost( echoD, ctx );
+```
+
+Create react three fiber Canvas in document root
+
+```jsx
+// client.js
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { Render } from './client/Render';
+
+const root = document.getElementById( 'root' );
+createRoot( root ).render( <Render events={ events } /> );
 ```
 
 ___
 
-## Basic Client
+### Actor Controller
 
 ```js
-const events = new EventEmitter()
-
-let renderTimer = null
-
-// Create echoD instance
-const echoD = new EchoD({}, {
-    isAuthority: false, // client is not authority
-    compressStringsAsInts: true, // optional
-    onUpdate: () => {
-        // ... handle render update ...
-        clearTimeout(renerTimer)
-        renderTimer = setTimeout(updateRender, 0)
+// client.js
+document.addEventListener( 'keydown', ( { code } ) => {
+    // Create WASD input handler for actor inputs
+    if ( ctx.id === null ) { return; }
+	const move = { x: 0, y: 0, z: 0 }
+    switch (code) {
+        case 'KeyW': case 'ArrowUp':
+            move.y =  1; break;
+        case 'KeyS': case 'ArrowDown':
+            move.y = -1; break;
+        case 'KeyA': case 'ArrowLeft':
+            move.x = -1; break;
+        case 'KeyD': case 'ArrowRight':
+            move.x =  1; break;
+        case 'KeyQ':
+            move.z =  1; break;
+        case 'KeyE':
+            move.z = -1; break;
     }
-    // ... other options ...
-})
+    echoD.actorInput( ctx.id, move );
+    echoD.updater({
+        responder: sendToHost,
+        updateOptions:  { mask: {
+            actors: true,
+            entities: true,
+            components: true,
+            symbols: true
+        } }
+    } );
+});
+```
+
+___
+
+### On Init
+
+```js
+// client/transport/init.js
+import { nanoid } from 'nanoid';
+export function onInit ( echoD, sendToHost ) {
+    sendToHost( [ 'symbols' ] );
+    sendToHost( [ 'actors' ] );
+    sendToHost( [ 'entities' ] );
+    sendToHost( [ 'components' ] );
+    const id = nanoid( );
+    echoD.spawnActor( id );
+    return id;
+}
+```
+
+___
+
+## Client Transport Layer
+
+<Tabs><TabItem label="BroadcastChannel">
+
+```js
+import { onInit } from './transport/init.js';
 ```
 
 ```js
-// Create websocket client, or use a different network transport layer
-const ws = new WebSocket(wsUrl);
-
-// Handle errors
-ws.on('error', console.error)
+// client/transport/bc.js
+const bcGameClients = new BroadcastChannel( 'game-clients' );
+const bcGameHost = new BroadcastChannel( 'game-host' );
 ```
 
 ```js
-// Handle messages
-ws.on('message', (data) => {
-    try {
-        data = msgpack.decode(data) // msgpack is recommended
-    } catch (err) {
-        console.error(err)
-        return
-    }
-
-    if (data[0] === 'init') {
-        // ... handle init message ...
-        // again, msgpack is recommended
-        ws.send(msgpack.encode(['symbols'])) // request initial symbols
-        ws.send(msgpack.encode(['actors'])) // request initial actors
-        ws.send(msgpack.encode(['entities'])) // request initial entities
-        ws.send(msgpack.encode(['components'])) // request initial components
-        return
-    }
-
-    // Update echoD with message
-    echoD.many(data) // handle message(s)
-})
+// client/transport/bc.js
+export function listenToHost ( echoD, ctx ) {
+    bcGameClients.onmessage = ( { data } ) => {
+        if ( !ctx.id && data[ 0 ] === 'init' ) {
+            ctx.id = onInit( echoD, sendToHost );
+        } else { echoD.many( data ); }
+    };
+}
 ```
 
 ```js
-const renderViews = {};
-const renderObjects = {};
+// client/transport/bc.js
+export function sendToHost ( message ) {
+    bcGameHost.postMessage( message );
+}
+```
+</TabItem><TabItem label="WebSocket">
 
-function updateRender () {
+```js
+// client/transport/ws.js
+import { decode, encode } from 'msgpack';
+import { onInit } from './transport/init.js';
+```
+
+Create websocket client, or use a different network transport layer
+
+```js
+// client/transport/ws.js
+export function createWebSocket( url ) {
+    url = url || 'ws://localhost:8080';
+    const ws = new WebSocket( url );
+    ws.on( 'error' , console.error );
+    return ws;
+}
+```
+
+```js
+// client/transport/ws.js
+export function listenToHost( echoD, ctx, ws ) {
+    ctx = ctx || { id: null };
+    ws = ws || createWebSocket( );
+    ctx.ws = ws;
+    ws.on( 'message', ( data ) => {
+        data = decode( data );
+        if ( data[ 0 ] === 'init' ) {
+            ctx.id = onInit( echoD, sendToHost );
+        } else echoD.many( data )
+    } );
+    return ctx;
+}
+```
+
+```js
+// client/transport/ws.js
+export function sendToHost ( message ) {
+    const data = encode( message );
+    ws.send( data );
+}
+```
+
+</TabItem></Tabs>
+
+___
+
+### Default Client Transport
+
+<Tabs><TabItem label="BroadcastChannel">
+
+```js
+// client/transport.js
+export * from './transport/bc.js';
+```
+
+</TabItem><TabItem label="WebSocket">
+
+```js
+// client/transport.js
+export * from './transport/ws.js';
+```
+</TabItem></Tabs>
+
+___
+
+## Update Render Function
+
+This will use the echoD store to create a list of render views, and update
+them when the store is updated.
+The `renderViews` object is used to store the react three fiber views,
+and the `renderObjects` object is used to store the three objects.
+
+```js
+// client/update.js
+const renderViews = { };
+const renderObjects = { };
+```
+
+The `updateRender` function is called after every update, and should be used
+to update the render views.
+
+```js
+// client/update.js
+export function updateRender ( echoD, events ) {
+    const componentPages = echoD.store.getComponents( )
+    const removedIds = Object.keys( renderViews )
     let updated = false
-
-    const componentPages = echoD.store.getComponents()
-
-    const removedIds = Object.keys(renderViews)
-
-    // Iterate over all component pages
-    for (const componentsPage of componentsPages) {
-        // Iterate over all entities in component page
-        for (const entities of componentsPage) {
-            // Iterate over all entities in component page
-            for (const id in entities) {
-                const entity = entities[id]
-                
-                // Example of iterating over all component values
-                for (const component of entity) {
-                    // ... do something with component value ...
-                    const value = entity[component]
-                    console.log(id, component, value)
-                }
-
-                // Create react three fiber view if it doesn't exist
-                if (!renderViews[entity]) {
-                    renderViews[entity] = (
-                        <mesh
-                            ref={(r) => {
-                                renderObjects[id] = r
-                            }}
-                            position={entity.position || [0, 0, 0]}
-                        >
-                            <sphereGeometry args={[entity.size || 0.5]} />
-                            <meshStandardMaterial color={entity.color || 0xff4444} />
-                        </mesh>
-                    )
+    for ( const componentsPage of componentsPages ) {
+        for ( const entities of componentsPage ) {
+            for ( const id in entities) {
+                const entity = entities[ id ]
+                if ( updateRenderEntity( id, entity, removedIds ) ) {
                     updated = true
-                } else {
-                    // Remove id from removedIds if it exists
-                    const index = removedIds.indexOf(id)
-                    if (index !== -1) {
-                        removedIds.splice(index, 1)
-                    }
-
-                    // Update position of three object if it exists
-                    if (renderObjects[id] && entity.position) {
-                        renderObjects[id].position.x = entity.position[0] || 0
-                        renderObjects[id].position.y = entity.position[1] || 0
-                        renderObjects[id].position.z = entity.position[2] || 0
-                        // updated = true
-                    }
+                }
+                for ( const component of entity ) {
+                    console.log( id, component, entity[ component ])
                 }
             }
         }
     }
-
-    if (removedIds.length) {
-        // Remove views if they no longer exist
-        for (const id of removedIds) {
-            delete renderViews[id]
-            delete renderObjects[id]
-            updated = true
+    if ( removedIds.length ) {
+        for ( const id of removedIds ) {
+            delete renderViews[ id ];
+            delete renderObjects[ id ];
+            updated = true;
         }
     }
-
-    // Emit render event if views were updated
-    if (updated) {
-        const views = Object.keys(renderViews).map((id) => renderViews[id])
-        events.emit('render', views)
+    if ( updated ) {
+        const views = Object.keys( renderViews ).map( ( id ) => renderViews[ id ] );
+        events.emit( 'render', views );
     }
 }
 ```
 
-```js
-// Use <EchoDThreeFibers /> to embed 3D objects into React Fiber tree
-function EchoDThreeFibers () {
-    const [views, setViews] = useState([])
-    useEffect(() => {
-        events.on('render', setViews)
-        return () => {
-            events.off('render', setViews)
+### Update Render Entity
+
+The `updateRenderEntity` function is called for every entity in the echoD store,
+and should be used to update the render views.
+
+It will also emit a `render` event when the views are updated.
+It uses React Fiber to render the views.
+
+```jsx
+// client/update.js
+export function updateRenderEntity ( id, entity, removedIds = [ ] ) {
+    // Create react three fiber view if it doesn't exist
+    if ( !renderViews[ id ] ) {
+        renderViews[ id ] = (
+            <Ball
+                key={id}
+                ref={ ( ref ) => ( renderObjects[id] = ref ) }
+                position={ entity.position }
+            />
+        );
+        return true;
+    } else {
+        // Remove id from removedIds if it exists
+        const index = removedIds.indexOf( id )
+        if ( index !== -1 ) {
+            removedIds.splice( index, 1 );
         }
-    }, [])
-    return views
+
+        if ( renderObjects[ id ] && entity.position ) {
+            renderObjects[ id ].position.x = entity.position[ 0 ] || 0;
+            renderObjects[ id ].position.y = entity.position[ 1 ] || 0;
+            renderObjects[ id ].position.z = entity.position[ 2 ] || 0;
+            // return true;
+        }
+    }
+    return false;
 }
 ```
 
-```js
-// Create react three fiber Canvas in document root
-createRoot(
-    document.getElementById('root')
-).render(
-  <Canvas>
-    <ambientLight intensity={Math.PI / 2} />
-    <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
-    <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
-    <EchoDThreeFibers />
-  </Canvas>
-)
-```
-    
-```js
-// Create WASD input handler for actor inputs
-document.addEventListener(`keydown`, e => {
-	const move = { x: 0, y: 0, z: 0 }
+___
 
-    switch (e.code) {
-        case `KeyW`:
-        case `ArrowUp`:
-            move.y = 1
-            break
-        case `KeyS`:
-        case `ArrowDown`:
-            move.y = -1
-            break
-        case `KeyA`:
-        case `ArrowLeft`:
-            move.x = -1
-            break
-        case `KeyD`:
-        case `ArrowRight`:
-            move.x = 1
-            break
-        case `KeyQ`:
-            move.z = 1
-            break
-        case `KeyE`:
-            move.z = -1
-            break
-    }
-    
-    // Send actor input to server
-    echoD.actorInput('actor', move, 0, 0)
-    
-    // Send input message to server
-    echoD.updater({
-        responder: (message) => {
-            const data = msgpack.encode(message) // msgpack is recommended
-            ws.send(data)
-        },
-        updateOptions:  {
-            // ... other update options ...
-            mask: {
-                // ... other masks ...
-                actors: true,
-                entities: true,
-                components: true,
-                symbols: true
-            },
-        }
-    })
-});
+## Client Components
+
+### Ball Component
+
+```jsx
+// components/Ball.js
+import React, { forwardRef } from 'react';
+export const Ball = forwardRef( function Ball ( props, ref ) {
+    const {
+        children,
+        position = [ 0, 0, 0 ],
+        size = [ 0.5 ],
+        color = 0xff4444
+    } = props;
+    return (
+        <mesh
+            ref={ ref }
+            position={ position }
+        >
+            <sphereGeometry args={ size } />
+            <meshStandardMaterial color={ color } />
+            { children }
+        </mesh>
+    );
+} );
+```
+
+___
+
+### EchoD Component
+
+Use `<EchoD />` to embed 3D objects into React Fiber tree
+
+```js
+// components/EchoD.js
+import { useEffect, useState } from 'react';
+export function EchoD ({ events: localEvents = events } ) {
+    const [ views, setViews ] = useState( [ ] );
+    useEffect( () => {
+        localEvents.on( 'render', setViews );
+        return () => localEvents.off( 'render', setViews );
+    }, [ localEvents ] );
+    return views;
+}
+```
+
+___
+
+### Render Component
+
+```jsx
+// components/Render.js
+import React from 'react';
+import { Canvas } from '@react-three/fiber';
+import { EchoD } from './EchoD.js';
+export function Render ( props ) {
+    const {
+        children,
+        events
+    } = props;
+    return (
+        <Canvas>
+            <ambientLight intensity={ Math.PI / 2 } />
+            <spotLight
+                position={ [ 10, 10, 10 ] }
+                angle={ 0.15 }
+                penumbra={ 1 }
+                decay={ 0 }
+                intensity={ Math.PI }
+            />
+            <pointLight
+                position={ [ -10, -10, -10 ] }
+                decay={ 0 }
+                intensity={ Math.PI }
+            />
+            <EchoD events={ events } />
+            {children}
+        </Canvas>
+    )
+}
 ```
