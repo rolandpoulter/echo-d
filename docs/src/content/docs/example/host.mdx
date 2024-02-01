@@ -1,0 +1,251 @@
+---
+title: Host
+description: High level example of the Echo-D usage.
+---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+In this example a host node is used to handle game logic, physics, and network updates.
+It is the authority for the game state, and is responsible for broadcasting updates to the clients.
+
+```js
+// host.js
+import EchoD from 'echo-d';
+```
+
+Prepare an `events` object to handle events such as `actorInput`.
+
+```js
+// host.js
+import { events } from './events.js';
+```
+
+Include the `listenToClients` and `broadcastClients` methods from the transport layer.
+
+```js
+// host.js
+import { listenToClients, broadcastClients } from './transport.js';
+```
+
+### Echo-D Host Instance
+
+Create a new **Echo-D** instance, and pass in the `events` along with options.
+The `events` will be used to handle events such as `actorInput`.
+
+In this example we are using `f32` for `position` components, and compressing
+strings as integers.
+We are also setting `isAuthority` to `true`, and `isSymbolLeader` to `true`.
+`compressStringsAsInts` is enabled to reduce the size of messages.
+
+The `updateOptions` are used to specify which updates to send to the clients.
+In this example we are only sending `position` updates
+and `inputs` are masked from the host becayse they are only
+allowed from clients.
+
+```js
+// host.js
+const echoOptions =  {
+    compressStringsAsInts: true,
+    isAuthority: true,
+    isSymbolLeader: true,
+    types: { position: [ 'f32', 3 ] },
+    updateOptions: {
+        mask: { inputs: true },
+        validkeys: { position: true }
+    }
+};
+const echoD = new EchoD( { events }, echoOptions );
+```
+
+### Listen to Clients
+
+Import the `listenToClients` and `broadcastClients` methods from the transport layer.
+Listen to clients and handle incoming messages with **Echo-D**.
+
+```js
+// host.js
+listenToClients( echoD );
+```
+
+### Game Loop
+
+Use **Echo-D** to perform a game network update by broadcasting
+updates to the clients.
+
+```js
+// host.js
+function gameNetworkUpdate ( ) {
+    echoD.updater( { responder: broadcastClients } );
+}
+```
+
+Create a game loop function to handle game logic, physics, and network updates.
+
+```js
+// host.js
+function gameLoop ( ) {
+    // gamePhysicsOrOther();
+    gameNetworkUpdate( );
+}
+```
+
+Setup the game loop using `setInterval`, or use a different
+game loop method.
+
+```js
+// host.js
+let gameInterval = null;
+export function gameStart ( ) {
+    gameInterval = setInterval( gameLoop, 1000 / 30 );
+}
+export function gameStop ( ) { clearInterval( gameInterval ); }
+
+gameStart( );
+```
+
+### Actor Input Handler
+
+Add an event listener for `actorInput` events. This will be used to handle
+actor inputs. In this example inputs are used to move the `position` of actors.
+
+```js
+// host.js
+events.on('actorInput', ( id, input, index, tick ) => {
+    const position = echoD.store.findComponent( id, 'position' );
+    echoD.upsertComponent( id, 'position', new Float32Array( [
+        position[ 0 ] + ( input.x || 0 ),
+        position[ 1 ] + ( input.y || 0 ),
+        position[ 2 ] + ( input.z || 0 ),
+    ] ) );
+} );
+```
+
+___
+
+## Host Transport Layer
+
+Choose a network transport layer such as
+`BroadcastChannel`, `WebSocket`, or `WebRTC`.
+
+<Tabs><TabItem label="BroadcasChannel">
+Create a `BroadcastChannel` instance for broadcasting to game clients.
+
+```js
+// host/transport/bc.js
+const bcGameClients = new BroadcastChannel( 'game-clients' );
+const bcGameHost = new BroadcastChannel( 'game-host' );
+```
+
+Now setup a message handler for the `bcGameClients`.
+This example only supports one host and multiple clients.
+Handle messages passing them to the **Echo-D** instance.
+
+```js
+// host/transport/bc.js
+bcGameHost.onmessage = ( { data } ) => echo.many( data );
+```
+
+Implement a `broadcastClients` method to broadcast a message to the clients.
+
+```js
+// host/transport/bc.js
+export function broadcastClients ( message ) {
+    bcGameClients.postMessage( message );
+}
+```
+</TabItem><TabItem label="WebSocket">
+
+Or use `WebSocketServer` from a `WebSocket` library such as `ws`
+in a supported JavaScript environments such as Node.js.
+
+`msgpack` is also recommended for reducing the size of messages.
+Especially when transporting over the network.
+
+```js
+// host/transport/ws.js
+import { WebSocketServer } from 'ws';
+import { decode, encode } from 'msgpack';
+```
+
+Create a `WebSocketServer` instance, and handle connections.
+
+```js
+// host/transport/ws.js
+const wssOptions = { port: 8080, host: 'localhost' };
+const wss = new WebSocketServer( wssOptions );
+```
+
+A list of clients that will be used to broadcast updates.
+
+```js
+// host/transport/ws.js
+const clients = [ ];
+```
+
+Handle messages from clients by decoding them, and passing them to the
+**Echo-D** instance.
+
+```js
+// host/transport/ws.js
+function messageHandler ( data ) {
+    data = decode( data );
+    echoD.many( data );
+};
+```
+
+After a client disconnects, remove them from the list of clients.
+
+```js
+// host/transport/ws.js
+function closeHandler ( conn ) {
+    const index = clients.indexOf( conn );
+    if (index !== -1) { clients.splice( index, 1 ); }
+}
+```
+
+Handle websocket connections, add them to the list of clients,
+and **send an init message to the client.**
+When a message is received, pass it to the message handler.
+
+```js
+// host/transport/ws.js
+wss.on( 'connection', ( conn ) => {
+    clients.push( conn );
+    conn.on( 'close', () => closeHandler( conn ) );
+    conn.on( 'message',  messageHandler );
+    conn.send( encode( [ 'init' ] ) );
+});
+```
+
+Implement a `broadcastClients` method to broadcast a message to
+the `WebSocket` clients.
+Use `msgpack` to encode the message before sending it.
+
+```js
+// host/transport/ws.js
+export function broadcastClients ( message ) {
+    const data = encode( message );
+    clients.forEach( ( client ) => client.send( data ) );
+}
+```
+</TabItem></Tabs>
+
+___
+
+### Default Client Transport
+
+Provide a way to import the `broadcastClients` method from `./host/transport.js`.
+
+<Tabs><TabItem label="BroadcastChannel">
+
+```js
+// host/transport.js
+export * from './transport/bc.js';
+```
+
+</TabItem><TabItem label="WebSocket">
+
+```js
+// host/transport.js
+export * from './transport/ws.js';
+```
+</TabItem></Tabs>

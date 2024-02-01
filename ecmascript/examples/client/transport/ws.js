@@ -1,5 +1,5 @@
 import { decode, encode } from 'msgpack';
-import { onInit } from './transport/init.js';
+import { onInit } from '../init.js';
 
 export function createWebSocket( url ) {
     url = url || 'ws://localhost:8080';

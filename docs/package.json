@@ -10,12 +10,22 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/react": "^3.0.9",
     "@astrojs/starlight": "^0.15.1",
     "@astrojs/starlight-tailwind": "^2.0.1",
+    "@react-three/drei": "^9.97.0",
+    "@react-three/fiber": "^8.15.16",
+    "@types/react": "^18.2.50",
+    "@types/react-dom": "^18.2.18",
     "astro": "^4.0.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-force-graph-2d": "^1.25.3",
+    "react-force-graph-3d": "^1.24.1",
     "sharp": "^0.32.5",
     "starlight-typedoc": "^0.7.0",
     "tailwindcss": "^3.4.1",
+    "three": "^0.161.0",
     "typedoc": "^0.25.4",
     "typedoc-plugin-markdown": "^4.0.0-next.38"
   }

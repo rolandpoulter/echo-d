@@ -1,0 +1,29 @@
+/* .link {
+    stroke: var(--sl-color-text);
+    stroke-width: 1px;
+} */
+
+.nettop {
+    border: 1px solid var(--sl-color-gray-5);
+    box-sizing: border-box;
+    margin-top: 1.5em;
+    /* padding: 1px; */
+}
+
+.node-label {
+    font-size: 12px;
+    padding: 1px 4px;
+    border-radius: 4px;
+    background-color: rgba(0,0,0,0.5);
+    user-select: none;
+}
+
+.nettop > div > div > div > div canvas:nth-child(3),
+.nettop > div > div > div > div div:nth-child(4),
+.nettop > div > div > div > div div:nth-child(4) .node-label {
+    margin-top: 0;
+}
+
+.nettop > div > div > div > div div:nth-child(4) {
+    overflow: visible;
+}

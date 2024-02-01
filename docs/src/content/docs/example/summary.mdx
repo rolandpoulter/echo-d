@@ -1,0 +1,49 @@
+---
+title: Game
+description: High level example of the Echo-D usage.
+---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+This example is split into two parts, the `./host.js` and the `./client.js`.
+However it is possible to use **Echo-D** in other network topologies.
+It is important to prevent the flow of data from the various nodes to not cycle
+around or else it will create an infinite loop.
+To prevent this, it is recommended to use the `mask` option in the `updater` method
+as well as the other options in the `EchoD` constructor.
+
+___
+
+## Events
+
+<Tabs><TabItem label="Node.js Supported">
+Uses `EventEmitter` from `node:events` to create an `events` object.
+This can be bundled for use in browsers with a bundler such as
+`esbuild`, `webpack`, `bun build`, or another bundler.
+
+```js
+// events.js
+import { EventEmitter } from 'node:events';
+export const events = new EventEmitter( );
+```
+</TabItem><TabItem label="Browser">
+Here is an example of barebones `events` implementation.
+It is recommended to use a library such as `mitt` for handling events.
+However this illustrates that **Echo-D** only uses `on` and `emit` methods.
+
+```js
+// events.js
+export const events = { evo: { },
+    on( ev, cb ) {
+        if ( Array.isArray( this.evo[ ev ] ) )
+            this.evo[ ev ].push( cb );
+        else this.evo[ ev ] = [ cb ];
+    },
+    emit( ev, ...data ) {
+        if ( Array.isArray( this.evo[ ev ] ) )
+            for ( const cb of this.evo[ ev ] )
+                cb.call( this, ...data );
+    }
+};
+```
+</TabItem></Tabs>
+

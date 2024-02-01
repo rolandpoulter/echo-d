@@ -1,0 +1,71 @@
+---
+title: Networking
+description: A guide in my new Starlight docs site.
+---
+import NetworkTopology from '../../../components/NetworkTopology.astro';
+
+### One Host, Multiple Clients
+
+<NetworkTopology
+    graphData={{
+        nodes: [
+            { id: '1', label: 'Host', group: 'host' },
+            { id: '2', label: 'Client 1', group: 'client' },
+            { id: '3', label: 'Client 2', group: 'client' },
+            { id: '4', label: 'Client 3', group: 'client' },
+            { id: '5', label: 'Client 4', group: 'client' },
+        ],
+        links: [
+            { source: '1', target: '2', type: 'out' },
+            { source: '1', target: '3', type: 'out' },
+            { source: '1', target: '4', type: 'out' },
+            { source: '1', target: '5', type: 'out' },
+
+            { source: '2', target: '1', type: 'in' },
+            { source: '3', target: '1', type: 'in' },
+            { source: '4', target: '1', type: 'in' },
+            { source: '5', target: '1', type: 'in' },
+        ],
+    }}
+/>
+
+### Multiple Hosts, Multiple Clients
+
+<NetworkTopology
+    graphData={{
+        nodes: [
+            { id: '1', label: 'Leader 1', group: 'host' },
+            { id: '2', label: 'Host 1', group: 'client' },
+            { id: '3', label: 'Host 2', group: 'client' },
+            { id: '4', label: 'Host 3', group: 'client' },
+            { id: '5', label: 'Client 1', group: 'client' },
+            { id: '6', label: 'Client 2', group: 'client' },
+            { id: '7', label: 'Client 3', group: 'client' },
+            { id: '8', label: 'Client 4', group: 'client' },
+        ],
+        links: [
+            { source: '1', target: '2', type: 'out' },
+            { source: '1', target: '3', type: 'out' },
+            { source: '1', target: '4', type: 'out' },
+
+            { source: '2', target: '1', type: 'out' },
+            { source: '3', target: '1', type: 'out' },
+            { source: '4', target: '1', type: 'out' },
+
+            { source: '2', target: '3', type: 'out' },
+            { source: '2', target: '4', type: 'out' },
+            
+            { source: '3', target: '4', type: 'out' },            
+            { source: '3', target: '2', type: 'out' },
+
+            { source: '4', target: '2', type: 'out' },
+            { source: '4', target: '3', type: 'out' },
+
+            { source: '5', target: '2', type: 'in' },
+            { source: '6', target: '3', type: 'in' },
+            { source: '7', target: '4', type: 'in' },
+            { source: '8', target: '2', type: 'in' },
+        ],
+    }}
+    height={400}
+/>

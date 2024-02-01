@@ -1,5 +1,6 @@
+import React, { useCallback, useEffect } from 'react';
 export function listenToControls ( echoD, ctx, sendToHost ) {
-    document.addEventListener( 'keydown', ( { code } ) => {
+    const handler = ( { code } ) => {
         if ( !ctx.id ) { return; }
         const move = { x: 0, y: 0, z: 0 }
         const step = 0.1;
@@ -27,5 +28,12 @@ export function listenToControls ( echoD, ctx, sendToHost ) {
                 symbols: true
             } }
         } );
-    } );
+    };
+
+    useEffect( ( ) => {
+        window.document.addEventListener( 'keydown', handler );
+        return () => {
+            window.document.removeEventListener( 'keydown', handler );
+        }
+    }, [ echoD, ctx, sendToHost ] );
 }

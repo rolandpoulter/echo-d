@@ -2,11 +2,30 @@
 title: Quick Start
 description: A guide to get up and running with Echo-D
 ---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 import EchoD from '../../../../../ecmascript/dist/module/lib.echo-d.js'
 
-Import Echo-D:
+## Install
 
+<Tabs><TabItem label="npm">
+```sh
+npm install echo-d
+```
+</TabItem><TabItem label="pnpm">
+```sh
+pnpm add echo-d
+```
+</TabItem><TabItem label="yarn">
+```sh
+yarn add echo-d
+```
+</TabItem></Tabs>
+
+## Import
+
+<Tabs><TabItem label="JS Module">
 ```js
+// echo.js
 import EchoD as EchoDHandler, {
     Node as EchoDNode
     Options as EchoDOptions,
@@ -14,26 +33,43 @@ import EchoD as EchoDHandler, {
     Storage as EchoDStorage,
 } from 'echo-d'
 ```
+</TabItem><TabItem label="CommonJS">
+```js
+// echo.js
+const {
+    Handler: EchoDHandler,
+    Node: EchoDNode,
+    Options: EchoDOptions,
+    Context: EchoDContext,
+    Storage: EchoDStorage,
+} = require('echo-d');
+```
+</TabItem></Tabs>
 
-Configure options:
+## Configure
 
 ```js
+// echo.js
 const customOptions = {}
 
 const echoDOptions = new EchoDOptions(customOptions, EchoDNode.actions)
 ```
 
-Create a new context:
+## Context
 
 ```js
+// echo.js
 const customContext = {}
 
 const echoDContext = new EchoDContext(customContext, echoDOptions, EchoDStorage)
 ```
 
+## Echo-D
+
 Setting up an instance of Echo-D:
 
 ```js
+// echo.js
 const echoD = new EchoDHandler(
     echoDContext,
     echoDOptions,
@@ -43,12 +79,14 @@ const echoD = new EchoDHandler(
 Using Echo-D to synchornize entity-component state:
 
 ```js
+// echo.js
 // create pending state
 echoD.spawnActor('actor') // spawn an actor
 echoD.upsertComponent('actor', 'position', [0, 0, 0]) // position actor
 ```
 
 ```js
+// echo.js
 events.on('echoD', (messages) => {
   other_echoD.many(messages) // handle message(s)
   // Now our other Echo-D instance will have
@@ -57,6 +95,7 @@ events.on('echoD', (messages) => {
 ```
 
 ```js
+// echo.js
 // send pending messages to other echoDs
 echoD.updater({
     responder: (message) => {

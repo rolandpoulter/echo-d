@@ -1,4 +1,4 @@
-import EchoD from '../../lib/index.js';
+import EchoD from '../lib/index.js';
 
 import { events } from './common/events.js';
 import {
@@ -6,42 +6,53 @@ import {
     broadcastClients
 } from './host/transport.js';
 
-const echoOptions =  {
-    compressStringsAsInts: true,
-    isAuthority: true,
-    isSymbolLeader: true,
-    types: { position: [ 'f32', 3 ] },
-    updateOptions: {
-        mask: { inputs: true },
-        validkeys: { position: true }
+export function createHost ( ) {
+    const echoOptions =  {
+        compressStringsAsInts: true,
+        isAuthority: true,
+        isSymbolLeader: true,
+        types: { position: [ 'f32', 3 ] },
+        updateOptions: {
+            mask: { inputs: true },
+            validkeys: { position: true }
+        }
+    };
+    const echoD = new EchoD( { events }, echoOptions );
+
+    listenToClients( echoD );
+
+    events.on('actorInput', ( id, input, index, tick ) => {
+        const position = echoD.store.findComponent( id, 'position' );
+        echoD.upsertComponent( id, 'position', new Float32Array( [
+            position[ 0 ] + ( input.x || 0 ),
+            position[ 1 ] + ( input.y || 0 ),
+            position[ 2 ] + ( input.z || 0 ),
+        ] ) );
+    } );
+
+    function gameNetworkUpdate ( ) {
+        echoD.updater( { responder: broadcastClients } );
     }
-};
-const echoD = new EchoD( { events }, echoOptions );
 
-listenToClients( echoD );
+    function gameLoop ( ) {
+        // gamePhysicsOrOther();
+        gameNetworkUpdate( );
+    }
 
-events.on('actorInput', ( id, input, index, tick ) => {
-    const position = echoD.store.findComponent( id, 'position' );
-    echoD.upsertComponent( id, 'position', new Float32Array( [
-        position[ 0 ] + ( input.x || 0 ),
-        position[ 1 ] + ( input.y || 0 ),
-        position[ 2 ] + ( input.z || 0 ),
-    ] ) );
-} );
+    let gameInterval = null;
+    function gameStart ( ) {
+        gameInterval = setInterval( gameLoop, 1000 / 30 );
+    }
+    function gameStop ( ) { clearInterval( gameInterval ); }
 
-function gameNetworkUpdate ( ) {
-    echoD.updater( { responder: broadcastClients } );
+    gameStart( );
+
+    return {
+        echoD,
+        events,
+        gameStop,
+        gameStart,
+    };
 }
 
-function gameLoop ( ) {
-    // gamePhysicsOrOther();
-    gameNetworkUpdate( );
-}
-
-let gameInterval = null;
-export function gameStart ( ) {
-    gameInterval = setInterval( gameLoop, 1000 / 30 );
-}
-export function gameStop ( ) { clearInterval( gameInterval ); }
-
-gameStart( );
+export default createHost;

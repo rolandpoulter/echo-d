@@ -1,12 +1,14 @@
 import React from 'react';
-import { Canvas } from '@react-three/fiber';
-import { EchoD } from '.../client/client/EchoD.jsxx';
+// import { Canvas } from '@react-three/fiber';
+import { EchoD } from './EchoD.js';
 
 export function Render ( props ) {
     const {
+        Canvas,
         children,
         events
     } = props;
+    const views = EchoD({ events });
     return (
         <Canvas>
             <ambientLight intensity={ Math.PI / 2 } />
@@ -22,7 +24,7 @@ export function Render ( props ) {
                 decay={ 0 }
                 intensity={ Math.PI }
             />
-            <EchoD events={ events } />
+            {views}
             {children}
         </Canvas>
     )

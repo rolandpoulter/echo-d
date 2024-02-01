@@ -1,4 +1,4 @@
-import { onInit } from './transport/init.js';
+import { onInit } from '../init.js';
 
 const bcGameClients = new BroadcastChannel( 'game-clients' );
 const bcGameHost = new BroadcastChannel( 'game-host' );

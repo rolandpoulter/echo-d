@@ -1,3 +1,6 @@
+import React from 'react';
+import { Ball } from '../components/Ball.jsx';
+
 const renderViews = { };
 const renderObjects = { };
 
