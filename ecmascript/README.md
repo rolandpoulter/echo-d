@@ -1,10 +1,13 @@
+Fast, simple network layer for Entity-Component Systems
+
 <table align="center" border="0"><tr><td align="center" width="9999">
 <img alt="Dolphin" src="https://github.com/rolandpoulter/echo-d/blob/main/docs/public/dolphin/echo-d-dolphin.png?raw=true" width="30%" style="transform: scaleX(-1) scaleY(0.9) rotate(25deg);" />
 
 # Echo-D (es)
-</td></tr></table>
 
 Distributed Entity-Component network protocol for JavaScript
+</td></tr></table>
+
 
 ### [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
