@@ -23,6 +23,8 @@ jobs:
       - run: cd ecmascript && npm install
       - run: cd ecmascript && npm run compile
       - run: sed -i '/ecmascript\/lib\//d' .gitignore
+      - run: git config --global user.email "you@example.com"
+      - run: git config --global user.name "Your Name"
       - run: git add .gitignore ecmascript/lib
       - run: git commit -m "add ignored files for codecov"
       - run: cat .gitignore
