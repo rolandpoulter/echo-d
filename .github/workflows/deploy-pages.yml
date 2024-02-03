@@ -20,11 +20,12 @@ jobs:
     steps:
       - name: Checkout your repository using git
         uses: actions/checkout@v4
-        with:
+        # with:
           # path: docs
           # Only clone the `docs` directory
-          sparse-checkout: docs
-          sparse-checkout-cone-mode: false
+          # sparse-checkout: docs
+          # sparse-checkout-cone-mode: false
+      - run: npm run build # Build libraries and distributables
       - run: ls -la . # List all files in the root of the repository
       - run: ls -la docs # List all files in the `docs` directory
       - name: Install, build, and upload your site
