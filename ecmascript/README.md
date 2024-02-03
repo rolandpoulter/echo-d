@@ -9,7 +9,7 @@ Distributed Entity-Component network protocol for JavaScript
 </td></tr></table>
 
 
-### [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/) ![test](https://github.com/github/docs/actions/workflows/test-node.yml/badge.svg) [![codecov](https://codecov.io/gh/rolandpoulter/echo-d/graph/badge.svg?token=TUVVXSW89X)](https://codecov.io/gh/rolandpoulter/echo-d)
+### [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/) [![Node.js CI](https://github.com/rolandpoulter/echo-d/actions/workflows/test-node.yml/badge.svg)](https://github.com/rolandpoulter/echo-d/actions/workflows/test-node.yml) [![codecov](https://codecov.io/gh/rolandpoulter/echo-d/graph/badge.svg?token=TUVVXSW89X)](https://codecov.io/gh/rolandpoulter/echo-d)
 
 ## Prerequisites
 
