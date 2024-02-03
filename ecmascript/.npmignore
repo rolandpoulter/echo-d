@@ -1,9 +1,9 @@
 examples/
 script/
 test/
-lib/
 dist/bun
 dist/deno
+dist/module
 build.bun.mjs
 esbuild.deno.mjs
 webpack.*
