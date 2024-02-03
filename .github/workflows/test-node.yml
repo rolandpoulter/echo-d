@@ -20,14 +20,11 @@ jobs:
       - uses: actions/setup-node@v4
         # with:
         #   node-version: ${{ matrix.node-version }}
-      - run: cd ecmascript && npm install
-      - run: cd ecmascript && npm run compile
+      - run: cd ecmascript && npm install && npm run compile
       - run: sed -i '/ecmascript\/lib\//d' .gitignore
-      - run: git config --global user.email "you@example.com"
-      - run: git config --global user.name "Your Name"
-      - run: git add .gitignore ecmascript/lib
-      - run: git commit -m "add ignored files for codecov"
-      - run: cat .gitignore
+      - run: git config --global user.email "bot@echo-d.net && git config --global user.name "Bot"
+      - run: git add .gitignore ecmascript/lib && git commit -m "add ignored files for codecov"
+      # - run: cat .gitignore
       - run: cd ecmascript && npm run test-cov
       # - run: npm ci
       # - run: npm run build --if-present
