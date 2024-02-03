@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'ecmascript/**'
+  workflow_dispatch:
   
 
 jobs:
