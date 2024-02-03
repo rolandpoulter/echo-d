@@ -81,18 +81,23 @@ export function manyHandler(message, context, options) {
                 payloadSize = payloadSize.default;
             }
         }
-        for (let i = offset; i < payload.length; i += payloadSize) {
-            // Call the handler function with the payload
-            if (payloadSize === 1) {
-                handler(payload[i], context, options);
-            }
-            else if (batchActionPayloadSizes) {
-                handler(payload.slice(i, i + payloadSize), context, options);
-            }
-            else {
-                // console.warn('BATCH MISMATCH')
-            }
+        // debugger;
+        if (payload.length && payload.length === offset && payloadSize === offset) {
+            handler(undefined, context, options);
         }
+        else
+            for (let i = offset; i < payload.length; i += payloadSize) {
+                // Call the handler function with the payload
+                if (payloadSize === 1) {
+                    handler(payload[i], context, options);
+                }
+                else if (batchActionPayloadSizes) {
+                    handler(payload.slice(i, i + payloadSize), context, options);
+                }
+                else {
+                    // console.warn('BATCH MISMATCH')
+                }
+            }
     };
     if (Array.isArray(message)) {
         const handler = actionHandler(message[0]);

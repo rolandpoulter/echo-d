@@ -2,15 +2,24 @@
 title: Demo
 description: High level example of the Echo-D usage.
 ---
-import { Tabs, TabItem } from '@astrojs/starlight/components';
-import { GameHost } from '../../../components/GameHost';
-import { GameClient } from '../../../components/GameClient';
+import GameHostIFrame from '../../../components/iframe/GameHost.astro';
+import GameClientIFrame from '../../../components/iframe/GameClient.astro';
 
 ### Host
-<GameHost />
+<GameHostIFrame />
 
-### Client 1
-<GameClient />
+<div style="display: flex; justify-content: flex-start; align-items: flex-start; width: 100%;">
+    <div style="margin-top: 0; width: 50%;">
+        ### Client 1
+        <GameClientIFrame />
+    </div>
 
-### Client 2
-<GameClient />
+    <div style="margin-top: 0; width: 50%;">
+        ### Client 2
+        <GameClientIFrame />
+    </div>
+</div>
+
+<a style="cursor: pointer;" onClick="window.open('/client', 'New Client', 'height=200,width=200');">
+    Open a new client window.
+</a>

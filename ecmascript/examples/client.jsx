@@ -10,7 +10,11 @@ import { listenToControls } from './client/controls.js';
 import { updateRender } from './client/update.jsx';
 import { Render } from './components/Render.jsx';
 
+// console.log('Client EchoD', EchoD);
+
 export function createClient({ props, Canvas }) {
+    // debugger;
+    // console.log('createClient', props, Canvas);
     let renderTimer = null
     function onUpdate (message) {
         if ( renderTimer !== null ) { clearTimeout( renderTimer ); }
@@ -25,6 +29,7 @@ export function createClient({ props, Canvas }) {
             mask: { entity: true, component: true },
             validkeys: { }
         },
+        responder: sendToHost,
         onUpdate
     };
     const echoD = new EchoD( { events }, echoOptions );
@@ -32,16 +37,25 @@ export function createClient({ props, Canvas }) {
     const ctx = { id: null };
     listenToHost( echoD, ctx );
     
-    listenToControls( echoD, ctx, sendToHost );
-    
+    listenToControls( echoD, ctx );
+
+    window.addEventListener('beforeunload', (event) => {
+        // debugger;
+        echoD.removeActor( ctx.id );
+        echoD.updater();
+        // console.log('GOT HERE' );
+    });
+
+    // console.log('createClient', echoD, events, ctx);
+
     return {
         echoD,
         events,
         context: ctx,
         view: (
             <Render {...props} Canvas={ Canvas } events={ events } />
-            )
-        };
-    }
+        )
+    };
+}
     
-    export default createClient;
+export default createClient;

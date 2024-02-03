@@ -212,7 +212,7 @@ export default function contextSpec(echo, { describe, it, expect, mock, spy, xit
 
             expect(context.store.findComponent(entityId, componentKey)).toEqual(componentValue);
             expect(context.pending.created.components[entityId][componentKey]).toBeTruthy();
-            expect(emit).toHaveBeenCalledWith('changeComponent', entityId, componentKey);
+            expect(emit).toHaveBeenCalledWith('changeComponent', entityId, componentKey, componentValue);
             expect(options.onUpdate).toHaveBeenCalled();
         });
 

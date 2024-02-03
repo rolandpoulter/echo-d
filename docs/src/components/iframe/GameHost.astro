@@ -1,0 +1,150 @@
+---
+// console.log('hello host')
+---
+
+<game-host>
+    <div class="container">
+        <iframe src="/host"></iframe>
+    </div>
+    <div class="buttons">
+        <button class="clear">CLEAR</button>
+        <button class="expand">EXPAND</button>
+    </div>
+</game-host>
+
+<script>
+    new BroadcastChannel('game-clients').onmessage = function (event) {
+        // console.log('bc clients message', event.data)
+    }
+    // setInterval(() => {
+    //     new BroadcastChannel('game-host').postMessage('pong')
+    // }, 1000)
+    // console.log('hello host')
+    // debugger;
+
+    window.addEventListener('message', function(event) {
+        // debugger;
+        if (event.data.type === 'console.log') {
+            return console.log(...event.data.message);
+        }
+        // console.log('host event', event.data);
+    });
+
+    class GameHost extends HTMLElement {
+        declare iframe: HTMLIFrameElement;
+        declare channel: MessageChannel;
+        declare port1: MessagePort;
+
+        constructor() {
+            super();
+            // this.classList.add('game-host');
+            const iframe = this.querySelector('iframe');
+            if (iframe === null) {
+                throw new Error('iframe not found');
+            }
+            const channel = new MessageChannel();
+            iframe.addEventListener('load', () => {
+                this.transfer();
+                // this.send('ping from host');
+            });
+            /*
+            window.addEventListener('mouseup', () => {
+                this.classList.remove('is-focused')
+            });
+            iframe.contentWindow?.addEventListener('focus', () => {
+                this.classList.add('is-focused')
+            });
+            document.querySelectorAll('iframe').forEach((iframe) => {
+                if (iframe.parentNode === this) {
+                    return;
+                }
+                iframe.contentWindow?.addEventListener('mouseup', () => {
+                    this.classList.remove('is-focused')
+                })
+            })
+            */
+            this.addEventListener('mouseup', (e) => {
+                // e.stopPropagation();
+                // e.preventDefault();
+                if (e.target instanceof HTMLButtonElement) {
+                    const className = e.target.className;
+                    if (className === 'expand') {
+                        if (iframe.classList.contains('is-expanded')) {
+                            iframe.classList.remove('is-expanded');
+                            e.target.innerHTML = 'EXPAND'
+                        } else {
+                            iframe.classList.add('is-expanded');
+                            e.target.innerHTML = 'COLLAPSE'
+                        }
+                        return;
+                    }
+                    const [code, key] = (({
+                        clear: ['Escape', 'Escape'],
+                    })[className] || [null, null]) as [string, string];
+                    const event = new KeyboardEvent('keydown', { code, key })
+                    iframe.contentWindow?.document.dispatchEvent(event);
+                }
+            });
+            this.channel = channel;
+            this.port1 = channel.port1;
+            this.iframe = iframe;
+            // console.log('host iframe')
+            this.onmessage = (event) => {
+                // debugger;
+                // console.log('host message', event.data);
+                // this.send('ping from host');
+            };
+        }
+
+        set onmessage(onMessage: (event: MessageEvent) => void) {
+            this.port1.onmessage = onMessage;
+        }
+
+        send(message: any) {
+            // console.log('host send', message);
+            this.port1.postMessage(message);
+        }
+
+        transfer() {
+            const { iframe, channel } = this;
+            if (iframe.contentWindow === null) {
+                throw new Error('iframe contentWindow not found');
+            }
+            iframe.contentWindow.postMessage('init', '*', [channel.port2])
+        }
+    }
+
+    customElements.define('game-host', GameHost);
+    // console.log('ping');
+</script>
+
+<style is:inline>
+    game-host {
+        display: block;
+        padding: 4px;
+    }
+    game-host iframe {
+        width: 100%;
+        height: 200px !important;
+        border: none;
+    }
+    game-host iframe.is-expanded {
+        height: 400px !important;
+    }
+    game-host button {
+        cursor: pointer;
+        margin-top: 0 !important;
+    }
+    game-host .buttons {
+        margin-top: 0 !important;
+        padding: 4px;
+        /* height: 40px; */
+    }
+    game-host .container {
+        padding: 4px;
+    }
+    /* game-host.is-focused {
+        padding: 2px;
+        border: 2px solid red;
+    } */
+</style>

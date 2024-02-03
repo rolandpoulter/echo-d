@@ -1,0 +1,88 @@
+---
+// title: GameHost
+// description: High level example of the Echo-D usage.
+// tableOfContents: false
+// template: splash
+import { GameHost } from '../components/GameHost';
+---
+<GameHost client:only={'react'} />
+
+<script is:inline>
+    const log = console.log;
+   
+    console.log = (...message) => {
+        try {
+            message = JSON.parse(JSON.stringify(message));
+        } catch (e) {
+            return;
+        }
+        log(...message);
+        const data = {
+            type: 'console.log',
+            message: message,
+        }
+        if (port2) {
+            port2.postMessage(data);
+        } else {
+            window.parent.postMessage(data, '*');
+        }
+    };
+  
+    let port2;
+    // debugger;
+
+    // window.alert('Host EchoD');
+
+    // Listen for the intial port transfer message
+    window.addEventListener('message', (e) => {
+        // debugger;
+        if (e.data === 'init') {
+            log('init');
+            port2 = e.ports[0];
+            port2.onmessage = onMessage;
+            // port2.postMessage('pong from host child');
+        } else {
+            onMessage(e);
+        }
+    });
+
+    function onMessage({ data }) {
+        // debugger;
+        log('onMessage', data);
+        // port2.postMessage('pong from host child');
+    }
+</script>
+
+<style is:inline>
+    :root {
+        --bgColor: #0f0f0f;
+        --txtColor: #fff;
+        /* --accentColor: #009bc6; */
+        --font: 'Courier New', monospace;
+    }
+
+    :root[data-theme='light'], [data-theme='light'] ::backdrop  {
+        --bgColor: #f0f0f0;
+        --txtColor: #000;
+        /* --accentColor: #009bc6; */
+    }
+
+    html,
+    body {
+        margin: 4px;
+        padding: 0;
+        /* display: flex; */
+        /* justify-content: center; */
+        /* align-items: center; */
+        /* height: 100vh; */
+        /* background-color: #f0f0f0; */
+        background-color: var(--bgColor);
+        color: var(--txtColor);
+        /* fixed size font */
+        font-family: var(--font);
+    }
+    .log, .components {
+        margin: 4px;
+        white-space: nowrap;
+    }
+</style>

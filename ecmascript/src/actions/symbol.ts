@@ -118,20 +118,21 @@ export const SymbolActionsFactory = (Parent: any = Object): any => class SymbolA
      */
     symbols(_: any, context: Context, options: Options | any) {
         options = options = Options.ensure(options, this)
-        const { responder, isAuthority, pageSize, enumDefaultSymbols, compressStringsAsInts } = options
+        const { responder, isAuthority, pageSize, defaultSymbols, enumDefaultSymbols, compressStringsAsInts } = options
 
         if (!isAuthority || !compressStringsAsInts) {
             return
         }
 
-        const symbols = context.symbolsList
+        let symbols = context.symbolsList
 
         if (symbols && symbols.length) {
+            symbols = symbols.slice(defaultSymbols.length)
             // responder([enumDefaultSymbols.mergeSymbols, 0, symbols])
 
             const pages = paginate(symbols, pageSize)
 
-            let i = 0
+            let i = defaultSymbols.length
             // send pages to responder
             for (const page of pages) {
                 responder([enumDefaultSymbols.mergeSymbols, i, page])

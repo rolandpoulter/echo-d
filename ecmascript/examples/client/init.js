@@ -6,5 +6,6 @@ export function onInit ( echoD, sendToHost ) {
     sendToHost( [ 'components' ] );
     const id = nanoid( );
     echoD.spawnActor( id );
+    // console.log('CLIENT ID', id)
     return id;
 }

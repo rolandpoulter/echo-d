@@ -6,12 +6,20 @@ import {
     broadcastClients
 } from './host/transport.js';
 
+// console.log('Host EchoD', EchoD);
+
 export function createHost ( ) {
+    // debugger;
+    // console.log('createHost');
     const echoOptions =  {
         compressStringsAsInts: true,
         isAuthority: true,
         isSymbolLeader: true,
         types: { position: [ 'f32', 3 ] },
+        responder: ( message ) => {
+            // console.log('responder', message);
+            broadcastClients( message )
+        },
         updateOptions: {
             mask: { inputs: true },
             validkeys: { position: true }
@@ -22,7 +30,7 @@ export function createHost ( ) {
     listenToClients( echoD );
 
     events.on('actorInput', ( id, input, index, tick ) => {
-        const position = echoD.store.findComponent( id, 'position' );
+        const position = echoD.store.findComponent( id, 'position' ) || [ 0, 0, 0 ];
         echoD.upsertComponent( id, 'position', new Float32Array( [
             position[ 0 ] + ( input.x || 0 ),
             position[ 1 ] + ( input.y || 0 ),
@@ -31,7 +39,7 @@ export function createHost ( ) {
     } );
 
     function gameNetworkUpdate ( ) {
-        echoD.updater( { responder: broadcastClients } );
+        echoD.updater( { /* responder: broadcastClients */ } );
     }
 
     function gameLoop ( ) {
@@ -46,6 +54,8 @@ export function createHost ( ) {
     function gameStop ( ) { clearInterval( gameInterval ); }
 
     gameStart( );
+
+    // console.log('createHost', echoD, events, gameStart, gameStop)
 
     return {
         echoD,

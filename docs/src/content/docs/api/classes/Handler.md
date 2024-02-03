@@ -39,7 +39,7 @@ The storage for the handler.
 
 #### Source
 
-ecmascript/src/handler.ts:141
+ecmascript/src/handler.ts:144
 
 ## Properties
 
@@ -49,7 +49,7 @@ ecmascript/src/handler.ts:141
 
 #### Source
 
-ecmascript/src/handler.ts:130
+ecmascript/src/handler.ts:133
 
 ***
 
@@ -59,7 +59,7 @@ ecmascript/src/handler.ts:130
 
 #### Source
 
-ecmascript/src/handler.ts:131
+ecmascript/src/handler.ts:134
 
 ## Accessors
 
@@ -75,7 +75,7 @@ Gets the store from the context.
 
 #### Source
 
-ecmascript/src/handler.ts:149
+ecmascript/src/handler.ts:152
 
 ## Methods
 
@@ -109,7 +109,7 @@ Custom options to extend the options for the handler.
 
 #### Source
 
-ecmascript/src/handler.ts:230
+ecmascript/src/handler.ts:233
 
 ***
 
@@ -147,7 +147,7 @@ Custom options to extend the options for the handler.
 
 #### Source
 
-ecmascript/src/handler.ts:276
+ecmascript/src/handler.ts:279
 
 ***
 
@@ -173,7 +173,7 @@ Custom options to extend the options for the handler.
 
 #### Source
 
-ecmascript/src/handler.ts:240
+ecmascript/src/handler.ts:243
 
 ***
 
@@ -212,7 +212,7 @@ Gets the action handler.
 
 #### Source
 
-ecmascript/src/handler.ts:176
+ecmascript/src/handler.ts:179
 
 ***
 
@@ -234,7 +234,7 @@ The action.
 
 #### Source
 
-ecmascript/src/handler.ts:185
+ecmascript/src/handler.ts:188
 
 ***
 
@@ -258,7 +258,7 @@ The messages to handle.
 
 #### Source
 
-ecmascript/src/handler.ts:168
+ecmascript/src/handler.ts:171
 
 ***
 
@@ -282,7 +282,7 @@ The message to handle.
 
 #### Source
 
-ecmascript/src/handler.ts:158
+ecmascript/src/handler.ts:161
 
 ***
 
@@ -306,7 +306,7 @@ The components queried.
 
 #### Source
 
-ecmascript/src/handler.ts:297
+ecmascript/src/handler.ts:300
 
 ***
 
@@ -332,7 +332,7 @@ Custom options to extend the options for the handler.
 
 #### Source
 
-ecmascript/src/handler.ts:218
+ecmascript/src/handler.ts:221
 
 ***
 
@@ -362,7 +362,7 @@ Custom options to extend the options for the handler.
 
 #### Source
 
-ecmascript/src/handler.ts:287
+ecmascript/src/handler.ts:290
 
 ***
 
@@ -388,7 +388,7 @@ Custom options to extend the options for the handler.
 
 #### Source
 
-ecmascript/src/handler.ts:250
+ecmascript/src/handler.ts:253
 
 ***
 
@@ -414,7 +414,7 @@ Custom options to extend the options for the handler.
 
 #### Source
 
-ecmascript/src/handler.ts:208
+ecmascript/src/handler.ts:211
 
 ***
 
@@ -442,7 +442,7 @@ A promise that resolves with updated batch of messages.
 
 #### Source
 
-ecmascript/src/handler.ts:196
+ecmascript/src/handler.ts:199
 
 ***
 
@@ -480,7 +480,7 @@ Custom options to extend the options for the handler.
 
 #### Source
 
-ecmascript/src/handler.ts:263
+ecmascript/src/handler.ts:266
 
 ***
 

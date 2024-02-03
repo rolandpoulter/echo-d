@@ -391,7 +391,7 @@ export class Context {
                     this.pending.changeComponent(pendingType, id, key);
                 }
                 if (this.events) {
-                    this.events.emit('changeComponent', id, key);
+                    this.events.emit('changeComponent', id, key, value);
                 }
                 completeChangeComponentUpdate();
             };
@@ -467,7 +467,7 @@ export class Context {
                         this.pending.upsertComponent(pendingType, id, key);
                     }
                     if (this.events) {
-                        this.events.emit('upsertComponent', id, key);
+                        this.events.emit('upsertComponent', id, key, value);
                     }
                     completeUpsertComponentUpdate();
                 };

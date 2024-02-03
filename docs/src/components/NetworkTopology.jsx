@@ -28,7 +28,7 @@ export function NetworkTopology(props) {
     const boundsRef = useRef(null);
     const graphRef = useRef(null);
     const updateTheme = useCallback((/* { matches } */) => {
-        console.log('updateTheme')
+        // console.log('updateTheme')
         const name = document.documentElement.dataset?.theme || (
             window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
         );

@@ -43,7 +43,7 @@ Spawns a new actor in the current context.
 
 ## Source
 
-ecmascript/src/actions/actor.ts:153
+ecmascript/src/actions/actor.ts:157
 
 ***
 

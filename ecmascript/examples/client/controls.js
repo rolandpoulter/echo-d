@@ -1,6 +1,9 @@
-import React, { useCallback, useEffect } from 'react';
-export function listenToControls ( echoD, ctx, sendToHost ) {
-    const handler = ( { code } ) => {
+// import React, { useCallback, useEffect } from 'react';
+export function listenToControls ( echoD, ctx ) {
+    // console.log('GOT HERE')
+    const handler = ({ code }) => {
+        // console.log('keydown', code, ctx.id, event)
+        // debugger;
         if ( !ctx.id ) { return; }
         const move = { x: 0, y: 0, z: 0 }
         const step = 0.1;
@@ -17,12 +20,13 @@ export function listenToControls ( echoD, ctx, sendToHost ) {
             move.z =  step; break;
         case 'KeyE':
             move.z = -step; break;
+        default: return;
         }
         echoD.actorInput( ctx.id, move );
         echoD.updater({
-            responder: sendToHost,
+            // responder: sendToHost,
             updateOptions:  { mask: {
-                actors: true,
+                // actors: true,
                 entities: true,
                 components: true,
                 symbols: true
@@ -30,10 +34,14 @@ export function listenToControls ( echoD, ctx, sendToHost ) {
         } );
     };
 
-    useEffect( ( ) => {
-        window.document.addEventListener( 'keydown', handler );
-        return () => {
-            window.document.removeEventListener( 'keydown', handler );
-        }
-    }, [ echoD, ctx, sendToHost ] );
+    window.document.addEventListener( 'keydown', handler );
+    return () => {
+        window.document.removeEventListener( 'keydown', handler );
+    }
+    // useEffect( ( ) => {
+    //     window.document.addEventListener( 'keydown', handler );
+    //     return () => {
+    //         window.document.removeEventListener( 'keydown', handler );
+    //     }
+    // }, [ echoD, ctx, sendToHost ] );
 }

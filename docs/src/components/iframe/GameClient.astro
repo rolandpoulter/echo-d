@@ -1,0 +1,159 @@
+---
+// console.log('hello client')
+---
+
+<game-client>
+    <div class="container">
+        <iframe src="/client"></iframe>
+    </div>
+    <div class="buttons">
+        <button class="in">&nearr;</button>
+        <button class="left">&larr;</button>
+        <button class="up">&uarr;</button>
+        <button class="down">&darr;</button>
+        <button class="right">&rarr;</button>
+        <button class="out">&swarr;</button>
+        <button class="clear">CLEAR</button>
+        <button class="expand">EXPAND</button>
+    </div>
+</game-client>  
+
+<script>
+    new BroadcastChannel('game-host').onmessage = function (event) {
+        // console.log('bc host message', event.data)
+    };
+    // setInterval(() => {
+    //     new BroadcastChannel('game-clients').postMessage('ping')
+    // }, 1000)
+    // console.log('hello client')
+    // debugger;
+
+    window.addEventListener('message', function(event) {
+        // debugger;
+        if (event.data.type === 'console.log') {
+            return console.log(...event.data.message);
+        }
+        // console.log('client event', event.data);
+    });
+
+    class GameClient extends HTMLElement {
+        declare iframe: HTMLIFrameElement;
+        declare channel: MessageChannel;
+        declare port1: MessagePort;
+
+        constructor() {
+            super();
+            // this.classList.add('game-client');
+            const iframe = this.querySelector('iframe');
+            if (iframe === null) {
+                throw new Error('iframe not found');
+            }
+            const channel = new MessageChannel();
+            iframe.addEventListener('load', () => {
+                this.transfer()
+                // this.send('ping from client');
+            });
+            window.addEventListener('mouseup', () => {
+                this.classList.remove('is-focused')
+            });
+            iframe.contentWindow?.addEventListener('focus', () => {
+                this.classList.add('is-focused')
+            });
+            document.querySelectorAll('iframe').forEach((iframe) => {
+                if (iframe.parentNode?.parentNode === this) {
+                    return;
+                }
+                iframe.contentWindow?.addEventListener('mouseup', () => {
+                    this.classList.remove('is-focused')
+                })
+            })
+            this.addEventListener('mouseup', (e) => {
+                // e.stopPropagation();
+                // e.preventDefault();
+                if (e.target instanceof HTMLButtonElement) {
+                    const className = e.target.className;
+                    if (className === 'expand') {
+                        if (iframe.classList.contains('is-expanded')) {
+                            iframe.classList.remove('is-expanded');
+                            e.target.innerHTML = 'EXPAND'
+                        } else {
+                            iframe.classList.add('is-expanded');
+                            e.target.innerHTML = 'COLLAPSE'
+                        }
+                        return;
+                    }
+                    const [code, key] = (({
+                        clear: ['Escape', 'Escape'],
+                        in: ['KeyQ', 'Q'],
+                        left: ['ArrowLeft', 'ArrowLeft'],
+                        up: ['ArrowUp', 'ArrowUp'],
+                        down: ['ArrowDown', 'ArrowDown'],
+                        right: ['ArrowRight', 'ArrowRight'],
+                        out: ['KeyE', 'E'],
+                    })[className] || [null, null]) as [string, string];
+                    const event = new KeyboardEvent('keydown', { code, key })
+                    iframe.contentWindow?.document.dispatchEvent(event);
+                }
+            });
+            this.channel = channel;
+            this.port1 = channel.port1;
+            this.iframe = iframe;
+            // console.log('client iframe')
+            this.onmessage = (event) => {
+                // debugger;
+                // console.log('client message', event.data);
+                // this.send('ping from client');
+            };
+        }
+
+        set onmessage(onMessage: (event: MessageEvent) => void) {
+            this.port1.onmessage = onMessage;
+        }
+
+        send(message: any) {
+            // console.log('client send', message);
+            this.port1.postMessage(message);
+            // this.iframe.contentWindow.postMessage(message, '*');
+        }
+
+        transfer() {
+            const { iframe, channel } = this;
+            if (iframe.contentWindow === null) {
+                throw new Error('iframe contentWindow not found');
+            }
+            iframe.contentWindow.postMessage('init', '*', [channel.port2])
+        }
+    }
+
+    customElements.define('game-client', GameClient);
+</script>
+
+<style is:inline>
+    game-client {
+        display: block;
+    }
+    game-client iframe {
+        width: 100%;
+        height: 200px !important;
+        border: none;
+    }
+    game-client iframe.is-expanded {
+        height: 500px !important;
+    }
+    game-client button {
+        cursor: pointer;
+        margin-top: 0 !important;
+    }
+    game-client .buttons {
+        margin-top: 0 !important;
+        padding: 4px;
+        /* height: 40px; */
+    }
+    game-client .container {
+        padding: 4px;
+    }
+    game-client.is-focused .container {
+        padding: 2px;
+        border: 2px solid red;
+    }
+</style>

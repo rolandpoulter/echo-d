@@ -506,7 +506,7 @@ export class Context {
                 }
 
                 if (this.events) {
-                    this.events.emit('changeComponent', id, key)
+                    this.events.emit('changeComponent', id, key, value)
                 }
 
                 completeChangeComponentUpdate()
@@ -605,7 +605,7 @@ export class Context {
                     }
 
                     if (this.events) {
-                        this.events.emit('upsertComponent', id, key)
+                        this.events.emit('upsertComponent', id, key, value)
                     }
 
                     completeUpsertComponentUpdate()
