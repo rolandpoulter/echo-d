@@ -1,7 +1,10 @@
 name: Node.js CI
 
 on:
+  # pull_request:
+  #   branches: [ master ]
   push:
+    # branches: [ master ]
     paths:
       - 'ecmascript/**'
   workflow_dispatch:

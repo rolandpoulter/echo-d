@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  ci:
+  test:
     runs-on: ubuntu-20.04
     container: lironavon/docker-puppeteer-container:14.16.0
     env:
