@@ -1,0 +1,27 @@
+name: Test Bun Module
+
+on:
+  # pull_request:
+  #   branches: [main]
+  push:
+    # branches: [main]
+    paths:
+      - 'ecmascript/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    # strategy:
+    #   matrix:
+    #     deno-version: [ 1.0.11, 1.14.0 ]
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: oven-sh/setup-bun@v1
+        # with:
+        #   bun-version: ${{ matrix.deno-version }}
+
+      - run: bun install
+      - run: script/test/sys-bun.sh

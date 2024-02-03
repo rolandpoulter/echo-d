@@ -1,0 +1,29 @@
+name: Test Deno Module
+
+on:
+  # pull_request:
+  #   branches: [main]
+  push:
+    # branches: [main]
+    paths:
+      - 'ecmascript/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    # strategy:
+    #   matrix:
+    #     deno-version: [ 1.2.2, 1.3.0 ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: denolib/setup-deno@v2
+        # with:
+        #   deno-version: ${{ matrix.deno-version }}
+      # - name: Lint Deno Module
+      #   run: deno fmt --check
+      # - name: Build Deno Module
+      #   run: deno run --reload mod.ts
+      - run: script/test/sys-deno.sh
