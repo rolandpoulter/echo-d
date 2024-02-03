@@ -29,5 +29,7 @@ jobs:
           key: node_modules-${{ hashFiles('**/package-lock.json')}}
       - name: Install dependencies
         run: cd ecmascript && npm install
+      - name: Build web bundle
+        run: cd ecmascript && npm run build
       - name: Run tests
         run: cd ecmascript && npm run test-web
