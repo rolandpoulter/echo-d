@@ -1,3 +1,5 @@
+console.log('test');
+
 /**
  * Exports all the constants.
  */
