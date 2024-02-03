@@ -36,5 +36,6 @@ and [Miniplex](https://github.com/hmans/miniplex) — Supported Storage ECS libr
 * [Starlight](https://starlight.astro.build/) — Documentation website framework
 * [Javelin](https://github.com/3mcd/javelin) — ECS library with networking (Echo-D Alternative)
 * [Bevy](https://bevyengine.org/) — Game engine with ECS (Storage Support coming soon)
+* [MessagePack](https://msgpack.org/) — Small and fast JSON data structure
 * [GGPO](https://www.ggpo.net/),
 and [GGRS](https://github.com/gschup/ggrs) — P2P rollback networking
