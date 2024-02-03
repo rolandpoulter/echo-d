@@ -1,5 +1,5 @@
 <table align="center" border="0"><tr><td align="center" width="9999">
-<img alt="Dolphin" src="https://gitlab.rumblinglabs.com/roland/echo-d/-/raw/main/docs/public/dolphin/echo-d-dolphin.png?inline=false" width="30%" style="transform: scaleX(-1) scaleY(0.9) rotate(25deg);" />
+<img alt="Dolphin" src="https://github.com/rolandpoulter/echo-d/blob/main/docs/public/dolphin/echo-d-dolphin.png?raw=true" width="30%" style="transform: scaleX(-1) scaleY(0.9) rotate(25deg);" />
 
 # Echo-D (rs)
 </td></tr></table>
