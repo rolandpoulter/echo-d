@@ -1,10 +1,13 @@
 name: Node.js CI
 
-on: [push]
+on:
+  push:
+    paths:
+      - 'ecmascript/**'
   
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     # strategy:
@@ -13,7 +16,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         # with:
         #   node-version: ${{ matrix.node-version }}
       - run: cd ecmascript && npm install
@@ -23,7 +26,7 @@ jobs:
       # - run: npm test
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true
           directory: ecmascript/test/coverage
