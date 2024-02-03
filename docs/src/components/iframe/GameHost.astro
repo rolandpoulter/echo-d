@@ -1,5 +1,4 @@
 ---
-// console.log('hello host')
 ---
 
 <game-host>
@@ -16,14 +15,8 @@
     new BroadcastChannel('game-clients').onmessage = function (event) {
         // console.log('bc clients message', event.data)
     }
-    // setInterval(() => {
-    //     new BroadcastChannel('game-host').postMessage('pong')
-    // }, 1000)
-    // console.log('hello host')
-    // debugger;
 
     window.addEventListener('message', function(event) {
-        // debugger;
         if (event.data.type === 'console.log') {
             return console.log(...event.data.message);
         }
@@ -37,7 +30,6 @@
 
         constructor() {
             super();
-            // this.classList.add('game-host');
             const iframe = this.querySelector('iframe');
             if (iframe === null) {
                 throw new Error('iframe not found');
@@ -45,27 +37,8 @@
             const channel = new MessageChannel();
             iframe.addEventListener('load', () => {
                 this.transfer();
-                // this.send('ping from host');
             });
-            /*
-            window.addEventListener('mouseup', () => {
-                this.classList.remove('is-focused')
-            });
-            iframe.contentWindow?.addEventListener('focus', () => {
-                this.classList.add('is-focused')
-            });
-            document.querySelectorAll('iframe').forEach((iframe) => {
-                if (iframe.parentNode === this) {
-                    return;
-                }
-                iframe.contentWindow?.addEventListener('mouseup', () => {
-                    this.classList.remove('is-focused')
-                })
-            })
-            */
             this.addEventListener('mouseup', (e) => {
-                // e.stopPropagation();
-                // e.preventDefault();
                 if (e.target instanceof HTMLButtonElement) {
                     const className = e.target.className;
                     if (className === 'expand') {
@@ -88,11 +61,8 @@
             this.channel = channel;
             this.port1 = channel.port1;
             this.iframe = iframe;
-            // console.log('host iframe')
             this.onmessage = (event) => {
-                // debugger;
                 // console.log('host message', event.data);
-                // this.send('ping from host');
             };
         }
 
@@ -101,7 +71,6 @@
         }
 
         send(message: any) {
-            // console.log('host send', message);
             this.port1.postMessage(message);
         }
 
@@ -115,7 +84,6 @@
     }
 
     customElements.define('game-host', GameHost);
-    // console.log('ping');
 </script>
 
 <style is:inline>
@@ -138,7 +106,6 @@
     game-host .buttons {
         margin-top: 0 !important;
         padding: 4px;
-        /* height: 40px; */
     }
     game-host .container {
         padding: 4px;

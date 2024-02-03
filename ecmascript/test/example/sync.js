@@ -1,6 +1,5 @@
 export default function (echo, extras, { describe, it, expect, mock, spy, xit, xdescribe }) {
     const syncExample = extras.sync.syncExample
-    // console.log('syncExample', syncExample, extras.sync)
 
     const echoExample = extras.echo.echoExample
     const becsyExample = extras.becsy.becsyExample

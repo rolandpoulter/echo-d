@@ -7,6 +7,7 @@ import react from "@astrojs/react";
 
 // https://astro.build/config
 export default defineConfig({
+	site: 'https://echo-d.org',
 	integrations: [
 		starlight({
 			title: 'Echo-D',
@@ -64,10 +65,9 @@ export default defineConfig({
 					{
 						label: 'Networking',
 						link: '/guides/networking/'
-					}, {
-						label: 'Performance',
-						link: '/guides/performance/'
-					}, {
+					},
+					// { label: 'Performance', link: '/guides/performance/' },
+					{
 						label: 'Storage Adapters',
 						link: '/guides/storage_adapters/'
 					}
@@ -78,8 +78,8 @@ export default defineConfig({
 				label: 'Example',
 				collapsed: true,
 				items: [{
-					label: 'Summary',
-					link: '/example/summary/'
+					label: 'Setup',
+					link: '/example/setup/'
 				}, {
 					label: 'Host',
 					link: '/example/host/'

@@ -7,7 +7,7 @@ The `Changes` class is responsible for managing changes in a context. It provide
 
 ## Example Usage
 
-```javascript
+```js
 const context = new Context();
 const changes = new Changes(context);
 

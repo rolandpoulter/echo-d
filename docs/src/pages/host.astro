@@ -1,8 +1,4 @@
 ---
-// title: GameHost
-// description: High level example of the Echo-D usage.
-// tableOfContents: false
-// template: splash
 import { GameHost } from '../components/GameHost';
 ---
 <GameHost client:only={'react'} />
@@ -29,27 +25,20 @@ import { GameHost } from '../components/GameHost';
     };
   
     let port2;
-    // debugger;
-
-    // window.alert('Host EchoD');
 
     // Listen for the intial port transfer message
     window.addEventListener('message', (e) => {
-        // debugger;
         if (e.data === 'init') {
             log('init');
             port2 = e.ports[0];
             port2.onmessage = onMessage;
-            // port2.postMessage('pong from host child');
         } else {
             onMessage(e);
         }
     });
 
     function onMessage({ data }) {
-        // debugger;
         log('onMessage', data);
-        // port2.postMessage('pong from host child');
     }
 </script>
 

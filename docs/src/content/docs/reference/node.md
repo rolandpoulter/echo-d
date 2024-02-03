@@ -7,7 +7,7 @@ The `NodeActions` class is a collection of actions that can be performed on diff
 
 ## Example Usage
 
-```javascript
+```js
 import { NodeActions } from './NodeActions'
 
 // Create an instance of NodeActions

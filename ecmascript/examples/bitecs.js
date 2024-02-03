@@ -43,11 +43,11 @@ export const RGBA = { r: Types.ui8, g: Types.ui8, b: Types.ui8, a: Types.ui8 }
 
 setDefaultSize(1000)
 
-export const Color = null && defineComponent(RGBA) 
-export const Position = null && defineComponent(Vector3)
-export const Rotation = null && defineComponent(Vector3)
-export const Velocity = null && defineComponent(Vector3)
-export const Spin = null && defineComponent(Vector3)
+export const Color = defineComponent(RGBA) 
+export const Position = defineComponent(Vector3)
+export const Rotation = defineComponent(Vector3)
+export const Velocity = defineComponent(Vector3)
+export const Spin = defineComponent(Vector3)
 
 export const createBitECSEchoD = (options = {}, Handler = EchoD, actions = EchoDNode.actions) => new Handler(
     // context,

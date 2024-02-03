@@ -5,12 +5,25 @@ description: High level example of the Echo-D usage.
 import GameHostIFrame from '../../../components/iframe/GameHost.astro';
 import GameClientIFrame from '../../../components/iframe/GameClient.astro';
 
+A demonstration of the Echo-D usage.
+It makes use of iframes to simulate multiple clients,
+and uses `BroadcasChannel` to communicate between them.
+The host and clients are all running in the same page,
+but in a real-world scenario, the host and clients would
+be running in separate windows or tabs.
+
+Click on one of the client windows to give it focus, then use arrow keys to move client positions.
+Or click on the buttons below to update the clients.
+The escape key will clear the logs for the active frame.
+
 ### Host
+
 <GameHostIFrame />
 
 <div style="display: flex; justify-content: flex-start; align-items: flex-start; width: 100%;">
     <div style="margin-top: 0; width: 50%;">
         ### Client 1
+        
         <GameClientIFrame />
     </div>
 
@@ -20,6 +33,13 @@ import GameClientIFrame from '../../../components/iframe/GameClient.astro';
     </div>
 </div>
 
+#### Add a client
+
+You can add a new client window by clicking the button below.
+This will open a new window with a client running in it.
+Buttons are not available in the client windows, instead use the arrow keys.
+
+<br/>
 <a style="cursor: pointer;" onClick="window.open('/client', 'New Client', 'height=200,width=200');">
     Open a new client window.
 </a>

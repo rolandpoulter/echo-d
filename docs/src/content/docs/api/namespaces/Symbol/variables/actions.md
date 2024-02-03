@@ -55,7 +55,7 @@ Retrieves all symbols from the current context.
 
 ## Source
 
-ecmascript/src/actions/symbol.ts:154
+ecmascript/src/actions/symbol.ts:155
 
 ***
 

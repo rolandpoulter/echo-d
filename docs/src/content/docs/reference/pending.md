@@ -7,7 +7,7 @@ The `Pending` class represents a pending state with removed, updated, and create
 
 ## Example Usage
 
-```javascript
+```js
 // Create a new instance of the Pending class
 const pending = new Pending();
 

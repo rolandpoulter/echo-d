@@ -7,7 +7,7 @@ The `Options` class represents the options for a node in a TypeScript code. It p
 
 ## Example Usage
 
-```javascript
+```js
 import Options from './Options'
 
 // Create an instance of Options with custom options

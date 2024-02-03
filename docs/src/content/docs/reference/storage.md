@@ -7,7 +7,7 @@ The `Storage` class represents a store with actors, entities, components, and in
 
 ## Example Usage
 
-```javascript
+```js
 const storage = new Storage();
 
 // Add actors to the store

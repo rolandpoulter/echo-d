@@ -1,5 +1,4 @@
 ---
-// console.log('hello client')
 ---
 
 <game-client>
@@ -22,14 +21,8 @@
     new BroadcastChannel('game-host').onmessage = function (event) {
         // console.log('bc host message', event.data)
     };
-    // setInterval(() => {
-    //     new BroadcastChannel('game-clients').postMessage('ping')
-    // }, 1000)
-    // console.log('hello client')
-    // debugger;
 
     window.addEventListener('message', function(event) {
-        // debugger;
         if (event.data.type === 'console.log') {
             return console.log(...event.data.message);
         }
@@ -43,15 +36,13 @@
 
         constructor() {
             super();
-            // this.classList.add('game-client');
             const iframe = this.querySelector('iframe');
             if (iframe === null) {
                 throw new Error('iframe not found');
             }
             const channel = new MessageChannel();
             iframe.addEventListener('load', () => {
-                this.transfer()
-                // this.send('ping from client');
+                this.transfer();
             });
             window.addEventListener('mouseup', () => {
                 this.classList.remove('is-focused')
@@ -68,8 +59,6 @@
                 })
             })
             this.addEventListener('mouseup', (e) => {
-                // e.stopPropagation();
-                // e.preventDefault();
                 if (e.target instanceof HTMLButtonElement) {
                     const className = e.target.className;
                     if (className === 'expand') {
@@ -98,11 +87,8 @@
             this.channel = channel;
             this.port1 = channel.port1;
             this.iframe = iframe;
-            // console.log('client iframe')
             this.onmessage = (event) => {
-                // debugger;
                 // console.log('client message', event.data);
-                // this.send('ping from client');
             };
         }
 
@@ -111,9 +97,7 @@
         }
 
         send(message: any) {
-            // console.log('client send', message);
             this.port1.postMessage(message);
-            // this.iframe.contentWindow.postMessage(message, '*');
         }
 
         transfer() {
@@ -147,7 +131,6 @@
     game-client .buttons {
         margin-top: 0 !important;
         padding: 4px;
-        /* height: 40px; */
     }
     game-client .container {
         padding: 4px;

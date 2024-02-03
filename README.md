@@ -6,13 +6,7 @@
 Distributed Entity-Component network protocol
 </td></tr></table>
 
-## Badges
-
-Add badges from somewhere like: [shields.io](https://shields.io/)
-
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-[![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
-[![AGPL License](https://img.shields.io/badge/license-AGPL-blue.svg)](http://www.gnu.org/licenses/agpl-3.0)
+### [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
 ## Features
 
@@ -31,16 +25,16 @@ Add badges from somewhere like: [shields.io](https://shields.io/)
 
 Contributions are always welcome!
 
-## License
-
-[MIT](https://choosealicense.com/licenses/mit/)
-
-## Related
+## Links
 
 Here are some related projects
 
-[Awesome README](https://github.com/matiassingers/awesome-readme)
-
-## Lessons Learned
-
-What did you learn while building this project? What challenges did you face and how did you overcome them?
+* [Becsy](https://github.com/LastOliveGames/becsy),
+[bitECS](https://github.com/NateTheGreatt/bitECS),
+and [Miniplex](https://github.com/hmans/miniplex) — Supported Storage ECS libraries
+* [Web Game Dev](https://www.webgamedev.com/) — Web game development news
+* [Starlight](https://starlight.astro.build/) — Documentation website framework
+* [Javelin](https://github.com/3mcd/javelin) — ECS library with networking (Echo-D Alternative)
+* [Bevy](https://bevyengine.org/) — Game engine with ECS (Storage Support coming soon)
+* [GGPO](https://www.ggpo.net/),
+and [GGRS](https://github.com/gschup/ggrs) — P2P rollback networking

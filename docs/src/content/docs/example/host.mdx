@@ -1,5 +1,5 @@
 ---
-title: Host
+title: Example Host
 description: High level example of the Echo-D usage.
 ---
 import { Tabs, TabItem } from '@astrojs/starlight/components';
@@ -48,6 +48,7 @@ const echoOptions =  {
     isAuthority: true,
     isSymbolLeader: true,
     types: { position: [ 'f32', 3 ] },
+    responder: broadcastClients,
     updateOptions: {
         mask: { inputs: true },
         validkeys: { position: true }
@@ -74,7 +75,7 @@ updates to the clients.
 ```js
 // host.js
 function gameNetworkUpdate ( ) {
-    echoD.updater( { responder: broadcastClients } );
+    echoD.updater( );
 }
 ```
 
@@ -110,7 +111,7 @@ actor inputs. In this example inputs are used to move the `position` of actors.
 ```js
 // host.js
 events.on('actorInput', ( id, input, index, tick ) => {
-    const position = echoD.store.findComponent( id, 'position' );
+    const position = echoD.store.findComponent( id, 'position' ) || [ 0, 0, 0 ];
     echoD.upsertComponent( id, 'position', new Float32Array( [
         position[ 0 ] + ( input.x || 0 ),
         position[ 1 ] + ( input.y || 0 ),
@@ -135,13 +136,15 @@ const bcGameClients = new BroadcastChannel( 'game-clients' );
 const bcGameHost = new BroadcastChannel( 'game-host' );
 ```
 
-Now setup a message handler for the `bcGameClients`.
+Now setup a message handler for the `bcGameHost`.
 This example only supports one host and multiple clients.
-Handle messages passing them to the **Echo-D** instance.
+Handle messages by passing them to the **Echo-D** instance.
 
 ```js
 // host/transport/bc.js
-bcGameHost.onmessage = ( { data } ) => echo.many( data );
+export function listenToClients ( echoD ) {
+    bcGameHost.onmessage = ( { data } ) => echoD.many( data );
+}
 ```
 
 Implement a `broadcastClients` method to broadcast a message to the clients.
@@ -166,15 +169,7 @@ import { WebSocketServer } from 'ws';
 import { decode, encode } from 'msgpack';
 ```
 
-Create a `WebSocketServer` instance, and handle connections.
-
-```js
-// host/transport/ws.js
-const wssOptions = { port: 8080, host: 'localhost' };
-const wss = new WebSocketServer( wssOptions );
-```
-
-A list of clients that will be used to broadcast updates.
+Keep a list of clients that will be used to broadcast updates.
 
 ```js
 // host/transport/ws.js
@@ -202,18 +197,22 @@ function closeHandler ( conn ) {
 }
 ```
 
-Handle websocket connections, add them to the list of clients,
+Create a `WebSocketServer` instance, and handle
+websocket connections, add them to the list of clients,
 and **send an init message to the client.**
 When a message is received, pass it to the message handler.
 
 ```js
 // host/transport/ws.js
-wss.on( 'connection', ( conn ) => {
-    clients.push( conn );
-    conn.on( 'close', () => closeHandler( conn ) );
-    conn.on( 'message',  messageHandler );
-    conn.send( encode( [ 'init' ] ) );
-});
+export function listenToClients( echoD, wss ) {
+    wss = wss || createWebSocketServer( { port: 8080, host: 'localhost' } );
+    wss.on( 'connection', ( conn ) => {
+        clients.push( conn );
+        conn.on( 'close', () => closeHandler( conn ) );
+        conn.on( 'message',  ( data ) => messageHandler( echoD, data ) );
+        conn.send( encode( [ 'init' ] ) );
+    });
+}
 ```
 
 Implement a `broadcastClients` method to broadcast a message to
@@ -236,6 +235,7 @@ ___
 Provide a way to import the `broadcastClients` method from `./host/transport.js`.
 
 <Tabs><TabItem label="BroadcastChannel">
+Set the default transport to `BroadcastChannel`.
 
 ```js
 // host/transport.js
@@ -243,6 +243,7 @@ export * from './transport/bc.js';
 ```
 
 </TabItem><TabItem label="WebSocket">
+Set the default transport to `WebSocket`.
 
 ```js
 // host/transport.js

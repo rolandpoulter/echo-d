@@ -28,7 +28,6 @@ export function NetworkTopology(props) {
     const boundsRef = useRef(null);
     const graphRef = useRef(null);
     const updateTheme = useCallback((/* { matches } */) => {
-        // console.log('updateTheme')
         const name = document.documentElement.dataset?.theme || (
             window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
         );
@@ -46,7 +45,6 @@ export function NetworkTopology(props) {
             && bkColor === theme.bkColor
             && txtColor === theme.txtColor
         ) return;
-        // console.log('theme', { name, font, bgColor, bkColor, txtColor })
         setTheme({ name, font, bgColor, bkColor, txtColor });
     });
     
@@ -63,11 +61,9 @@ export function NetworkTopology(props) {
             });
             graphRef.current.zoomToFit(500, 10);
         });
-        // window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', updateTheme);
         const mutationObserver = new MutationObserver((/* list, obs */) => updateTheme());
         mutationObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
         resizeObserver.observe(boundsRef.current);
-        // graphRef.current.zoomToFit(500, 10);
         if (orbitDuration !== 0) {
             cameraRef.current.interval = setInterval(() => {
                 const angle = cameraRef.current.angle;
@@ -83,7 +79,6 @@ export function NetworkTopology(props) {
             resizeObserver.disconnect();
             mutationObserver.disconnect();
             clearInterval(cameraRef.current.interval);
-            // window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', updateTheme);
         }
     }, []);
     useEffect(() => {
@@ -91,7 +86,6 @@ export function NetworkTopology(props) {
             graphRef.current.zoomToFit(500, 10);
         }, 100);
     }, [size]);
-    // if (!theme.name) return null;
     return (
         <div
             ref={boundsRef}

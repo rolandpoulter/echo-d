@@ -7,7 +7,7 @@ The `Emitter` class is a class that emits values to its handlers. It allows you 
 
 ## Example Usage
 
-```javascript
+```js
 const emitter = new Emitter()
 const handler = emitter.emitTo((value) => {
   console.log(value)

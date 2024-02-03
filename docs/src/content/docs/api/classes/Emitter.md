@@ -24,7 +24,7 @@ emit - Emits a value to the handlers of the Emitter.
 ```ts
 const emitter = new Emitter()
 const handler = emitter.emitTo((value) => {
- console.log(value)
+  console.log(value)
 })
 emitter.emit('Hello, world!')
 emitter.done() // cleanup

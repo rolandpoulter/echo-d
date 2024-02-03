@@ -28,26 +28,12 @@ export function Log(props) {
 }
 
 export function GameClient(props) {
-    // debugger;
-    // console.log('GAME CLIENT', props)
-    // const client = useRef(
-    //     null
-    //     // createClient({ props, Canvas })
-    // );
-    // if (client.current === null) {
-    //     client.current = createClient({ props, Canvas });
-    // }
     const {
         echoD,
         events,
         context,
         view,
-    // } = client.current;
-    } = useMemo(() => createClient({ Canvas, props }), []); // [props]);
-    // console.log('GOT HERE 123', !!view)
-    // return (
-    //     view
-    // );
+    } = useMemo(() => createClient({ Canvas, props }), []);
     const [actors, setActors] = useState(0);
     const [components, setComponents] = useState(null);
     const [log, setLog] = useState([]);
@@ -72,13 +58,10 @@ export function GameClient(props) {
                             </div>
                         </div>
                     );
-                    // console.log(key, components[key]);
                 });
                 setComponents(componentList);
             }
             setLog((prevLog) => {
-                // console.log('APPEND LOG', name, data)
-                // debugger;
                 return ([
                     <Log key={`log${keyRef.current++}`} name={name} data={data} />
                 ]).concat(prevLog)
@@ -86,13 +69,11 @@ export function GameClient(props) {
         }
         METHODS.forEach((name) => {
             logger.current[name] = appendLog(name);
-            // console.log('adding listener', name);
             events.on(name, logger.current[name]);
         });
         clear.current = ({ code }) => {
             if (code === 'Escape') {
                 setLog([]);
-                // setComponents(null);
             }
         };
         window.document.addEventListener('keydown', clear.current)

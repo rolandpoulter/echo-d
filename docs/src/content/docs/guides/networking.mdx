@@ -1,10 +1,19 @@
 ---
 title: Networking
-description: A guide in my new Starlight docs site.
+description: A guide to Echo-D Networking Topologies
 ---
 import NetworkTopology from '../../../components/NetworkTopology.astro';
 
-### One Host, Multiple Clients
+**Echo-D** is a distributed system that is designed to be deployed in a network of nodes.
+The system is composed of a leader with other nodes.
+The leader is responsible for making sure Symbols are indexed consistently.
+This is only important if `compressStringsAsInts` is set to `true` in the configuration.
+The leader is flagged using `isSymbolLeader` in the configuration.
+
+## One Host, Multiple Clients
+
+This is the simplest network topology. One host and multiple clients.
+The host will provide state to the clients and the clients will send inputs to the host.
 
 <NetworkTopology
     graphData={{
@@ -29,7 +38,12 @@ import NetworkTopology from '../../../components/NetworkTopology.astro';
     }}
 />
 
-### Multiple Hosts, Multiple Clients
+## Multiple Hosts, Multiple Clients
+
+It is possible to have multiple hosts in the network.
+This is useful for redundancy and load balancing.
+The clients will send inputs to the hosts and the hosts will send state to the clients.
+The hosts will keep the state in sync with each other.
 
 <NetworkTopology
     graphData={{
@@ -65,6 +79,11 @@ import NetworkTopology from '../../../components/NetworkTopology.astro';
             { source: '6', target: '3', type: 'in' },
             { source: '7', target: '4', type: 'in' },
             { source: '8', target: '2', type: 'in' },
+
+            { source: '2', target: '5', type: 'in' },
+            { source: '3', target: '6', type: 'in' },
+            { source: '4', target: '7', type: 'in' },
+            { source: '2', target: '8', type: 'in' },
         ],
     }}
     height={400}

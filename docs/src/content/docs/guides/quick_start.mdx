@@ -7,6 +7,8 @@ import EchoD from '../../../../../ecmascript/dist/module/lib.echo-d.js'
 
 ## Install
 
+**Echo-D** is available on NPM.
+
 <Tabs><TabItem label="npm">
 ```sh
 npm install echo-d
@@ -23,19 +25,21 @@ yarn add echo-d
 
 ## Import
 
+First things first, import **Echo-D** into your code.
+
 <Tabs><TabItem label="JS Module">
 ```js
-// echo.js
+// echo-d.js
 import EchoD as EchoDHandler, {
     Node as EchoDNode
     Options as EchoDOptions,
     Context as EchoDContext,
     Storage as EchoDStorage,
-} from 'echo-d'
+} from 'echo-d';
 ```
 </TabItem><TabItem label="CommonJS">
 ```js
-// echo.js
+// echo-d.js
 const {
     Handler: EchoDHandler,
     Node: EchoDNode,
@@ -48,35 +52,52 @@ const {
 
 ## Configure
 
+**Echo-D** requires a few things to get started.
+Options are used to configure the behavior of **Echo-D**.
+
 ```js
-// echo.js
+// echo-d.js
 const customOptions = {}
 
-const echoDOptions = new EchoDOptions(customOptions, EchoDNode.actions)
+const echoDOptions = new EchoDOptions(customOptions, EchoDNode.actions);
 ```
 
 ## Context
 
+Context is used to provide a context to **Echo-D**.
+Storage is used to provide a custom way to store state in **Echo-D**.
+
 ```js
-// echo.js
+// echo-d.js
 const customContext = {}
 
-const echoDContext = new EchoDContext(customContext, echoDOptions, EchoDStorage)
+const echoDContext = new EchoDContext(customContext, echoDOptions, EchoDStorage);
 ```
 
 ## Echo-D
 
-Setting up an instance of Echo-D:
+Now that we have our options and context, we can create an instance of **Echo-D**.
 
 ```js
-// echo.js
+// echo-d.js
 const echoD = new EchoDHandler(
     echoDContext,
     echoDOptions,
-)
+);
 ```
 
-Using Echo-D to synchornize entity-component state:
+Using Echo-D to synchornize entity-component state to other Echo-D instances:
+
+```js
+// echo.js
+events.on('echoD', (messages) => {
+  other_echoD.many(messages) // handle message(s)
+  // Now our other Echo-D instance will have
+  // an 'actor' with a 'position' of [0, 0, 0]
+});
+```
+
+Using Echo-D to create entity-component state:
 
 ```js
 // echo.js
@@ -85,14 +106,7 @@ echoD.spawnActor('actor') // spawn an actor
 echoD.upsertComponent('actor', 'position', [0, 0, 0]) // position actor
 ```
 
-```js
-// echo.js
-events.on('echoD', (messages) => {
-  other_echoD.many(messages) // handle message(s)
-  // Now our other Echo-D instance will have
-  // an 'actor' with a 'position' of [0, 0, 0]
-})
-```
+Using Echo-D to send updated entity-component state:
 
 ```js
 // echo.js
@@ -101,5 +115,5 @@ echoD.updater({
     responder: (message) => {
         events.emit('echoD', message) // send message(s)
     },
-})
+});
 ```

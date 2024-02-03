@@ -1,57 +1,90 @@
-
-![Logo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/th5xamgrr6se0x5ro4g6.png)
-
+<table align="center" border="0"><tr><td align="center" width="9999">
+<img alt="Dolphin" src="https://gitlab.rumblinglabs.com/roland/echo-d/-/raw/main/docs/public/dolphin/echo-d-dolphin.png?inline=false" width="30%" style="transform: scaleX(-1) scaleY(0.9) rotate(25deg);" />
 
 # Echo-D (es)
+</td></tr></table>
 
-Distributed Entity-Component network protocol
+Distributed Entity-Component network protocol for JavaScript
 
-## Badges
+### [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
-Add badges from somewhere like: [shields.io](https://shields.io/)
+## Prerequisites
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-[![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
-[![AGPL License](https://img.shields.io/badge/license-AGPL-blue.svg)](http://www.gnu.org/licenses/agpl-3.0)
-
-
-## Features
-
-- Light/dark mode toggle
-- Live previews
-- Fullscreen mode
-- Cross platform
-
+* A JavaScript runtime is required. **Echo-D** has been test using:
+  * Modern Browsers (Chrome, Edge, and FireFox)
+  * Bun, Deno and Node.JS
 
 ## Installation
 
-Install my-project with npm
+Install **Echo-D** with npm, pnpm, or yarn
 
 ```bash
-  npm install my-project
-  cd my-project
-```
-    
-## Running Tests
-
-To run tests, run the following command
-
-```bash
-  npm run test
+  npm install echo-d 
 ```
 
+## Basic Usage
 
-## Usage/Examples
+Here is an example snippet that shows the basic usage of **Echo-D**:
 
-```javascript
-import Component from 'my-project'
+```js
+import EchoD from 'echo-d';
+import { EventEmitter } from 'node:events';
 
-function App() {
-  return <Component />
-}
+const context = {
+  events: new EventEmitter()
+};
+
+const options = {
+  responder(data) => {
+    otherEchoD.many(data)
+  },
+  onUpdate() {
+    context.events.emit('update')
+  }
+};
+
+const echoD = new EchoD(context, options);
+
+echoD.spawnActor('actor')
+echoD.actorInput('actor', { type: 'jump' })
+
+echoD.spawnEntity('entity')
+echoD.upsertComponent('entity', 'component', 'value')
+
+echoD.updater().then(() => console.log('update finished'))
 ```
-
 
 ## Documentation
 
-[Documentation](https://linktodocumentation)
+Please refer to the documentation for more detailed information:
+
+[Documentation](https://echo-d.org/guides/quick_start/)
+
+# Development Guide
+
+**Echo-D** (es) is developed and tested for `web`, `bun`, `deno`, and `node.js`.
+It is recommended to have `bun`, `deno`, and `node.js` installed for development.
+
+## Building web bundle
+
+To bundle for the web, run one of the following commands:
+
+```bash
+  script/build/all.sh # build them all:
+  script/build/bun.sh # build with bun
+  script/build/deno.sh # build with deno/esbuild
+  script/build/node.sh # build with node/webpack
+```
+
+## Running Tests
+
+To run tests, run one of the following commands:
+
+```bash
+  script/test/all.sh # test them all:
+  script/test/web.sh # test in the web with puppeteer
+  script/test/sys.sh # test the system tests:
+  script/test/sys-bun.sh # test with bun
+  script/test/sys-deno.sh # test with deno
+  script/test/sys-node.sh # test with node
+```

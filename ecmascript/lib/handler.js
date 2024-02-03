@@ -81,7 +81,6 @@ export function manyHandler(message, context, options) {
                 payloadSize = payloadSize.default;
             }
         }
-        // debugger;
         if (payload.length && payload.length === offset && payloadSize === offset) {
             handler(undefined, context, options);
         }

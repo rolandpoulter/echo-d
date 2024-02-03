@@ -7,7 +7,7 @@ The `Symbols` class represents a collection of symbols and provides methods to m
 
 ## Example Usage
 
-```javascript
+```js
 // Create a new Symbols object
 const symbols = new Symbols();
 

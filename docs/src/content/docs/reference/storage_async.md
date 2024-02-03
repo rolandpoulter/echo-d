@@ -7,7 +7,7 @@ The `AsyncStorage` class represents an asynchronous store with actors, entities,
 
 ## Example Usage
 
-```javascript
+```js
 // Create a new AsyncStorage object
 const storage = new AsyncStorage();
 

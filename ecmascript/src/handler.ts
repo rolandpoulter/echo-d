@@ -102,7 +102,6 @@ export function manyHandler(message: Message | any[], context: Context, options:
             }
         }
 
-        // debugger;
         if (payload.length && payload.length === offset && payloadSize === offset) {
             handler(undefined, context, options)
         } else for (let i = offset; i < payload.length; i += payloadSize) {

@@ -10,11 +10,7 @@ import { listenToControls } from './client/controls.js';
 import { updateRender } from './client/update.jsx';
 import { Render } from './components/Render.jsx';
 
-// console.log('Client EchoD', EchoD);
-
 export function createClient({ props, Canvas }) {
-    // debugger;
-    // console.log('createClient', props, Canvas);
     let renderTimer = null
     function onUpdate (message) {
         if ( renderTimer !== null ) { clearTimeout( renderTimer ); }
@@ -40,13 +36,9 @@ export function createClient({ props, Canvas }) {
     listenToControls( echoD, ctx );
 
     window.addEventListener('beforeunload', (event) => {
-        // debugger;
         echoD.removeActor( ctx.id );
         echoD.updater();
-        // console.log('GOT HERE' );
     });
-
-    // console.log('createClient', echoD, events, ctx);
 
     return {
         echoD,

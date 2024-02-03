@@ -6,18 +6,13 @@ import {
     broadcastClients
 } from './host/transport.js';
 
-// console.log('Host EchoD', EchoD);
-
 export function createHost ( ) {
-    // debugger;
-    // console.log('createHost');
     const echoOptions =  {
         compressStringsAsInts: true,
         isAuthority: true,
         isSymbolLeader: true,
         types: { position: [ 'f32', 3 ] },
         responder: ( message ) => {
-            // console.log('responder', message);
             broadcastClients( message )
         },
         updateOptions: {
@@ -54,8 +49,6 @@ export function createHost ( ) {
     function gameStop ( ) { clearInterval( gameInterval ); }
 
     gameStart( );
-
-    // console.log('createHost', echoD, events, gameStart, gameStop)
 
     return {
         echoD,

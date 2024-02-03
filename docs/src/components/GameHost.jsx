@@ -19,14 +19,11 @@ export function Log(props) {
 }
 
 export function GameHost(props) {
-    // debugger;
-    // console.log('GAME HOST', props)
     const {
         echoD,
         events,
         context,
     } = useMemo(() => createHost(), []);
-    // console.log('GOT HERE 321', events, context)
     const [actors, setActors] = useState(0);
     const [components, setComponents] = useState(null);
     const [log, setLog] = useState([]);
@@ -40,7 +37,6 @@ export function GameHost(props) {
                 setActors(actors[0].length);
             }
             const components = echoD.store.getComponents();
-            // console.log(components);
             if (components[0]) {
                 const componentList = [];
                 Object.keys(components[0]).forEach((key) => {
@@ -52,13 +48,10 @@ export function GameHost(props) {
                             </div>
                         </div>
                     );
-                    // console.log(key, components[key]);
                 });
                 setComponents(componentList);
             }
             setLog((prevLog) => {
-                // console.log('APPEND LOG', name, data)
-                // debugger;
                 return ([
                     <Log key={`log${keyRef.current++}`} name={name} data={data} />
                 ]).concat(prevLog)
@@ -66,13 +59,11 @@ export function GameHost(props) {
         }
         METHODS.forEach((name) => {
             logger.current[name] = appendLog(name);
-            // console.log('adding listener', name);
             events.on(name, logger.current[name]);
         });
         clear.current = ({ code }) => {
             if (code === 'Escape') {
                 setLog([]);
-                // setComponents(null);
             }
         };
         window.document.addEventListener('keydown', clear.current)

@@ -7,7 +7,7 @@ The `Ordered` class represents a collection of tick values and provides methods 
 
 ## Example Usage
 
-```javascript
+```js
 // Create a new Ordered object
 const ordered = new Ordered();
 

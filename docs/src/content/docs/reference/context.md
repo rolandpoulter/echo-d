@@ -7,7 +7,7 @@ The `Context` class is responsible for managing the context of an application. I
 
 ## Example Usage
 
-```javascript
+```js
 const context = new Context();
 context.createEntity('entity1', options);
 context.changeComponent('entity1', 'position', { x: 10, y: 20 }, options);

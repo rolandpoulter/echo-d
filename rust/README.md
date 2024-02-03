@@ -1,52 +1,90 @@
-
-![Logo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/th5xamgrr6se0x5ro4g6.png)
+<table align="center" border="0"><tr><td align="center" width="9999">
+<img alt="Dolphin" src="https://gitlab.rumblinglabs.com/roland/echo-d/-/raw/main/docs/public/dolphin/echo-d-dolphin.png?inline=false" width="30%" style="transform: scaleX(-1) scaleY(0.9) rotate(25deg);" />
 
 # Echo-D (rs)
+</td></tr></table>
 
-Distributed Entity-Component network protocol
+Distributed Entity-Component network protocol for Rust
 
-## Badges
+### [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
-Add badges from somewhere like: [shields.io](https://shields.io/)
-
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-[![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
-[![AGPL License](https://img.shields.io/badge/license-AGPL-blue.svg)](http://www.gnu.org/licenses/agpl-3.0)
-
-## Features
-
-- Light/dark mode toggle
-- Live previews
-- Fullscreen mode
-- Cross platform
+# WIP! The Rust implementation is coming soon...
 
 ## Installation
 
-Install my-project with npm
+Install **Echo-D** with cargo
 
 ```bash
-  npm install my-project
-  cd my-project
-```
-    
-## Running Tests
-
-To run tests, run the following command
-
-```bash
-  npm run test
+  cargo install echo-d
 ```
 
-## Usage/Examples
+## Basic Usage
 
-```javascript
-import Component from 'my-project'
+Here is an example snippet that shows the basic usage of **Echo-D**:
 
-function App() {
-  return <Component />
+```rust
+use log::info;
+use crate:echo-d::{Handler, Context, Options}
+
+const context = new Context({
+  // events
+});
+
+fn responder(data) => {
+  otherEchoD.many(data)
 }
+
+fn onUpdate() {
+  // events.emit('update')
+}
+
+const options = new Options({
+  responder: responder,
+  onUpdate: onUpdate,
+});
+
+const echoD = new EchoD(context, options);
+
+echoD.spawnActor('actor')
+
+const input = Input { type: 'jump' }
+echoD.actorInput('actor', input)
+
+echoD.spawnEntity('entity')
+echoD.upsertComponent('entity', 'component', 'value')
+
+fn onUpdated() {
+  info!('update finished');
+}
+
+const update = echoD.updater()
+update.then(onUpdated)
+
 ```
 
 ## Documentation
 
-[Documentation](https://linktodocumentation)
+Please refer to the documentation for more detailed information:
+
+[Documentation](https://echo-d.org/guides/quick_start/)
+
+# Development Guide
+
+**Echo-D** (rs) is developed and tested for `rust`.
+It is required to have `rust` installed for development.
+
+## Building WASM
+
+To build a WASM module, run the following command:
+
+```bash
+  # TODO
+```
+
+## Running Tests
+
+To run tests, run the following command:
+
+```bash
+  # TODO
+```

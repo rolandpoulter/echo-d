@@ -1,15 +1,10 @@
 ---
-// title: GameClient
-// description: High level example of the Echo-D usage.
-// tableOfContents: false
-// template: splash
 import { GameClient } from '../components/GameClient';
 ---
 
 <GameClient client:only={'react'} />
 
 <script is:inline>
-    // debugger;
     const log = console.log;
 
     console.log = (...message) => {
@@ -31,27 +26,20 @@ import { GameClient } from '../components/GameClient';
     };
 
     let port2;
-    // debugger;
-
-    // window.alert('Client EchoD');
 
     // Listen for the intial port transfer message
     window.addEventListener('message', (e) => {
-        // debugger;
         if (e.data === 'init') {
             log('init');
             port2 = e.ports[0];
             port2.onmessage = onMessage;
-            // port2.postMessage('pong from host child');
         } else {
             onMessage(e);
         }
     });
 
     function onMessage({ data }) {
-        // debugger;
         log('onMessage', data);
-        // port2.postMessage('pong from client child');
     }
 </script>
 

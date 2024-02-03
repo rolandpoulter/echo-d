@@ -1,5 +1,5 @@
 ---
-title: Client
+title: Example Client
 description: High level example of the Echo-D usage.
 ---
 import { Tabs, TabItem } from '@astrojs/starlight/components';
@@ -8,9 +8,10 @@ Bundle with `esbuild`, `webpack`, `bun build`, or another bundler.
 
 ```js
 // client.js
-import EchoD from 'echo-d'
+import EchoD from 'echo-d';
 ```
 
+Prepare the events object to be used with **Echo-D**.
 
 ```js
 // client.js
@@ -24,10 +25,22 @@ Include the `listenToHost` and `sendToHost` methods from the transport layer.
 import { listToHost, sendToHost } from './transport.js';
 ```
 
+Include the `listenToControls` method from the controller layer.
+
+```js
+import { listenToControls } from './client/controls.js';
+```
+
+Need to be able to update the views when **Echo-D** is updated.
+
 ```js
 // client.js
 import { updateRender } from './update.js';
 ```
+
+Delare an `onUpdate` function to be used by **Echo-D** when it is updated.
+This will call the `updateRender` function to update the views, but it
+should be throttled to 30 frames per second. So that it doesn't occur too often.
 
 ```js
 // client.js
@@ -39,11 +52,14 @@ function onUpdate (message) {
 }
 ```
 
+Create an instance of **Echo-D** with the `events` object and the `echoOptions` object.
+
 ```js
 // client.js
 const echoOptions = {
     compressStringsAsInts: true,
     types: { position: [ 'f32', 3 ] },
+    responder: sendToHost,
     updateOptions: {
         mask: { entity: true, component: true },
         validkeys: { }
@@ -63,6 +79,23 @@ const ctx = { id: null };
 listenToHost( echoD, ctx );
 ```
 
+List to controls and send inputs to the host.
+
+```js
+// client.js
+listenToControls( echoD, ctx );
+```
+
+Seupt a handler to remove the actor when the window is closed or refreshed.
+
+```js
+// client.js
+window.addEventListener('beforeunload', ( event ) => {
+    echoD.removeActor( ctx.id );
+    echoD.updater( );
+});
+```
+
 Create react three fiber Canvas in document root
 
 ```jsx
@@ -79,42 +112,55 @@ ___
 
 ### Actor Controller
 
+Setup event listener on the window to listen for keydown events.
+Move the actor based on the keydown event. Then send the input to the host.
+
 ```js
-// client.js
-document.addEventListener( 'keydown', ( { code } ) => {
-    // Create WASD input handler for actor inputs
-    if ( ctx.id === null ) { return; }
-	const move = { x: 0, y: 0, z: 0 }
-    switch (code) {
+// controls.js
+export function listenToControls ( echoD, ctx ) {
+    const handler = ({ code }) => {
+        if ( !ctx.id ) { return; }
+        const move = { x: 0, y: 0, z: 0 }
+        const step = 0.1;
+        switch (code) {
         case 'KeyW': case 'ArrowUp':
-            move.y =  1; break;
+            move.y =  step; break;
         case 'KeyS': case 'ArrowDown':
-            move.y = -1; break;
+            move.y = -step; break;
         case 'KeyA': case 'ArrowLeft':
-            move.x = -1; break;
+            move.x = -step; break;
         case 'KeyD': case 'ArrowRight':
-            move.x =  1; break;
+            move.x =  step; break;
         case 'KeyQ':
-            move.z =  1; break;
+            move.z =  step; break;
         case 'KeyE':
-            move.z = -1; break;
-    }
-    echoD.actorInput( ctx.id, move );
-    echoD.updater({
-        responder: sendToHost,
-        updateOptions:  { mask: {
-            actors: true,
-            entities: true,
-            components: true,
-            symbols: true
-        } }
-    } );
-});
+            move.z = -step; break;
+        default: return;
+        }
+        echoD.actorInput( ctx.id, move );
+        echoD.updater({
+            updateOptions:  { mask: {
+                actors: true,
+                entities: true,
+                components: true,
+                symbols: true
+            } }
+        } );
+    };
+
+    window.document.addEventListener( 'keydown', handler );
+    return () => {
+        window.document.removeEventListener( 'keydown', handler );
+    };
+}
 ```
 
 ___
 
 ### On Init
+
+When the client is initialized, it should send a message to the host to get the
+symbols, actors, entities, and components. Then it should spawn an actor for the client.
 
 ```js
 // client/transport/init.js
@@ -126,6 +172,7 @@ export function onInit ( echoD, sendToHost ) {
     sendToHost( [ 'components' ] );
     const id = nanoid( );
     echoD.spawnActor( id );
+    echoD.updater( );
     return id;
 }
 ```
@@ -134,11 +181,17 @@ ___
 
 ## Client Transport Layer
 
+Choose a network transport layer such as
+`BroadcastChannel`, `WebSocket`, or `WebRTC`.
+
 <Tabs><TabItem label="BroadcastChannel">
+Import the `onInit` function for initializing the client.
 
 ```js
 import { onInit } from './transport/init.js';
 ```
+
+Create a `BroadcastChannel` for the game clients and the game host.
 
 ```js
 // client/transport/bc.js
@@ -146,9 +199,18 @@ const bcGameClients = new BroadcastChannel( 'game-clients' );
 const bcGameHost = new BroadcastChannel( 'game-host' );
 ```
 
+Now setup a message handler for the `bcGameClients`.
+This example only supports one host and multiple clients.
+Handle messages by passing them to the **Echo-D** instance.
+
+Automatically call the `onInit` function when the client begins listening.
+
 ```js
 // client/transport/bc.js
 export function listenToHost ( echoD, ctx ) {
+    if ( !ctx.id ) {
+        ctx.id = onInit( echoD, sendToHost );
+    }
     bcGameClients.onmessage = ( { data } ) => {
         if ( !ctx.id && data[ 0 ] === 'init' ) {
             ctx.id = onInit( echoD, sendToHost );
@@ -156,6 +218,8 @@ export function listenToHost ( echoD, ctx ) {
     };
 }
 ```
+
+Implement the `sendToHost` function to send messages to the host.
 
 ```js
 // client/transport/bc.js
@@ -165,13 +229,18 @@ export function sendToHost ( message ) {
 ```
 </TabItem><TabItem label="WebSocket">
 
+Or use `WebSocket` in a supported environment such as a web browser.
+
+`msgpack` is also recommended for reducing the size of messages.
+Especially when transporting over the network.
+
 ```js
 // client/transport/ws.js
 import { decode, encode } from 'msgpack';
 import { onInit } from './transport/init.js';
 ```
 
-Create websocket client, or use a different network transport layer
+Create a websocket client, and ensure errors are handled.
 
 ```js
 // client/transport/ws.js
@@ -182,6 +251,9 @@ export function createWebSocket( url ) {
     return ws;
 }
 ```
+
+Listen to the host and handle incoming messages with **Echo-D** using the `WebSocket`.
+Call the `onInit` function when the client is initialized.
 
 ```js
 // client/transport/ws.js
@@ -199,6 +271,8 @@ export function listenToHost( echoD, ctx, ws ) {
 }
 ```
 
+Implement the `sendToHost` function to send messages to the host.
+
 ```js
 // client/transport/ws.js
 export function sendToHost ( message ) {
@@ -206,14 +280,16 @@ export function sendToHost ( message ) {
     ws.send( data );
 }
 ```
-
 </TabItem></Tabs>
 
 ___
 
 ### Default Client Transport
 
+Provide a way to import the `sendToHost` method from `./client/transport.js`.
+
 <Tabs><TabItem label="BroadcastChannel">
+Set the default transport to `BroadcastChannel`.
 
 ```js
 // client/transport.js
@@ -221,6 +297,7 @@ export * from './transport/bc.js';
 ```
 
 </TabItem><TabItem label="WebSocket">
+Set the default transport to `WebSocket`.
 
 ```js
 // client/transport.js
@@ -322,7 +399,11 @@ ___
 
 ## Client Components
 
+The client components are used to render the 3D objects in the React Fiber tree.
+
 ### Ball Component
+
+Use `<Ball />` to create a 3D ball in the React Fiber tree.
 
 ```jsx
 // components/Ball.js
@@ -351,7 +432,7 @@ ___
 
 ### EchoD Component
 
-Use `<EchoD />` to embed 3D objects into React Fiber tree
+Use `<EchoD />` to embed 3D entities into React Fiber tree
 
 ```js
 // components/EchoD.js
@@ -369,6 +450,8 @@ export function EchoD ({ events: localEvents = events } ) {
 ___
 
 ### Render Component
+
+Use `<Render />` to create a React Fiber tree with a 3D canvas amd embed 3D entities.
 
 ```jsx
 // components/Render.js

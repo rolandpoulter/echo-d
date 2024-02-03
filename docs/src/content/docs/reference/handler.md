@@ -7,7 +7,7 @@ The `Handler` class is responsible for handling messages and performing various 
 
 ## Example Usage
 
-```javascript
+```js
 // Create a new handler instance
 const handler = new Handler(context, options, actions);
 

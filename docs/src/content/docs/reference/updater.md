@@ -7,7 +7,7 @@ The `updater` function updates the context based on the provided options. It pro
 
 ## Example Usage
 
-```javascript
+```js
 const context = new Context();
 const options = new Options();
 const tick = 0;
