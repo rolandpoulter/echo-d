@@ -26,6 +26,4 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          files:
-            - ecmascript/test/coverage/clover.xml
-            - ecmascript/test/coverage/cobertura-coverage.xml
+          directory: ecmascript/test/coverage
