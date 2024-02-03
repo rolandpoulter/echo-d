@@ -1,0 +1,31 @@
+name: Node.js CI
+
+on: [push]
+  
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # strategy:
+    #     matrix:
+    #       node-version: [ 10.17.0, 17.9.0 ]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        # with:
+        #   node-version: ${{ matrix.node-version }}
+      - run: cd ecmascript && npm install
+      - run: cd ecmascript && script/test/sys-node.sh
+      # - run: npm ci
+      # - run: npm run build --if-present
+      # - run: npm test
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          files:
+            - ecmascript/test/coverage/clover.xml
+            - ecmascript/test/coverage/cobertura-coverage.xml
