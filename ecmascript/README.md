@@ -61,7 +61,7 @@ echoD.updater().then(() => console.log('update finished'))
 
 Please refer to the documentation for more detailed information:
 
-[Documentation](https://echo-d.org/guides/quick_start/)
+[Documentation](https://echo-d.net/guides/quick_start/)
 
 # Development Guide
 
