@@ -30,4 +30,4 @@ jobs:
       - name: Install dependencies
         run: cd ecmascript && npm install
       - name: Run tests
-        run: cd ecmascript && npm test-web
+        run: cd ecmascript && npm run test-web
