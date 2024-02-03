@@ -23,5 +23,5 @@ jobs:
         # with:
         #   bun-version: ${{ matrix.deno-version }}
 
-      - run: bun install
-      - run: script/test/sys-bun.sh
+      - run: cd ecmascript && bun install
+      - run: cd ecmascript && script/test/sys-bun.sh

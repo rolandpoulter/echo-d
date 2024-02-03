@@ -26,4 +26,4 @@ jobs:
       #   run: deno fmt --check
       # - name: Build Deno Module
       #   run: deno run --reload mod.ts
-      - run: script/test/sys-deno.sh
+      - run: cd ecmascript && script/test/sys-deno.sh
