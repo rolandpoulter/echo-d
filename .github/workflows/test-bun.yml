@@ -1,4 +1,4 @@
-name: Test Bun Module
+name: Bun CI
 
 on:
   # pull_request:
