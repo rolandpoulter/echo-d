@@ -5,6 +5,9 @@ ecmascript/dist/
 # code coverage
 ecmascript/test/coverage/
 
+# test reports
+ecmascript/test/report/
+
 # node_modules
 node_modules/
 

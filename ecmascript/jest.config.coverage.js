@@ -26,6 +26,16 @@ const config = {
     'cobertura',
     'html'
   ],
+
+  reporters: [
+    // 'default',
+    ['jest-junit', {
+      outputDirectory: join(__dirname, 'test', 'report'),
+      outputName: 'jest-report.xml'
+    }],
+    ['github-actions', {silent: false}],
+    'summary',
+  ]
 };
 
 export default config;
