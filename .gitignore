@@ -1,6 +1,6 @@
 # build waste
 ecmascript/dist/
-# ecmascript/lib/
+ecmascript/lib/
 
 # code coverage
 ecmascript/test/coverage/
