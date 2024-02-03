@@ -21,9 +21,9 @@ jobs:
         # with:
         #   node-version: ${{ matrix.node-version }}
       - run: cd ecmascript && npm install && npm run compile
-      - run: sed -i '/ecmascript\/lib\//d' .gitignore
-      - run: git config --global user.email "bot@echo-d.net && git config --global user.name "Bot"
-      - run: git add .gitignore ecmascript/lib && git commit -m "add ignored files for codecov"
+      # - run: sed -i '/ecmascript\/lib\//d' .gitignore
+      # - run: git config --global user.email "bot@echo-d.net && git config --global user.name "Bot"
+      # - run: git add .gitignore ecmascript/lib && git commit -m "add ignored files for codecov"
       # - run: cat .gitignore
       - run: cd ecmascript && npm run test-cov
       # - run: npm ci
