@@ -21,7 +21,7 @@ jobs:
       - name: Checkout your repository using git
         uses: actions/checkout@v4
         with:
-          path: docs
+          # path: docs
           # Only clone the `docs` directory
           sparse-checkout: docs
           sparse-checkout-cone-mode: false
@@ -29,8 +29,8 @@ jobs:
       - run: ls -la docs # List all files in the `docs` directory
       - name: Install, build, and upload your site
         uses: withastro/action@v1
-        # with:
-          # path: docs # The root location of your Astro project inside the repository. (optional)
+        with:
+          path: docs # The root location of your Astro project inside the repository. (optional)
           # node-version: 18 # The specific version of Node that should be used to build your site. Defaults to 18. (optional)
           # package-manager: pnpm@latest # The Node package manager that should be used to install dependencies and build your site. Automatically detected based on your lockfile. (optional)
 
