@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: denolib/setup-deno@v2
+      - uses: denoland/setup-deno@v1
         # with:
         #   deno-version: ${{ matrix.deno-version }}
       # - name: Lint Deno Module
