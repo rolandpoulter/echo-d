@@ -58,6 +58,7 @@ jobs:
         id: test-results
         if: always()
         with:
+          check_name: results
           files: "ecmascript/test/report/jest-*.xml"
       - name: Set badge color
         shell: bash
