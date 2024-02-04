@@ -9,7 +9,7 @@ Distributed Entity-Component network protocol for JavaScript
 </td></tr></table>
 
 
-### [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/) [![Node.js CI](https://github.com/rolandpoulter/echo-d/actions/workflows/test-node.yml/badge.svg)](https://github.com/rolandpoulter/echo-d/actions/workflows/test-node.yml) [![codecov](https://codecov.io/gh/rolandpoulter/echo-d/graph/badge.svg?token=TUVVXSW89X)](https://codecov.io/gh/rolandpoulter/echo-d)
+### [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/) [![Node.js CI](https://github.com/rolandpoulter/echo-d/actions/workflows/test-node.yml/badge.svg)](https://github.com/rolandpoulter/echo-d/actions/workflows/test-node.yml) [![codecov](https://codecov.io/gh/rolandpoulter/echo-d/graph/badge.svg?token=TUVVXSW89X)](https://codecov.io/gh/rolandpoulter/echo-d) [![Test Results](https://camo.githubusercontent.com/649c32d178b22dfae371497750eafee220a5bf3b25204d28c1a0be61f7d59866/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f74657374732d3139332532307061737365642532432532303439253230736b69707065642d73756363657373)](https://camo.githubusercontent.com/649c32d178b22dfae371497750eafee220a5bf3b25204d28c1a0be61f7d59866/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f74657374732d3139332532307061737365642532432532303439253230736b69707065642d73756363657373)
 
 ## Prerequisites
 
