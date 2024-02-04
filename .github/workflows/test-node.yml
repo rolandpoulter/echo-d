@@ -44,6 +44,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ecmascript/test/coverage
           # verbose: true
+      - run: ls -l ecmascript/test/report
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: success() || failure()    # run this step even if previous step failed
