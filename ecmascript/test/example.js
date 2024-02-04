@@ -1,13 +1,13 @@
-import exampleBecsyTest from './example/becsy.js';
-import exampleBitECSTest from './example/bitecs.js';
-import exampleMiniplexTest from './example/miniplex.js';
-import exampleEchoTest from './example/echo.js';
+import exampleBecsyTest from './examples/becsy.js';
+import exampleBitECSTest from './examples/bitecs.js';
+import exampleMiniplexTest from './examples/miniplex.js';
+import exampleEchoTest from './examples/echo.js';
 
-import exampleSyncTest from './example/sync.js';
+import exampleSyncTest from './examples/sync.js';
 
-import exampleGameTest from './example/game.js';
-import exampleLoopTest from './example/loop.js';
-import exampleSystemsTest from './example/systems.js';
+import exampleGameTest from './examples/game.js';
+import exampleLoopTest from './examples/loop.js';
+import exampleSystemsTest from './examples/systems.js';
 
 import * as becsy from '../examples/becsy.js';
 import * as bitecs from '../examples/bitecs.js';
