@@ -1,6 +1,7 @@
 {
   "tasks": {
     "test": "deno test --allow-hrtime test/env/deno",
+    "test-cov": "deno test --allow-hrtime --coverage=test/coverage --junit-path=test/report/jest-report.xml --reporter=dot test/env/deno && deno coverage --unstable test/coverage",
     "build": "deno run --allow-write --allow-read --allow-run --allow-env --allow-net esbuild.deno.mjs"
   }
 }

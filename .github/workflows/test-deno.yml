@@ -7,7 +7,12 @@ on:
     # branches: [main]
     paths:
       - 'ecmascript/**'
-  # workflow_dispatch:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
 
 jobs:
   test:
@@ -26,4 +31,17 @@ jobs:
       #   run: deno fmt --check
       # - name: Build Deno Module
       #   run: deno run --reload mod.ts
-      - run: cd ecmascript && script/test/sys-deno.sh
+      - run: cd ecmascript && deno task test-cov
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ecmascript/test/coverage
+          # verbose: true
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: report                               # Name of the check run which will be created
+          path: ecmascript/test/report/jest-*.xml    # Path to test results
+          reporter: jest-junit                       # Format of test results
