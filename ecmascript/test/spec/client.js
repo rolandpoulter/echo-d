@@ -8,5 +8,9 @@ export default function (echo, { describe, it, expect, mock, spy, xit, xdescribe
 
             // TODO: Add more tests here.
         });
+
+        xit('empty test to skip', () => {
+            // This test will be skipped.
+        })
     });
 }
