@@ -9,7 +9,7 @@ Distributed Entity-Component network protocol for JavaScript
 </td></tr></table>
 
 
-### [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/) [![Node.js CI](https://github.com/rolandpoulter/echo-d/actions/workflows/test-node.yml/badge.svg)](https://github.com/rolandpoulter/echo-d/actions/workflows/test-node.yml) [![Coverage](https://codecov.io/gh/rolandpoulter/echo-d/graph/badge.svg?token=TUVVXSW89X)](https://codecov.io/gh/rolandpoulter/echo-d) [![Test Results](https://gist.githubusercontent.com/rolandpoulter/1be7067d8f9c4b75883df8b23f4c38ee/raw/badge.svg)](https://gist.githubusercontent.com/rolandpoulter/1be7067d8f9c4b75883df8b23f4c38ee/raw/badge.svg)
+### [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/) [![Node.js CI](https://github.com/rolandpoulter/echo-d/actions/workflows/test-node.yml/badge.svg)](https://github.com/rolandpoulter/echo-d/actions/workflows/test-node.yml) [![Coverage](https://codecov.io/gh/rolandpoulter/echo-d/graph/badge.svg?token=TUVVXSW89X)](https://codecov.io/gh/rolandpoulter/echo-d) [![Test Results](https://gist.githubusercontent.com/rolandpoulter/1be7067d8f9c4b75883df8b23f4c38ee/raw/badge.svg)](https://gist.githubusercontent.com/rolandpoulter/1be7067d8f9c4b75883df8b23f4c38ee/raw/badge.svg) [![Qodana](https://github.com/rolandpoulter/echo-d/actions/workflows/qodana_quality.yml/badge.svg)](https://github.com/rolandpoulter/echo-d/actions/workflows/qodana_quality.yml)
 
 ## Prerequisites
 
