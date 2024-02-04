@@ -3,7 +3,7 @@
     "build": "deno run --allow-write --allow-read --allow-run --allow-env --allow-net esbuild.deno.mjs",
     "test": "deno test --allow-hrtime test/env/deno",
     "test-ci": "deno test --allow-hrtime --coverage=test/coverage --junit-path=test/report/deno-report.xml --reporter=tap test/env/deno && deno task test-ci-report",
-    "test-ci-report": "deno run --allow-read --allow-write test-report.deno.mjs",
+    "test-ci-report": "deno run --allow-read --allow-write test-report.deno.mjs && rm -f test/report/deno-report.xml",
     "test-cov": "deno task test-cleanup && deno task test-ci && deno task test-coverage",
     "test-coverage": "deno task test-coverage-lcov && deno task test-coverage-html && deno task coverage-cleanup",
     "test-coverage-html": "deno coverage --exclude=test --html test/coverage",
