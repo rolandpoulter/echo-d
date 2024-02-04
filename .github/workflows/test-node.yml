@@ -75,18 +75,18 @@ jobs:
               ;;
           esac
       - name: Create badge
-        uses: emibcn/badge-action@d6f51ff11b5c3382b3b88689ae2d6db22d9737d1
+        uses: emibcn/badge-action@v2
         with:
           label: Tests
           status: '${{ fromJSON( steps.test-results.outputs.json ).formatted.stats.tests }} tests, ${{ fromJSON( steps.test-results.outputs.json ).formatted.stats.runs }} runs: ${{ fromJSON( steps.test-results.outputs.json ).conclusion }}'
           color: ${{ env.BADGE_COLOR }}
-          path: echo-d-tests-badge.svg
+          path: badge.svg
       - name: Upload badge to Gist # Upload only for main branch
         if: >
           github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' ||
           github.event_name != 'workflow_run' && github.ref == 'refs/heads/main'
-        uses: andymckay/append-gist-action@1fbfbbce708a39bd45846f0955ed5521f2099c6d
+        uses: andymckay/append-gist-actionv0.0.2
         with:
           token: ${{ secrets.GIST_TOKEN }}
-          gistURL: https://gist.githubusercontent.com/rolandpoulter/a7e2a3fad6701edbfd785ba7a4294cf6
-          file: echo-d-tests-badge.svg
+          gistURL: https://gist.githubusercontent.com/rolandpoulter/1be7067d8f9c4b75883df8b23f4c38ee
+          file: badge.svg
