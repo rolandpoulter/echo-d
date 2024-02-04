@@ -2,9 +2,9 @@ name: Node.js CI
 
 on:
   # pull_request:
-  #   branches: [ master ]
+  #   branches: [ main ]
   push:
-    # branches: [ master ]
+    # branches: [ main ]
     paths:
       - 'ecmascript/**'
   workflow_dispatch:
@@ -47,8 +47,8 @@ jobs:
       # - run: ls -l ecmascript/test/report
       - name: Test Report
         uses: dorny/test-reporter@v1
-        if: false
-        # if: success() || failure()    # run this step even if previous step failed
+        # if: false
+        if: success() || failure()    # run this step even if previous step failed
         with:
           name: report                               # Name of the check run which will be created
           path: ecmascript/test/report/jest-*.xml    # Path to test results
@@ -80,10 +80,10 @@ jobs:
           status: '${{ fromJSON( steps.test-results.outputs.json ).formatted.stats.tests }} tests, ${{ fromJSON( steps.test-results.outputs.json ).formatted.stats.runs }} runs: ${{ fromJSON( steps.test-results.outputs.json ).conclusion }}'
           color: ${{ env.BADGE_COLOR }}
           path: badge.svg
-      - name: Upload badge to Gist # Upload only for master branch
+      - name: Upload badge to Gist # Upload only for main branch
         if: >
-          github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'master' ||
-          github.event_name != 'workflow_run' && github.ref == 'refs/heads/master'
+          github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' ||
+          github.event_name != 'workflow_run' && github.ref == 'refs/heads/main'
         uses: andymckay/append-gist-action@1fbfbbce708a39bd45846f0955ed5521f2099c6d
         with:
           token: ${{ secrets.GIST_TOKEN }}
