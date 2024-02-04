@@ -4,7 +4,7 @@ test/
 dist/bun
 dist/deno
 dist/module
-build.bun.mjs
-esbuild.deno.mjs
+*.bun.mjs
+*.deno.mjs
 webpack.*
 jest.*

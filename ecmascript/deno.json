@@ -1,7 +1,15 @@
 {
   "tasks": {
+    "build": "deno run --allow-write --allow-read --allow-run --allow-env --allow-net esbuild.deno.mjs",
     "test": "deno test --allow-hrtime test/env/deno",
-    "test-cov": "deno test --allow-hrtime --coverage=test/coverage --junit-path=test/report/jest-report.xml --reporter=dot test/env/deno && deno coverage --unstable test/coverage",
-    "build": "deno run --allow-write --allow-read --allow-run --allow-env --allow-net esbuild.deno.mjs"
+    "test-ci": "deno test --allow-hrtime --coverage=test/coverage --junit-path=test/report/deno-report.xml --reporter=tap test/env/deno && deno task test-ci-report",
+    "test-ci-report": "deno run --allow-read --allow-write test-report.deno.mjs",
+    "test-cov": "deno task test-cleanup && deno task test-ci && deno task test-coverage",
+    "test-coverage": "deno task test-coverage-lcov && deno task test-coverage-html && deno task coverage-cleanup",
+    "test-coverage-html": "deno coverage --exclude=test --html test/coverage",
+    "test-coverage-lcov": "deno coverage --exclude=test --lcov --output=test/coverage/lcov.info test/coverage",
+    "test-coverage-detailed": "deno coverage --exclude=test --detailed test/coverage",
+    "test-cleanup": "rm -rf test/coverage && rm -rf test/report",
+    "coverage-cleanup": "rm -rf test/coverage/*.json && mv test/coverage/html/* test/coverage && rm -rf test/coverage/html"
   }
 }
