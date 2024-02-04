@@ -26,5 +26,5 @@ jobs:
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
         with:
-          args: --source-directory=ecmascript
+          args: --source-directory=ecmascript/src
           github-token: ${{ secrets.GITHUB_TOKEN }}
