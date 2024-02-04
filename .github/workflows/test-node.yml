@@ -87,5 +87,5 @@ jobs:
         uses: andymckay/append-gist-action@1fbfbbce708a39bd45846f0955ed5521f2099c6d
         with:
           token: ${{ secrets.GIST_TOKEN }}
-          gistURL: https://gist.githubusercontent.com/{user}/{id}
-          file: badge.svg
+          gistURL: https://gist.githubusercontent.com/rolandpoulter/a7e2a3fad6701edbfd785ba7a4294cf6
+          file: echo-d-tests-badge.svg
