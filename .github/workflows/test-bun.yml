@@ -23,5 +23,6 @@ jobs:
         # with:
         #   bun-version: ${{ matrix.deno-version }}
 
+      - run: rm -rf ecmascript/test/report && rm -rf ecmascript/test/coverage
       - run: cd ecmascript && bun install
       - run: cd ecmascript && script/test/sys-bun.sh
