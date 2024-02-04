@@ -34,11 +34,12 @@ jobs:
       - run: cd ecmascript && deno task test-cov
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
+        if: false
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ecmascript/test/coverage
           # verbose: true
-      - run: ls ecmascript/test/report
+      # - run: ls ecmascript/test/report
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: success() || failure()    # run this step even if previous step failed
