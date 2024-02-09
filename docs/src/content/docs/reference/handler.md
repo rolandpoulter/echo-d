@@ -18,7 +18,7 @@ handler.one(message, extendOptions);
 handler.many(messages, extendOptions);
 
 // Get the action handler
-const actionHandler = handler.getActionHandler();
+const [handler, symbol] = handler.getActionHandler(action, options);
 
 // Get the symbol action
 const symbolAction = handler.getSymbolAction(action);
@@ -60,7 +60,7 @@ ___
 
 - `one(message: Message | any[], extendOptions: Options | any)`: Handles a single message.
 - `many(message: Message | any[], extendOptions: Options | any)`: Handles multiple messages.
-- `getActionHandler(): any`: Gets the action handler.
+- `getActionHandler(action: string | number): [Function, string]`: Gets the action handler.
 - `getSymbolAction(action: string | number): any`: Gets the symbol action.
 - `updater(extendOptions: OptionsProps | any, tick: number = now()): Promise<any[]>`: Updates other nodes in the network.
 - `spawnActor(id: string, extendOptions: OptionsProps | any): Promise<boolean> | boolean`: Spawns an actor.

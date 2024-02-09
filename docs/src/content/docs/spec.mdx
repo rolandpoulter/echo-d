@@ -599,14 +599,25 @@ batched payloads for the provided action.
 
 ```js
 // Message Array
-[ 'upsertComponent',
+[ [ 'spawnEntity', 'entity1', 'entity2' ],
+  [ 'upsertComponent',
   'entity1', 'position', [0, 0, 0],
-  'entity2', 'position', [1, 1, 1] ]
+  'entity2', 'position', [1, 1, 1] ] ]
 
 // Message Object
 { action: 'upsertComponent',
   payload: [ 'entity1', 'position', [0, 0, 0 ],
              'entity2', 'position', [1, 1, 1] ] }
+```
+
+Objects can also be used in array-object hybrid messages.
+
+```js
+// Message Object Array
+[ { action: 'spawnEntity', payload: ['entity1', 'entity2'] },
+  { action: 'upsertComponent',
+    payload: [ 'entity1', 'position', [0, 0, 0 ],
+               'entity2', 'position', [1, 1, 1] ] } ]
 ```
 
 ### Grouped Component Updates

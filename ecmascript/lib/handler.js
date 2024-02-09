@@ -8,34 +8,30 @@ import { now } from './utils.js';
  *
  * @param {string | number} action - The action.
  * @param {Record<number, string> | null} defaultSymbols - The default symbols.
- * @returns {number | string} The symbol action.
+ * @returns {string} The symbol action.
  */
 export function getSymbolAction(action, defaultSymbols) {
     if (defaultSymbols && typeof action === 'number' && defaultSymbols[action]) {
-        action = defaultSymbols[action];
+        return defaultSymbols[action];
     }
-    return action;
+    if (action === null || action === undefined) {
+        return '';
+    }
+    return action.toString();
 }
 /**
  * Gets the action handler.
  *
- * @param {Context} context - The context.
+ * @param {string | number} action - The action.
  * @param {OptionsExtended | any} options - The options.
+ * @returns {[Function, string]} The action handler and the symbol action.
  */
-export function getActionHandler(context, options) {
+export function getActionHandler(action, options) {
     options = options instanceof Options ? options : new Options(options);
     const { actions, defaultSymbols } = options;
-    return (action) => {
-        action = getSymbolAction(action, defaultSymbols);
-        const handler = (payload) => {
-            if (actions[action]) {
-                actions[action](payload, context, options);
-            }
-        };
-        // Assign the action to the handler function.
-        handler.action = action;
-        return handler;
-    };
+    const symbol = getSymbolAction(action, defaultSymbols) || '';
+    const handler = actions[symbol] || null;
+    return [handler, symbol];
 }
 /**
  * Handles a single message.
@@ -46,12 +42,17 @@ export function getActionHandler(context, options) {
 */
 export function oneHandler(message, context, options) {
     options = options instanceof Options ? options : new Options(options);
-    const actionHandler = getActionHandler(context, options);
     if (Array.isArray(message)) {
-        actionHandler(message[0])(message[1]);
+        const [handler] = getActionHandler(message[0], options);
+        if (handler) {
+            handler(message[1], context, options);
+        }
     }
     else if (message) {
-        actionHandler(message.action)(message.payload);
+        const [handler] = getActionHandler(message.action, options);
+        if (handler) {
+            handler(message.payload, context, options);
+        }
     }
 }
 export const handler = manyHandler;
@@ -65,22 +66,7 @@ export const handler = manyHandler;
 export function manyHandler(message, context, options) {
     options = options instanceof Options ? options : new Options(options);
     const { batchActionPayloadSizes, isOrdered, enableRollback } = options;
-    const actionHandler = getActionHandler(context, options);
-    const iterator = (payload, handler, offset = 0) => {
-        // Use the action from the handler Function
-        const action = handler.action;
-        let payloadSize = batchActionPayloadSizes[action] || 1;
-        if (payloadSize && typeof payloadSize === 'object') {
-            if (payloadSize.ordered && isOrdered) {
-                payloadSize = payloadSize.ordered;
-            }
-            else if (payloadSize.rollback && enableRollback) {
-                payloadSize = payloadSize.rollback;
-            }
-            else {
-                payloadSize = payloadSize.default;
-            }
-        }
+    const iterator = (payload, handler, payloadSize, offset = 0) => {
         if (payload.length && payload.length === offset && payloadSize === offset) {
             handler(undefined, context, options);
         }
@@ -98,13 +84,42 @@ export function manyHandler(message, context, options) {
                 }
             }
     };
+    const getPayloadSize = (symbol) => {
+        // Use the action from the handler Function
+        let payloadSize = batchActionPayloadSizes[symbol] || 1;
+        if (payloadSize && typeof payloadSize === 'object') {
+            if (payloadSize.ordered && isOrdered) {
+                payloadSize = payloadSize.ordered;
+            }
+            else if (payloadSize.rollback && enableRollback) {
+                payloadSize = payloadSize.rollback;
+            }
+            else {
+                payloadSize = payloadSize.default;
+            }
+        }
+        return payloadSize;
+    };
     if (Array.isArray(message)) {
-        const handler = actionHandler(message[0]);
-        iterator(message, handler, 1);
+        if (typeof message[0] === 'object') {
+            for (let i = 0; i < message.length; i++) {
+                manyHandler(message[i], context, options);
+            }
+        }
+        else {
+            const [handler, symbol] = getActionHandler(message[0], options);
+            if (handler) {
+                const payloadSize = getPayloadSize(symbol);
+                iterator(message, handler, payloadSize, 1);
+            }
+        }
     }
     else if (message) {
-        const handler = actionHandler(message.action);
-        iterator(message.payload, handler);
+        const [handler, symbol] = getActionHandler(message.action, options);
+        if (handler) {
+            const payloadSize = getPayloadSize(symbol);
+            iterator(message.payload, handler, payloadSize, 0);
+        }
     }
 }
 /**
@@ -150,8 +165,8 @@ export class Handler {
     /**
      * Gets the action handler.
      */
-    getActionHandler() {
-        return getActionHandler(this.context, this.options);
+    getActionHandler(action) {
+        return getActionHandler(action, this.options);
     }
     /**
      * Gets the symbol action.

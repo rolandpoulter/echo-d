@@ -1,13 +1,50 @@
 use hash::HashMap;
 use context::Context;
 use options::Options;
+use serde_json::Value;
+
 
 /**
- * The Message struct represents a message with an action and a payload.
+ * The Message enum represents a message with an action and a payload.
+ * It can be an array of values with the first value being considered the action, and the remaining the payload.
+ * Or it can be an object with an action and a payload.
  */
-struct Message {
+pub enum Message {
+    Array(Vec<Value>),
+    Object(MessageObject),
+}
+
+/**
+ * The Messages enum represents one or more messages with actions and a payloads.
+ */
+pub enum Messages {
+    Array(MessageArray),
+    Object(MessageObject),
+}
+
+/**
+ * The MessageArray struct represents a list of messages
+ */
+pub enum MessageArray {
+    Tuple(Vec<Value>),
+    Messages(Vec<Message>),
+    Message(Message),
+}
+
+/**
+ * The MessageObject struct represents a message with an action and a payload.
+ */
+pub struct MessageObject {
     action: String,
-    payload: serde_json::Value,
+    payload: Payload,
+}
+
+/**
+ * The Payload enum represents the payload of a message.
+ */
+pub enum Payload {
+    Array(Vec<Value>),
+    Object(Value),
 }
 
 /**
@@ -17,7 +54,7 @@ struct Message {
  * @param default_symbols - The default symbols.
  * @returns The symbol action.
  */
-fn get_symbol_action(action: &str, default_symbols: &HashMap<u32, String>) -> String {
+pub fn get_symbol_action(action: &str, default_symbols: &HashMap<u32, String>) -> String {
     if let Some(symbol) = default_symbols.get(&(action.parse::<u32>().unwrap())) {
         return symbol.clone();
     }
@@ -25,26 +62,34 @@ fn get_symbol_action(action: &str, default_symbols: &HashMap<u32, String>) -> St
 }
 
 /**
+ * The void action function.
+ */
+pub fn void_action_fn() {}
+
+/**
  * Gets the action handler.
  *
- * @param context - The context.
+ * @param action - The action.
  * @param options - The options.
+ * @returns The action handler, and the symbol action.
  */
-fn get_action_handler(context: &Context, options: &Options) -> impl Fn(&str) -> () {
-    let actions = &options.actions;
-    let default_symbols = &options.default_symbols;
-
-    move |action: &str| {
-        let action = get_symbol_action(action, default_symbols);
-
-        let handler = move |payload: serde_json::Value| {
-            if let Some(action_fn) = actions.get(&action) {
-                action_fn(payload, context, options);
-            }
-        };
-
-        handler
+pub fn get_action_handler(action: str, options: Options) -> impl Fn(&str) -> () {
+    let actions: HashMap = &options.actions;
+    let default_symbols: HashMap = &options.default_symbols;
+    if ( actions.is_none()
+      || actions.is_empty()
+      || default_symbols.is_none()
+      || default_symbols.is_empty()
+      || action.is_none()
+      || action.is_empty()
+    ) {
+        return (void_action_fn, ("").to_string());
     }
+    let symbol = get_symbol_action(action, default_symbols);
+    if let Some(action_fn) = actions.get(&action) {
+        return (action_fn, symbol);
+    }
+    (void_action_fn, symbol)
 }
 
 /**
@@ -54,28 +99,35 @@ fn get_action_handler(context: &Context, options: &Options) -> impl Fn(&str) -> 
  * @param context - The context for the handler.
  * @param options - The options for the handler.
  */
-fn one_handler(message: &Message, context: &Context, options: &Options) {
-    let action_handler = get_action_handler(context, options);
-
-    if let Some(message) = message {
-        if let Some(action_fn) = action_handler(&message.action) {
-            action_fn(message.payload.clone());
+pub fn one_handler(message: Message, context: Context, options: Options) {
+    let (handler, payload) = match type_of(message) {
+        Message::Array(msg) => {
+            let (handler, _) = get_action_handler(msg[0], options);
+            (handler, msg[1])
         }
+        Message::Object(msg) => {
+            let (handler, _) = get_action_handler(msg.action, options);
+            (handler, msg.payload)
+        }
+    };
+
+    if let Some(handler) = handler {
+        handler(payload, context, options);
     }
 }
 
 /**
  * Handles multiple messages.
  *
- * @param message - The messages to handle.
+ * @param messages - The messages to handle.
  * @param context - The context for the handler.
  * @param options - The options for the handler.
  */
-fn many_handler(message: &Vec<Message>, context: &Context, options: &Options) {
-    let batch_action_payload_sizes = &options.batch_action_payload_sizes;
+pub fn many_handler(messages: Messages, context: Context, options: Options) {
+    let batch_action_payload_sizes = options.batch_action_payload_sizes;
     let action_handler = get_action_handler(context, options);
 
-    let iterator = |payload: &Vec<serde_json::Value>, handler: &dyn Fn(serde_json::Value)| {
+    let iterator = |payload: Payload, handler: &dyn Fn(Value, Context, Options), payloadSize: i8, offset: i32| {
         let action = handler.action.clone();
         let payload_size = batch_action_payload_sizes.get(&action).cloned().unwrap_or(1);
 
