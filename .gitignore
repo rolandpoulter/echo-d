@@ -35,3 +35,6 @@ rust/target/
 
 # macOS-specific files
 .DS_Store
+
+# vscode settings
+.vscode/settings.json
