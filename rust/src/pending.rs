@@ -1,52 +1,58 @@
-use crate::hash::HashMap
+use crate::hash::HashMap;
+// use crate::context::Context;
 
 /**
  * The RemovedState struct represents the state of removed actors, entities, and components.
  */
-struct RemovedState {
-    actors: HashMap<String, bool>,
-    entities: Vec<String>,
-    components: HashMap<String, HashMap<String, bool>>,
+pub struct RemovedState {
+    pub actors: HashMap<String, bool>,
+    pub entities: Vec<String>,
+    pub components: HashMap<String, HashMap<String, bool>>,
 }
 
 /**
  * The UpdatedState struct represents the state of updated components.
  */
-struct UpdatedState {
-    components: HashMap<String, HashMap<String, bool>>,
+pub struct UpdatedState {
+    pub components: HashMap<String, HashMap<String, bool>>,
 }
 
 /**
  * The CreatedState struct represents the state of created actors, entities, components, and inputs.
  */
-struct CreatedState {
-    actors: HashMap<String, bool>,
-    entities: Vec<String>,
-    components: HashMap<String, HashMap<String, bool>>,
-    inputs: HashMap<String, Vec<i32>>,
+pub struct CreatedState {
+    pub actors: HashMap<String, bool>,
+    pub entities: Vec<String>,
+    pub components: HashMap<String, HashMap<String, bool>>,
+    pub inputs: HashMap<String, Vec<i32>>,
 }
+
+pub type SymbolsState = Vec<(String, i32)>;
 
 /**
  * The PendingContext struct represents the context of pending operations.
  */
-struct PendingContext {
-    pending: Option<Pending>,
+struct PendingContext<'a> {
+    pending: Option<Pending<'a>>,
 }
 
 /**
  * The Pending struct represents a pending state with removed, updated, and created states.
  */
-struct Pending {
-    removed: RemovedState,
-    updated: UpdatedState,
-    created: CreatedState,
+pub struct Pending<'a> {
+    pub removed: RemovedState,
+    pub updated: UpdatedState,
+    pub created: CreatedState,
+    
+    pub symbols: &'a Vec<(&'a String, i32)>,
+    pub is_diffed: bool,
 }
 
-impl Pending {
+impl<'a> Pending<'a> {
     /**
      * Constructs a new Pending object and resets its state.
      */
-    fn new() -> Self {
+    pub fn new(is_diffed: bool) -> Self {
         Self {
             removed: RemovedState {
                 actors: HashMap::new(),
@@ -62,6 +68,8 @@ impl Pending {
                 components: HashMap::new(),
                 inputs: HashMap::new(),
             },
+            symbols: &Vec::new(),
+            is_diffed,
         }
     }
 
@@ -71,7 +79,7 @@ impl Pending {
      * @param {String} id - The ID of the actor.
      * @param {i32} newindex - The index of the new input.
      */
-    fn actor_input(&mut self, id: String, newindex: i32) {
+    pub fn actor_input(&mut self, id: String, newindex: i32) {
         self.created.inputs.entry(id).or_insert(Vec::new()).push(newindex);
     }
 
@@ -82,7 +90,7 @@ impl Pending {
      * @param {String} id - The ID of the entity.
      * @param {String} key - The key of the component.
      */
-    fn change_component(&mut self, pending_type: String, id: String, key: String) {
+    pub fn change_component(&mut self, pending_type: String, id: String, key: String) {
         self.upsert_component(pending_type, id, key);
     }
 
@@ -91,7 +99,7 @@ impl Pending {
      *
      * @param {String} id - The ID of the entity to create.
      */
-    fn create_entity(&mut self, id: String) {
+    pub fn create_entity(&mut self, id: String) {
         self.created.entities.push(id);
     }
 
@@ -100,7 +108,7 @@ impl Pending {
      *
      * @param {String} id - The ID of the actor to remove.
      */
-    fn remove_actor(&mut self, id: String) {
+    pub fn remove_actor(&mut self, id: String) {
         self.removed.actors.insert(id, true);
     }
 
@@ -110,7 +118,7 @@ impl Pending {
      * @param {String} id - The ID of the entity.
      * @param {String} key - The key of the component to remove.
      */
-    fn remove_component(&mut self, id: String, key: String) {
+    pub fn remove_component(&mut self, id: String, key: String) {
         self.removed.components.entry(id).or_insert(HashMap::new()).insert(key, true);
     }
 
@@ -119,15 +127,15 @@ impl Pending {
      *
      * @param {String} id - The ID of the entity to remove.
      */
-    fn remove_entity(&mut self, id: String) {
+    pub fn remove_entity(&mut self, id: String) {
         self.removed.entities.push(id);
     }
 
     /**
      * Resets the state of the Pending object.
      */
-    fn reset(&mut self) {
-        *self = Self::new();
+    pub fn reset(&mut self) {
+        *self = Self::new(self.is_diffed);
     }
 
     /**
@@ -135,7 +143,7 @@ impl Pending {
      *
      * @param {String} id - The ID of the actor to spawn.
      */
-    fn spawn_actor(&mut self, id: String) {
+    pub fn spawn_actor(&mut self, id: String) {
         self.created.actors.insert(id, true);
     }
 
@@ -146,7 +154,7 @@ impl Pending {
      * @param {String} id - The ID of the entity.
      * @param {String} key - The key of the component.
      */
-    fn upsert_component(&mut self, pending_type: String, id: String, key: String) {
+    pub fn upsert_component(&mut self, pending_type: String, id: String, key: String) {
         let pending = if pending_type == "created" {
             &mut self.created
         } else {
@@ -161,59 +169,13 @@ impl Pending {
             pending.components.insert(id, new_components);
         }
     }
-}
-
-/**
- * The withPending struct contains a pending state and methods for managing it.
- */
-struct WithPending {
-    pending: Pending,
-}
-
-impl WithPending {
-    /**
-     * Constructs a new WithPending object.
-     *
-     * @param {PendingContext} context - The context for the pending state.
-     */
-    fn new(context: ContextWithPending | ContextWithPendingAndSymbols) -> Self {
-        let pending = context.pending.unwrap_or_else(|| Pending::new());
-        Self { pending }
-    }
-
-    /**
-     * Resets the current pending state.
-     */
-    fn reset_pending(&mut self) {
-        self.pending.reset();
-    }
-}
-
-/**
- * The PendingWithSymbols struct extends the Pending struct with symbol management.
- */
-struct PendingWithSymbols {
-    pending: Pending,
-    symbols: Vec<(String, i32)>,
-}
-
-impl PendingWithSymbols {
-    /**
-     * Constructs a new PendingWithSymbols object and initializes its symbols array.
-     */
-    fn new() -> Self {
-        Self {
-            pending: Pending::new(),
-            symbols: Vec::new(),
-        }
-    }
 
     /**
      * Adds a symbol tuple to the symbols array.
      *
      * @param {String} symbol_tuple - The symbol tuple to add.
      */
-    fn add_symbol(&mut self, symbol_tuple: (String, i32)) {
+    pub fn add_symbol(&mut self, symbol_tuple: (String, i32)) {
         self.symbols.push(symbol_tuple);
     }
 
@@ -222,11 +184,7 @@ impl PendingWithSymbols {
      *
      * @param {Vec<(String, i32)>} symbols - The new array of symbols.
      */
-    fn replace_symbols(&mut self, symbols: Vec<(String, i32)>) {
+    pub fn replace_symbols(&mut self, symbols: Vec<(String, i32)>) {
         self.symbols = symbols;
     }
-}
-
-fn main() {
-    let pending_with_symbols = PendingWithSymbols::new();
 }

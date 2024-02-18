@@ -1,10 +1,6 @@
 // use std::collections::HashMap;
 use crate::hash::{HashMap, HashSet};
-
-/**
- * A type that can be either a Set or a Vec.
- */
-type SetOrVec<T> = Set<T> | Vec<T>;
+use crate::types::{Action, Payload, SetOrVec};
 
 /**
  * Creates a union of multiple sets or vec.
@@ -12,7 +8,7 @@ type SetOrVec<T> = Set<T> | Vec<T>;
  * @param sets - The sets or vec to be united.
  * @returns The union of the sets or vec.
  */
-fn union_sets<T: std::hash::Hash + Eq + Clone>(sets: &[SetOrVec<T>]) -> Vec<T> {
+pub fn union_sets<'a, T, const S: usize>(sets: [SetOrVec<&'static T>; S]) -> Vec<&T> {
     let mut union: HashSet<T> = HashSet::new();
 
     for set in sets {
@@ -33,7 +29,7 @@ fn union_sets<T: std::hash::Hash + Eq + Clone>(sets: &[SetOrVec<T>]) -> Vec<T> {
  * @param offset - The starting value of the enum.
  * @returns The created enum.
  */
-fn create_enum<T: std::hash::Hash + Eq + Clone>(set: &SetOrVec<T>, offset: i32) -> HashMap<T, i32> {
+pub fn create_enum<T>(set: SetOrVec<T>, offset: i16) -> HashMap<T, i32> {
     let mut enum_map: HashMap<T, i32> = HashMap::new();
 
     let mut i = offset;
@@ -53,7 +49,9 @@ fn create_enum<T: std::hash::Hash + Eq + Clone>(set: &SetOrVec<T>, offset: i32) 
  * @param message - The message from which the tuple is to be created.
  * @returns The created tuple.
  */
-fn message_tuple(message: &Option<(Option<Action>, Option<Payload>)>) -> (Option<Action>, Option<Payload>) {
+pub fn message_tuple<'a>(
+    message: Option<(Option<&'a Action<'a>>, Option<&'a Payload<'a>>)>,
+) -> (Option<&'a Action<'a>>, Option<&'a Payload<'a>>) {
     match message {
         Some((action, payload)) => (action.clone(), payload.clone()),
         _ => (None, None),
@@ -66,7 +64,7 @@ fn message_tuple(message: &Option<(Option<Action>, Option<Payload>)>) -> (Option
  * @param v - The value whose type is to be determined.
  * @returns The type of the value.
  */
-fn type_of<T>(v: &T) -> &'static str {
+pub fn type_of<T>(v: &T) -> &'static str {
     let t = std::any::type_name::<T>();
     if t == "std::option::Option<T>" {
         return "option";
@@ -95,7 +93,7 @@ fn type_of<T>(v: &T) -> &'static str {
  * @param obj_b - The second value.
  * @returns A tuple where the first element is a boolean indicating whether the values were combined, and the second element is the combined value.
  */
-fn combine_values<T: std::hash::Hash + Eq + Clone>(obj_a: &T, obj_b: &T) -> (bool, T) {
+pub fn combine_values<T: std::hash::Hash + Eq + Clone>(obj_a: &T, obj_b: &T) -> (bool, T) {
     recursive_combination(obj_a, obj_b)
 }
 
@@ -106,7 +104,7 @@ fn combine_values<T: std::hash::Hash + Eq + Clone>(obj_a: &T, obj_b: &T) -> (boo
  * @param obj_b - The second value.
  * @returns A tuple where the first element is a boolean indicating whether the values were combined, and the second element is the combined value.
  */
-fn recursive_combination<T: std::hash::Hash + Eq + Clone>(obj_a: &T, obj_b: &T) -> (bool, T) {
+pub fn recursive_combination<T: std::hash::Hash + Eq + Clone>(obj_a: &T, obj_b: &T) -> (bool, T) {
     let type_a = type_of(obj_a);
     let type_b = type_of(obj_b);
 

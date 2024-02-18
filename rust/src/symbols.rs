@@ -1,19 +1,29 @@
-use std::collections::HashMap;
+use serde_json::Value;
+
+// use crate::actions;
+// use crate::string::str;
+use crate::context::Context;
+use crate::hash::HashMap;
+use crate::options::Options;
+// use crate::symbols::get_symbol;
+// use crate::types::Payload;
+use crate::types::Symbols as SymbolsHashMap;
+
 /**
  * The Enum struct represents a mapping from keys to numeric values.
  */
-pub struct Enum {
-    values: HashMap<String, i32>,
+pub struct Enum<'a> {
+    pub values: &'a SymbolsHashMap<'a>,
 }
 
-impl Enum {
+impl<'a> Enum<'a> {
     /**
      * Constructs a new Enum object.
      *
      * @param {HashMap<String, i32>} values - A HashMap containing the key-value pairs.
      */
-    pub fn new(values: HashMap<String, i32>) -> Self {
-        Enum { values }
+    pub fn new(values: &HashMap<&String, i32>) -> Self {
+        Enum { values: &values }
     }
 
     /**
@@ -22,27 +32,33 @@ impl Enum {
      * @param {&str} key - The key to be found.
      * @returns {Option<i32>} The value of the key, or None if the key is not found.
      */
-    pub fn find(&self, key: &str) -> Option<i32> {
-        self.values.get(key).cloned()
+    pub fn find(&self, key: &String) -> Option<i32> {
+        Some(self.values.get(&key).cloned())
     }
 }
 
 /**
  * The Symbols struct represents a collection of symbols.
  */
-pub struct Symbols {
-    list: Vec<String>,
-    enum_obj: Enum,
+pub struct Symbols<'a> {
+    pub list: &'a Vec<&'a String>,
+    pub enum_obj: Enum<'a>,
 }
 
-impl Symbols {
+impl<'a> Symbols<'a> {
     /**
      * Constructs a new Symbols object.
      *
      * @param {Vec<String>} symbols - An optional vector of symbols.
      */
     pub fn new(symbols: Vec<String>) -> Self {
-        let enum_obj = Enum::new(symbols.iter().enumerate().map(|(i, s)| (s.clone(), i as i32)).collect());
+        let enum_obj = Enum::new(
+            symbols
+                .iter()
+                .enumerate()
+                .map(|(i, s)| (s.clone(), i as i32))
+                .collect(),
+        );
         Symbols {
             list: symbols,
             enum_obj,
@@ -61,8 +77,8 @@ impl Symbols {
                 return Some(index as usize);
             } else {
                 let index = self.list.len();
-                self.list.push(symbol.clone());
-                self.enum_obj.values.insert(symbol, index as i32);
+                self.list.push(&symbol.clone());
+                self.enum_obj.values.insert(&symbol, index as i32);
                 return Some(index);
             }
         }
@@ -121,7 +137,13 @@ impl Symbols {
      */
     pub fn reset(&mut self, symbols: Vec<String>) {
         self.list = symbols;
-        self.enum_obj = Enum::new(symbols.iter().enumerate().map(|(i, s)| (s.clone(), i as i32)).collect());
+        self.enum_obj = Enum::new(
+            symbols
+                .iter()
+                .enumerate()
+                .map(|(i, s)| (s.clone(), i as i32))
+                .collect(),
+        );
     }
 }
 
@@ -133,14 +155,14 @@ impl Symbols {
  * @param {any} options - The options for extracting the symbol.
  * @returns {string | number} The extracted symbol.
  */
-pub fn extract_symbol(index: i32, context: &dyn Any, options: &dyn Any) -> String {
+pub fn extract_symbol<'a, T>(index: i32, context: &Context<T>, options: &Options<T>) -> &'a String {
     if let Some(get_symbol) = options.get_symbol {
         if let Some(symbol) = get_symbol(index, context, options) {
             return symbol;
         }
     }
 
-    index.to_string()
+    &index.to_string()
 }
 
 /**
@@ -151,7 +173,11 @@ pub fn extract_symbol(index: i32, context: &dyn Any, options: &dyn Any) -> Strin
  * @param {any} options - The options for indexing the symbol.
  * @returns {number | string} The indexed symbol.
  */
-pub fn ensure_symbol_index(symbol: &str, context: &dyn Any, options: &dyn Any) -> Result<i32, String> {
+pub fn ensure_symbol_index<T>(
+    symbol: &String,
+    context: &Context<T>,
+    options: &Options<T>,
+) -> Result<i32, String> {
     if let Some(add_symbol) = options.add_symbol {
         if let Some(index) = add_symbol(symbol, context, options) {
             return Ok(index);
@@ -170,31 +196,51 @@ pub fn ensure_symbol_index(symbol: &str, context: &dyn Any, options: &dyn Any) -
  * @param {any} options - The options for extracting symbols.
  * @returns {any} The value with extracted symbols.
  */
-pub fn recursive_symbol_extraction(key: &str, value: &dyn Any, context: &dyn Any, options: &dyn Any) -> Box<dyn Any> {
+pub fn recursive_symbol_extraction<T>(
+    key: &String,
+    value: &Value,
+    context: &Context<T>,
+    options: &Options<T>,
+) -> Box<Value> {
     if key.starts_with('$') {
         if let Some(get_symbol) = options.get_symbol {
-            let recursive_fix = |value: &dyn Any| -> Box<dyn Any> {
-                if let Some(array) = value.downcast_ref::<Vec<Box<dyn Any>>>() {
-                    let mut new_array = Vec::new();
-                    for item in array {
-                        new_array.push(recursive_fix(item));
-                    }
-                    return Box::new(new_array);
-                } else if let Some(number) = value.downcast_ref::<i32>() {
-                    if let Some(symbol) = get_symbol(*number, context, options) {
-                        return Box::new(symbol);
-                    }
-                } else if let Some(object) = value.downcast_ref::<HashMap<String, Box<dyn Any>>>() {
-                    let mut new_object = HashMap::new();
-                    for (key, value) in object {
-                        new_object.insert(key.clone(), recursive_fix(value));
-                    }
-                    return Box::new(new_object);
-                }
-                Box::new(value.clone())
-            };
-            return recursive_fix(value);
+            return recursive_symbol_extraction_loop::<T>(&key, &value, &context, &options);
         }
+    }
+    Box::new(value.clone())
+}
+
+fn recursive_symbol_extraction_loop<T>(
+    key: &String,
+    value: &Value,
+    context: &Context<T>,
+    options: &Options<T>,
+) {
+    if let Some(array) = value.downcast_ref::<&Vec<Box<Value>>>() {
+        let mut new_array = Vec::new();
+        for item in array {
+            let new_item = recursive_symbol_indexes_ensured_loop::<T>(&key, &item, &context, &options);
+            new_array.push(new_item);
+        }
+        return Box::new(new_array);
+    } else if let Some(number) = value.downcast_ref::<i32>() {
+        // TODO: get get_symbol from options.actions
+        let actions = options.actions;
+        if let Some(get_symbol) = actions.get("get_symbol") {
+            let execute = get_symbol.and_then(|get_symbol| {
+                get_symbol.downcast_ref::<fn(i: usize, c: &Context<T>, o: &Options<T>)>()
+            });
+            if let Some(symbol) = execute(*number, context, options) {
+                return Box::new(symbol);
+            }
+        }
+    } else if let Some(object) = value.downcast_ref::<&HashMap<&String, Box<Value>>>() {
+        let mut new_object = HashMap::new();
+        for (key, value) in object {
+            let new_value = recursive_symbol_indexes_ensured_loop::<T>(&key, &value, &context, &options);
+            new_object.insert(key.clone(), new_value);
+        }
+        return Box::new(new_object);
     }
     Box::new(value.clone())
 }
@@ -208,31 +254,51 @@ pub fn recursive_symbol_extraction(key: &str, value: &dyn Any, context: &dyn Any
  * @param {any} options - The options for indexing symbols.
  * @returns {any} The value with indexed symbols.
  */
-pub fn recursive_symbol_indexes_ensured(key: &str, value: &dyn Any, context: &dyn Any, options: &dyn Any) -> Box<dyn Any> {
+pub fn recursive_symbol_indexes_ensured<T>(
+    key: &String,
+    value: &Value,
+    context: &Context<T>,
+    options: &Options<T>,
+) -> Box<Value> {
     if key.starts_with('$') {
         if let Some(add_symbol) = options.add_symbol {
-            let recursive_fix = |value: &dyn Any| -> Box<dyn Any> {
-                if let Some(array) = value.downcast_ref::<Vec<Box<dyn Any>>>() {
-                    let mut new_array = Vec::new();
-                    for item in array {
-                        new_array.push(recursive_fix(item));
-                    }
-                    return Box::new(new_array);
-                } else if let Some(string) = value.downcast_ref::<String>() {
-                    if let Ok(index) = add_symbol(string, context, options) {
-                        return Box::new(index);
-                    }
-                } else if let Some(object) = value.downcast_ref::<HashMap<String, Box<dyn Any>>>() {
-                    let mut new_object = HashMap::new();
-                    for (key, value) in object {
-                        new_object.insert(key.clone(), recursive_fix(value));
-                    }
-                    return Box::new(new_object);
-                }
-                Box::new(value.clone())
-            };
-            return recursive_fix(value);
+            return recursive_symbol_indexes_ensured_loop::<T>(&key, &value, &context, &options);
         }
+    }
+    Box::new(value.clone())
+}
+
+fn recursive_symbol_indexes_ensured_loop<T>(
+    key: &String,
+    value: &Value,
+    context: &Context<T>,
+    options: &Options<T>,
+) {
+    if let Some(array) = value.downcast_ref::<Vec<Box<Value>>>() {
+        let mut new_array = Vec::new();
+        for item in array {
+            let new_item = recursive_symbol_indexes_ensured_loop::<T>(&key, &item, &context, &options);
+            new_array.push(new_item);
+        }
+        return Box::new(new_array);
+    } else if let Some(string) = value.downcast_ref::<&String>() {
+        let actions = options.actions;
+        if let Some(add_symbol) = actions.get("add_symbol") {
+            let execute = add_symbol.and_then(|add_symbol| {
+                add_symbol.downcast_ref::<fn(s: &String, c: &Context<T>, o: &Options<T>)>()
+            });
+            if let Ok(index) = execute(string, context, options) {
+                return Box::new(index);
+            }
+        }
+        
+    } else if let Some(object) = value.downcast_ref::<&HashMap<&String, Box<Value>>>() {
+        let mut new_object = HashMap::new();
+        for (key, value) in object {
+            let new_value = recursive_symbol_indexes_ensured_loop::<T>(&key, &value, &context, &options);
+            new_object.insert(key.clone(), new_value);
+        }
+        return Box::new(new_object);
     }
     Box::new(value.clone())
 }

@@ -1,36 +1,20 @@
-use std::collections::HashMap;
+use serde_json::Value;
+
+use crate::hash::HashMap;
+// use crate::context::Context;
+use crate::types::{
+    // ChangesInput,
+    Component,
+    // Components_ as Components,
+};
+
 /**
  * The ChangesInput struct represents the input for changes.
  *
  * diffs: The diffs.
  */
-struct ChangesInput {
-    diffs: Option<HashMap<String, serde_json::Value>>,
-}
-
-/**
- * The Component struct represents a component with dynamic properties.
- */
-struct Component {
-    properties: HashMap<String, serde_json::Value>,
-}
-
-/**
- * The Components struct represents a collection of components.
- *
- * id: The component identified by id.
- */
-struct Components {
-    components: HashMap<String, Component>,
-}
-
-/**
- * The Context struct represents the context for the changes.
- *
- * components: The components.
- */
-struct Context {
-    components: Components,
+pub struct ChangesInput {
+    pub diffs: Option<HashMap<String, serde_json::Value>>,
 }
 
 /**
@@ -39,21 +23,21 @@ struct Context {
  * context: The context in which changes are to be managed.
  * diffs: The diffs of the changes.
  */
-struct Changes {
-    context: Context,
-    diffs: HashMap<String, serde_json::Value>,
+pub struct Changes<'a, T> {
+    store: &'a T,
+    pub diffs: HashMap<String, Value>,
 }
 
-impl Changes {
+impl<'a, T> Changes<'a, T> {
     /**
      * Creates a new instance of the Changes struct.
      *
      * context: The context in which changes are to be managed.
      * changes: An optional initial set of changes.
      */
-    fn new(context: Context, changes: ChangesInput) -> Self {
+    pub fn new(store: &T, changes: ChangesInput) -> Self {
         let diffs = changes.diffs.unwrap_or_default();
-        Changes { context, diffs }
+        Changes { store, diffs }
     }
 
     /**
@@ -63,7 +47,7 @@ impl Changes {
      * key: The key of the property to be changed.
      * new_value: The new value of the property.
      */
-    fn change_component(&mut self, id: String, key: String, new_value: serde_json::Value) {
+    pub fn change_component(&mut self, id: String, key: String, new_value: serde_json::Value) {
         self.upsert_component(id, key, new_value);
     }
 
@@ -72,7 +56,7 @@ impl Changes {
      *
      * changes: The new set of changes.
      */
-    fn reset(&mut self, changes: ChangesInput) {
+    pub fn reset(&mut self, changes: ChangesInput) {
         self.diffs = changes.diffs.unwrap_or_default();
     }
 
@@ -83,16 +67,15 @@ impl Changes {
      * key: The key of the property to be updated or inserted.
      * new_value: The new value of the property.
      */
-    fn upsert_component(&mut self, id: String, key: String, new_value: serde_json::Value) {
-        let context = &mut self.context;
-        let components = &mut context.components;
+    pub fn upsert_component(&mut self, id: String, key: String, new_value: Value) {
+        let components = self.store.get_components();
         let current_scope = components.components.entry(id).or_insert_with(Component::default);
-        let diff_object = self.diffs.entry(id).or_insert_with(serde_json::Value::default);
+        let diff_object = self.diffs.entry(id).or_insert_with(Value::default);
         recursive_diff(key, diff_object, current_scope, new_value);
     }
 }
 
-fn recursive_diff(key: String, diff: &mut serde_json::Value, scope: &mut Component, next_val: serde_json::Value) {
+pub fn recursive_diff(key: String, diff: &mut Value, scope: &mut Component, next_val: Value) {
     let prev_type = scope.properties.get(&key).map(|v| type_of(v));
     let next_type = type_of(&next_val);
     if prev_type != Some(next_type) {
@@ -104,13 +87,13 @@ fn recursive_diff(key: String, diff: &mut serde_json::Value, scope: &mut Compone
             let v1 = scope.properties.get(&key).and_then(|v| v.as_f64()).unwrap_or_default();
             let v2 = next_val.as_f64().unwrap_or_default();
             let d = v2 - v1;
-            scope.properties.insert(key.clone(), serde_json::Value::from(v2));
-            diff[key] = serde_json::Value::from(d);
+            scope.properties.insert(key.clone(), Value::from(v2));
+            diff[key] = Value::from(d);
         }
         "array" => {
             let diff = diff.get_mut(&key).unwrap();
             let scope = scope.properties.get_mut(&key).unwrap();
-            if let serde_json::Value::Array(next_val) = next_val {
+            if let Value::Array(next_val) = next_val {
                 for (i, next_val) in next_val.into_iter().enumerate() {
                     recursive_diff(i.to_string(), diff, scope, next_val);
                 }
@@ -119,7 +102,7 @@ fn recursive_diff(key: String, diff: &mut serde_json::Value, scope: &mut Compone
         "object" => {
             let diff = diff.get_mut(&key).unwrap();
             let scope = scope.properties.get_mut(&key).unwrap();
-            if let serde_json::Value::Object(next_val) = next_val {
+            if let Value::Object(next_val) = next_val {
                 for (k, next_val) in next_val.into_iter() {
                     recursive_diff(k, diff, scope, next_val);
                 }
@@ -131,34 +114,13 @@ fn recursive_diff(key: String, diff: &mut serde_json::Value, scope: &mut Compone
     }
 }
 
-fn type_of(value: &serde_json::Value) -> &str {
+pub fn type_of(value: &Value) -> &str {
     match value {
-        serde_json::Value::Null => "null",
-        serde_json::Value::Bool(_) => "boolean",
-        serde_json::Value::Number(_) => "number",
-        serde_json::Value::String(_) => "string",
-        serde_json::Value::Array(_) => "array",
-        serde_json::Value::Object(_) => "object",
-    }
-}
-
-impl Default for Component {
-    fn default() -> Self {
-        Component {
-            properties: HashMap::new(),
-        }
-    }
-}
-
-impl Default for Changes {
-    fn default() -> Self {
-        Changes {
-            context: Context {
-                components: Components {
-                    components: HashMap::new(),
-                },
-            },
-            diffs: HashMap::new(),
-        }
+        Value::Null => "null",
+        Value::Bool(_) => "boolean",
+        Value::Number(_) => "number",
+        Value::String(_) => "string",
+        Value::Array(_) => "array",
+        Value::Object(_) => "object",
     }
 }

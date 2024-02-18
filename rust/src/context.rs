@@ -1,96 +1,181 @@
+use futures::executor::block_on;
+use futures::stream::FuturesUnordered;
+use futures::{Future, StreamExt};
+use serde_json::Value;
+use std::pin::Pin;
+
 // use super::{Context, ContextProps, ContextOptions, Store, Options, Pending, Symbols, PendingWithSymbols};
-use crate::pending::{Pending, PendingWithSymbols, with_pending};
-use crate::symbols::Symbols;
-use crate::options::Options;
 use crate::changes::Changes;
-use crate::ticks::Ticks;
-use crate::store::Store;
+use crate::options::Options;
+use crate::pending::Pending;
+use crate::symbols::Symbols;
+// use crate::index_manager::IndexManager as Indexes;
+use crate::events::EventEmitter;
+use crate::ordered::Ordered;
+use crate::storage::Storage;
 use crate::utils::combine_values;
+// use crate::actor::Actor;
+// use crate::query::Query;
+use crate::hash::HashMap;
+
+use crate::types::{
+    Actor,
+    Inputs,
+    // Entity,
+    Query,
+    StorageOptions as StorageProps,
+};
+
 /**
  * The ContextProps struct represents the properties of the context.
  */
-struct ContextProps {
-    changes: Option<Box<dyn Any>>,
-    events: Option<Box<dyn Any>>,
-    pending: Option<Box<dyn Any>>,
-    store: Option<Box<dyn Any>>,
-    symbols: Option<Box<dyn Any>>,
-    ticks: Option<Box<dyn Any>>,
-    other_props: HashMap<String, Box<dyn Any>>,
+pub struct ContextProps<'a, T> {
+    pub events: Option<&'a EventEmitter>,
+    pub store: Option<&'a Storage<'a>>, // TODO: use dyn with trait to allow custom stores
+    pub order: Option<&'a Ordered<'a>>,
+    pub changes: Option<&'a Changes<'a, T>>,
+    pub pending: Option<&'a Pending<'a>>,
+    pub symbols: Option<&'a Symbols<'a>>, // other_props: HashMap<String, Box<dyn Any>>,
+}
+
+pub enum ContextInput<'a, T> {
+    Props(ContextProps<'a, T>),
+    Instance(Context<'a, T>),
 }
 
 /**
  * The Context struct provides methods for managing the context.
  */
-struct Context {
-    events: Option<Box<dyn Any>>,
-    store: Store,
-    ticks: Option<Ticks>,
-    changes: Option<Changes>,
-    pending: Option<Box<dyn Any>>,
+pub struct Context<'a, T> {
+    pub events: Option<&'a EventEmitter>,
+    pub store: &'a Storage<'a>, // TODO: use dyn with trait to allow custom stores
+    pub order: Option<&'a Ordered<'a>>,
+    pub changes: Option<&'a Changes<'a, T>>,
+    pub pending: Option<&'a Pending<'a>>,
+    pub symbols: &'a Symbols<'a>,
 }
 
-impl Context {
+impl<'a, T> Context<'a, T> {
     /**
      * Creates a new instance of the Context struct.
      */
-    fn new(context: ContextProps, options: ContextOptions, store: Store) -> Self {
+    pub fn new(context: &ContextInput<T>, options: &Options<T>) -> Self {
         let ContextProps {
-            changes,
             events,
-            pending,
             store,
-            symbols,
-            ticks,
-        } = context;
-
-        let ticks = if options.is_ticked {
-            Some(Ticks::new(ticks))
-        } else {
-            None
-        };
-
-        let changes = if options.is_diffed {
-            Some(Changes::new(self, changes))
-        } else {
-            None
-        };
-
-        Context {
-            events,
-            store: Store::new(store),
-            ticks,
+            order,
             changes,
-            pending: None,
+            pending,
+            symbols,
+        } = match context {
+            ContextInput::Props(props) => {
+                props;
+            }
+            ContextInput::Instance(context) => {
+                let props: ContextProps = context;
+                props;
+            }
+        };
+
+        let enum_default_symbols = options.enum_default_symbols;
+        let is_read_only = options.is_read_only;
+        let is_diffed = options.is_diffed;
+        let is_ordered = options.is_ordered;
+        // let is_symbol_leader = options.is_symbol_leader;
+        let enable_querying = options.enable_querying;
+        let types = options.types;
+        let indexes = options.indexes;
+        let store_options = options.store_options;
+
+        let order = if is_ordered {
+            Ordered::new(&order)
+        } else {
+            None
+        };
+
+        let symbols = if Some(symbols) {
+            Symbols::new(&symbols);
+        } else {
+            let symbols = Symbols::new(&symbols);
+            symbols.copy_enum(&enum_default_symbols);
+            symbols
+        };
+
+        let pending = if is_read_only {
+            None
+        } else {
+            Pending::new(is_diffed);
+        };
+
+        let events = if Some(events) {
+            events;
+        } else {
+            // EventEmitter::new();
+            None;
+        };
+
+        let custom_store_props = StorageProps {
+            // enable_querying,
+            types: Some(types),
+            indexes: Some(indexes),
+            other: None,
+        };
+
+        let store_options = store_options.extend(&custom_store_props);
+        let store = T::new(&store, &store_options);
+
+        let &mut context = Self {
+            events,
+            store,
+            order,
+            changes: None,
+            pending,
+            symbols,
+        } & context.changes = if is_diffed {
+            Changes::new(&context, &changes)
+        } else {
+            None
+        };
+
+        &context
+    }
+
+    pub fn ensure<'b>(context: &ContextInput<T>, options: &Options<T>) -> Context<'b, T> {
+        Context::<T>::new(&context, &options)
+    }
+
+    /**
+     * Gets the actors from the store.
+     *
+     * @returns The actors from the store.
+     */
+    pub fn actors<'b>(&self) -> &'b Vec<Actor<'b>> {
+        let actors = self.get_actors(None, None);
+        match actors {
+            // Emitter(actors) => actors,
+            Some(actors) => &actors, //[0],
+            None => &Vec::new(),
         }
     }
 
-    /**
-    * Gets the actors from the store.
-    *
-    * @returns The actors from the store.
-    */
-    fn actors(&self) -> Vec<Actor> {
-        self.store.get_actors()
+    pub fn get_actors(&self, query: Option<&Query>, page_size: Option<i16>) -> &Vec<&Actor> {
+        self.store.get_actors(query, page_size)
     }
 
-    /**
-    * Spawns an actor with the given id and options.
-    *
-    * @param {string} id - The id of the actor to spawn.
-    * @param {Options} options - The options for spawning the actor.
-    */
-    fn spawn_actor(&mut self, id: String, options: Options) {
-        let Options { skip_pending, on_update, .. } = options;
-        let added = self.store.store_actor(id);
+    fn spawn_actor_op(&self, added: bool, id: &String, options: &Options<T>) {
+        let Options {
+            skip_pending,
+            on_update,
+            ..
+        } = options;
 
         if added {
             if !skip_pending && self.pending.is_some() {
-                self.pending.spawn_actor(id);
+                self.pending.spawn_actor(&id);
             }
 
-            if let Some(events) = &self.events {
-                events.emit("spawnActor", id);
+            if let Some(events) = self.events {
+                events.emit("spawnActor", &id);
             }
 
             if let Some(on_update_fn) = on_update {
@@ -100,21 +185,39 @@ impl Context {
     }
 
     /**
-    * Removes an actor with the given id and options.
-    *
-    * @param {string} id - The id of the actor to remove.
-    * @param {Options} options - The options for removing the actor.
-    */
-    fn remove_actor(&mut self, id: String, options: Options) {
-        let Options { skip_pending, on_update, .. } = options;
-        let removed = self.store.destroy_actor(id);
+     * Spawns an actor with the given id and options.
+     *
+     * @param {string} id - The id of the actor to spawn.
+     * @param {Options} options - The options for spawning the actor.
+     */
+    pub fn spawn_actor(&self, id: &String, options: &Options<T>) {
+        let Options {
+            is_async_storage, ..
+        } = options;
+        if is_async_storage {
+            let added = self.store.store_actor(&id);
+            let result = block_on(added);
+            self.spawn_actor_op(result, &id, &options);
+            return result;
+        }
+        let added = self.store.store_actor(&id);
+        self.spawn_actor_op(added, &id, &options);
+        return added;
+    }
+
+    fn remove_actor_op(&self, removed: bool, id: &String, options: &Options<T>) {
+        let Options {
+            skip_pending,
+            on_update,
+            ..
+        } = options;
 
         if removed {
             if !skip_pending && self.pending.is_some() {
                 self.pending.remove_actor(id);
             }
 
-            if let Some(events) = &self.events {
+            if let Some(events) = self.events {
                 events.emit("removeActor", id);
             }
 
@@ -125,22 +228,66 @@ impl Context {
     }
 
     /**
-    * Merges actors with the given payload and options.
-    *
-    * @param {string[]} payload - The payload of the actors to merge.
-    * @param {Options} options - The options for merging the actors.
-    */
-    fn merge_actors(&mut self, payload: Vec<String>, options: Options) {
-        let Options { actions, on_update, .. } = options;
+     * Removes an actor with the given id and options.
+     *
+     * @param {string} id - The id of the actor to remove.
+     * @param {Options} options - The options for removing the actor.
+     */
+    pub fn remove_actor(&self, id: &String, options: &Options<T>) {
+        let Options {
+            is_async_storage, ..
+        } = options;
+        if is_async_storage {
+            let removed = self.store.destroy_actor(&id);
+            let result = block_on(removed);
+            self.remove_actor_op(result, &id, &options);
+            return result;
+        }
+        let removed = self.store.destroy_actor(&id);
+        self.remove_actor_op(removed, &id, &options);
+        return removed;
+    }
 
-        let next_options = Options {
+    /**
+     * Merges actors with the given payload and options.
+     *
+     * @param {string[]} payload - The payload of the actors to merge.
+     * @param {Options} options - The options for merging the actors.
+     */
+    pub fn merge_actors(&self, payload: &Vec<&String>, options: &Options<T>) {
+        let Options {
             actions,
-            on_update: None,
-            ..options
-        };
+            is_async_storage,
+            on_update,
+            ..
+        } = options;
 
-        for id in payload {
-            actions.spawn_actor(id, self, next_options);
+        let next_options = options.extend(
+            &Options {
+                // actions,
+                on_update: None,
+                ..options
+            },
+            None,
+        );
+
+        let spawn_actor = actions.get("spawnActor");
+
+        if is_async_storage {
+            let mut futures = FuturesUnordered::<Pin<Box<dyn Future<Output = String>>>>::new();
+
+            for id in payload {
+                let future = spawn_actor(&id, &self, &next_options);
+                futures.push(Box::pin(future));
+            }
+
+            // wait for all futures to complete
+            let promise = self.finish_futures(futures);
+            block_on(promise);
+        } else {
+            for id in payload {
+                spawn_actor(&id, &self, &next_options);
+            }
         }
 
         if let Some(on_update_fn) = on_update {
@@ -148,32 +295,49 @@ impl Context {
         }
     }
 
-    /**
-    * Gets the entities from the store.
-    *
-    * @returns The entities from the store.
-    */
-    fn entities(&self) -> Vec<any> {
-        self.store.get_entities()
+    async fn finish_futures(
+        &self,
+        mut futures_unordered: FuturesUnordered<Pin<Box<dyn Future<Output = String>>>>,
+    ) {
+        while let Some(_value) = futures_unordered.next().await {}
     }
 
     /**
-    * Creates an entity with the given id and options.
-    *
-    * @param {string} id - The id of the entity to create.
-    * @param {Options} options - The options for creating the entity.
-    */
-    fn create_entity(&mut self, id: String, options: Options) {
-        let Options { skip_pending, on_update, .. } = options;
-        let added = self.store.store_entity(id);
+     * Gets the entities from the store.
+     *
+     * @returns The entities from the store.
+     */
+    fn entities(&self) -> &Vec<&Vec<&String>> {
+        let entities = self.get_entities(None, None);
+        match entities {
+            // Emitter(entities) => entities,
+            Some(entities) => &entities, //[0],
+            None => &Vec::new(),
+        }
+    }
+
+    pub fn get_entities(
+        &self,
+        query: Option<&Query>,
+        page_size: Option<i16>,
+    ) -> &Vec<&Vec<&String>> {
+        self.store.get_entities(&query, page_size)
+    }
+
+    fn create_entity_op(&self, added: bool, id: &String, options: &Options<T>) {
+        let Options {
+            skip_pending,
+            on_update,
+            ..
+        } = options;
 
         if added {
             if !skip_pending && self.pending.is_some() {
-                self.pending.create_entity(id);
+                self.pending.create_entity(&id);
             }
 
-            if let Some(events) = &self.events {
-                events.emit("createEntity", id);
+            if let Some(events) = self.events {
+                events.emit("createEntity", &id);
             }
 
             if let Some(on_update_fn) = on_update {
@@ -183,22 +347,41 @@ impl Context {
     }
 
     /**
-    * Removes an entity with the given id and options.
-    *
-    * @param {string} id - The id of the entity to remove.
-    * @param {Options} options - The options for removing the entity.
-    */
-    fn remove_entity(&mut self, id: String, options: Options) {
-        let Options { skip_pending, on_update, .. } = options;
-        let removed = self.store.destroy_entity(id);
+     * Creates an entity with the given id and options.
+     *
+     * @param {string} id - The id of the entity to create.
+     * @param {Options} options - The options for creating the entity.
+     */
+    pub fn create_entity(&self, id: &String, options: &Options<T>) {
+        let Options {
+            is_async_storage, ..
+        } = options;
+        if is_async_storage {
+            let added = self.store.store_entity(&id);
+            let result = block_on(added);
+            self.create_entity_op(result, &id, &options);
+            return result;
+        }
+        let added = self.store.store_entity(&id);
+        self.create_entity_op(added, &id, &options);
+        return added;
+    }
+
+    fn remove_entity_op(&self, id: &String, options: &Options<T>) {
+        let Options {
+            skip_pending,
+            on_update,
+            ..
+        } = options;
+        let removed = self.store.destroy_entity(&id);
 
         if removed {
             if !skip_pending && self.pending.is_some() {
-                self.pending.remove_entity(id);
+                self.pending.remove_entity(&id);
             }
 
-            if let Some(events) = &self.events {
-                events.emit("removeEntity", id);
+            if let Some(events) = self.events {
+                events.emit("removeEntity", &id);
             }
 
             if let Some(on_update_fn) = on_update {
@@ -208,22 +391,66 @@ impl Context {
     }
 
     /**
-    * Merges entities with the given payload and options.
-    *
-    * @param {string[]} payload - The payload of the entities to merge.
-    * @param {Options} options - The options for merging the entities.
-    */
-    fn merge_entities(&mut self, payload: Vec<String>, options: Options) {
-        let Options { actions, on_update, .. } = options;
+     * Removes an entity with the given id and options.
+     *
+     * @param {string} id - The id of the entity to remove.
+     * @param {Options} options - The options for removing the entity.
+     */
+    pub fn remove_entity(&self, id: &String, options: &Options<T>) {
+        let Options {
+            is_async_storage, ..
+        } = options;
+        if is_async_storage {
+            let removed = self.store.destroy_entity(&id);
+            let result = block_on(removed);
+            self.remove_entity_op(&id, &options);
+            return result;
+        }
+        let removed = self.store.destroy_entity(&id);
+        self.remove_entity_op(&id, &options);
+        return removed;
+    }
 
-        let next_options = Options {
+    /**
+     * Merges entities with the given payload and options.
+     *
+     * @param {string[]} payload - The payload of the entities to merge.
+     * @param {Options} options - The options for merging the entities.
+     */
+    pub fn merge_entities(&self, payload: &Vec<&String>, options: &Options<T>) {
+        let Options {
             actions,
-            on_update: None,
-            ..options
-        };
+            is_async_storage,
+            on_update,
+            ..
+        } = options;
 
-        for id in payload {
-            actions.create_entity(id, self, next_options);
+        let next_options = options.extend(
+            &Options {
+                // actions,
+                on_update: None,
+                ..options
+            },
+            None,
+        );
+
+        let create_entity = actions.get("createEntity");
+
+        if is_async_storage {
+            let mut futures = FuturesUnordered::<Pin<Box<dyn Future<Output = String>>>>::new();
+
+            for id in payload {
+                let future = create_entity(&id, &self, &next_options);
+                futures.push(Box::pin(future));
+            }
+
+            // wait for all futures to complete
+            let promise = self.finish_futures(futures);
+            block_on(promise);
+        } else {
+            for id in payload {
+                create_entity(&id, &self, &next_options);
+            }
         }
 
         if let Some(on_update_fn) = on_update {
@@ -231,25 +458,25 @@ impl Context {
         }
     }
 
-    /**
-    * Gets the components from the store.
-    *
-    * @returns The components from the store.
-    */
-    fn get_components(&self) -> HashMap<String, HashMap<String, Value>> {
-        self.store.get_components()
+    pub fn components(&self) -> &HashMap<&String, &HashMap<&String, &Value>> {
+        self.get_components()
     }
 
     /**
-    * Changes a component with the given id, key, value, and options.
-    *
-    * @param {string} id - The id of the component to change.
-    * @param {string} key - The key of the component to change.
-    * @param {any} value - The value to change in the component.
-    * @param {Options} options - The options for changing the component.
-    */
-    fn change_component(&mut self, id: String, key: String, value: Value, options: Options) {
-        let Options { skip_pending, on_update, .. } = options;
+     * Gets the components from the store.
+     *
+     * @returns The components from the store.
+     */
+    pub fn get_components(&self) -> &HashMap<&String, &HashMap<&String, &Value>> {
+        self.store.get_components()
+    }
+
+    fn change_component_op(&self, id: &String, key: &String, value: &Value, options: &Options<T>) {
+        let Options {
+            skip_pending,
+            on_update,
+            ..
+        } = options;
 
         let current_value = self.store.fetch_component(&id, &key);
 
@@ -259,11 +486,11 @@ impl Context {
             "updated"
         };
 
-        if self.ticks.is_some() {
+        if self.order.is_some() {
             // TODO: add tick to message payload when is_ticked is true
             let tick = 0;
             // let tick = arguments[3];
-            let is_valid_tick = self.ticks.change_component(&id, &key, tick);
+            let is_valid_tick = self.order.change_component(&id, &key, tick);
             if !is_valid_tick && self.changes.is_none() {
                 return;
             }
@@ -274,11 +501,12 @@ impl Context {
             next_value = value;
         } else {
             let combined = combine_values(current_value.unwrap(), value);
-            next_value = combined.1;
+            next_value = &combined.1;
         }
 
         if self.changes.is_some() {
-            self.changes.change_component(pending_type, &id, &key, next_value);
+            self.changes
+                .change_component(pending_type, &id, &key, next_value);
         } else {
             self.store.store_component(&id, &key, next_value);
         }
@@ -288,7 +516,7 @@ impl Context {
         }
 
         if let Some(events) = &self.events {
-            events.emit("changeComponent", &id, &key);
+            events.emit("changeComponent", (&id, &key));
         }
 
         if let Some(on_update_fn) = on_update {
@@ -297,15 +525,40 @@ impl Context {
     }
 
     /**
-    * Upserts a component with the given id, key, value, and options.
-    *
-    * @param {string} id - The id of the component to upsert.
-    * @param {string} key - The key of the component to upsert.
-    * @param {any} value - The value to upsert in the component.
-    * @param {Options} options - The options for upserting the component.
-    */
-    fn upsert_component(&mut self, id: String, key: String, value: Value, options: Options) {
-        let Options { skip_pending, on_update, .. } = options;
+     * Changes a component with the given id, key, value, and options.
+     *
+     * @param {string} id - The id of the component to change.
+     * @param {string} key - The key of the component to change.
+     * @param {any} value - The value to change in the component.
+     * @param {Options} options - The options for changing the component.
+     */
+    pub fn change_component(
+        &self,
+        id: String,
+        key: String,
+        value: Value,
+        tick: i32,
+        options: Options<T>,
+    ) {
+        let Options {
+            is_async_storage, ..
+        } = options;
+        if is_async_storage {
+            let result = block_on(self.store.store_component(id, key, value));
+            self.change_component_op(&id, &key, &value, &options);
+            return result;
+        }
+        let result = self.store.store_component(id, key, value);
+        self.change_component_op(&id, &key, &value, &options);
+        return result;
+    }
+
+    fn upsert_component_op(&self, id: String, key: String, value: Value, options: Options<T>) {
+        let Options {
+            skip_pending,
+            on_update,
+            ..
+        } = options;
 
         let current_value = self.store.fetch_component(&id, &key);
 
@@ -316,18 +569,19 @@ impl Context {
         };
 
         if current_value != Some(value) {
-            if self.ticks.is_some() {
+            if self.order.is_some() {
                 // TODO: add tick to message payload when is_ticked is true
                 let tick = 0;
                 // let tick = arguments[3];
-                let is_valid_tick = self.ticks.upsert_component(&id, &key, tick);
+                let is_valid_tick = self.order.upsert_component(&id, &key, tick);
                 if !is_valid_tick && self.changes.is_none() {
                     return;
                 }
             }
 
             if self.changes.is_some() {
-                self.changes.upsert_component(pending_type, &id, &key, value);
+                self.changes
+                    .upsert_component(pending_type, &id, &key, value);
             } else {
                 self.store.store_component(&id, &key, value);
             }
@@ -337,7 +591,7 @@ impl Context {
             }
 
             if let Some(events) = &self.events {
-                events.emit("upsertComponent", &id, &key);
+                events.emit("upsertComponent", (&id, &key));
             }
 
             if let Some(on_update_fn) = on_update {
@@ -347,14 +601,40 @@ impl Context {
     }
 
     /**
-    * Removes a component with the given id, key, and options.
-    *
-    * @param {string} id - The id of the component to remove.
-    * @param {string} key - The key of the component to remove.
-    * @param {Options} options - The options for removing the component.
-    */
-    fn remove_component(&mut self, id: String, key: String, options: Options) {
-        let Options { skip_pending, on_update, .. } = options;
+     * Upserts a component with the given id, key, value, and options.
+     *
+     * @param {string} id - The id of the component to upsert.
+     * @param {string} key - The key of the component to upsert.
+     * @param {any} value - The value to upsert in the component.
+     * @param {Options} options - The options for upserting the component.
+     */
+    pub fn upsert_component(
+        &self,
+        id: &String,
+        key: &String,
+        value: &Value,
+        tick: i32,
+        options: Options<T>,
+    ) {
+        let Options {
+            is_async_storage, ..
+        } = options;
+        if is_async_storage {
+            let result = block_on(self.store.store_component(&id, &key, &value));
+            self.upsert_component_op(&id, &key, &value, &options);
+            return result;
+        }
+        let result = self.store.store_component(&id, &key, &value);
+        self.upsert_component_op(&id, &key, &value, &options);
+        return result;
+    }
+
+    fn remove_component_op(&self, id: &String, key: &String, options: &Options<T>) {
+        let Options {
+            skip_pending,
+            on_update,
+            ..
+        } = options;
 
         let current_value = self.store.fetch_component(&id, &key);
 
@@ -366,7 +646,7 @@ impl Context {
             }
 
             if let Some(events) = &self.events {
-                events.emit("removeComponent", &id, &key);
+                events.emit("removeComponent", (&id, &key));
             }
 
             if let Some(on_update_fn) = on_update {
@@ -376,50 +656,92 @@ impl Context {
     }
 
     /**
-    * Merges components with the given payload and options.
-    *
-    * @param {any} payload - The payload of the components to merge.
-    * @param {Options} options - The options for merging the components.
-    */
-    fn merge_components(&mut self, payload: HashMap<String, HashMap<String, Value>>, options: Options) {
-        let Options { actions, on_update, is_component_relay, .. } = options;
-
-        let next_options = Options {
-            actions,
-            on_update: None,
-            is_component_relay,
-            ..options
-        };
-
-        for (id, component_map) in payload {
-            for (key, value) in component_map {
-                actions.upsert_component(id.clone(), key.clone(), value, self, next_options);
-            }
+     * Removes a component with the given id, key, and options.
+     *
+     * @param {string} id - The id of the component to remove.
+     * @param {string} key - The key of the component to remove.
+     * @param {Options} options - The options for removing the component.
+     */
+    pub fn remove_component(&self, id: String, key: String, options: Options<T>) {
+        let Options {
+            is_async_storage, ..
+        } = options;
+        if is_async_storage {
+            let result = block_on(self.store.destroy_component(id, key));
+            self.remove_component_op(&id, &key, &options);
+            return result;
         }
-
-        if let Some(on_update_fn) = on_update {
-            on_update_fn();
-        }
+        let result = self.store.destroy_component(id, key);
+        self.remove_component_op(&id, &key, &options);
+        return result;
     }
 
     /**
-    * Gets the inputs from the store.
-    *
-    * @returns The inputs from the store.
-    */
-    fn get_inputs(&self) -> Inputs {
+     * Merges components with the given payload and options.
+     *
+     * @param {any} payload - The payload of the components to merge.
+     * @param {Options} options - The options for merging the components.
+     */
+    pub fn merge_components(
+        &self,
+        payload: &HashMap<String, HashMap<String, Value>>,
+        options: &Options<T>,
+    ) {
+        let Options {
+            actions,
+            is_async_storage,
+            is_component_relay,
+            on_update,
+            ..
+        } = options;
+        let next_options = options.extend(
+            &Options {
+                // actions,
+                skip_pending: is_component_relay,
+                on_update: None,
+                ..options
+            },
+            None,
+        );
+        if is_async_storage {
+            let mut futures = FuturesUnordered::<Pin<Box<dyn Future<Output = String>>>>::new();
+
+            for (id, components) in payload {
+                for (key, value) in components {
+                    let future = self
+                        .store
+                        .store_component(id.clone(), key.clone(), value.clone());
+                    futures.push(Box::pin(future));
+                }
+            }
+            let result = block_on(self.store.store_components(payload));
+            self.merge_components_op(result, options);
+            return result;
+        }
+        let result = self.store.store_components(payload);
+        self.merge_components_op(result, options);
+        return result;
+    }
+
+    fn inputs(&self) -> Inputs {
+        self.get_inputs()
+    }
+
+    /**
+     * Gets the inputs from the store.
+     *
+     * @returns The inputs from the store.
+     */
+    pub fn get_inputs(&self) -> Inputs {
         self.store.get_inputs()
     }
 
-    /**
-    * Handles actor input with the given id, payload, and options.
-    *
-    * @param {string} id - The id of the actor.
-    * @param {any} payload - The payload for the actor input.
-    * @param {Options} options - The options for handling the actor input.
-    */
-    fn actor_input(&mut self, id: String, payload: Value, options: Options) {
-        let Options { skip_pending, on_update, .. } = options;
+    fn actor_input_op(&mut self, id: String, payload: Value, options: Options<T>) {
+        let Options {
+            skip_pending,
+            on_update,
+            ..
+        } = options;
 
         let new_index = self.store.store_input(id.clone(), payload);
 
@@ -428,43 +750,33 @@ impl Context {
         }
 
         if let Some(events) = &self.events {
-            events.emit("actorInput", &id, &payload, new_index);
+            events.emit("actorInput", (&id, &payload, new_index));
         }
 
         if let Some(on_update_fn) = on_update {
             on_update_fn();
         }
     }
-}
 
-/**
- * The ContextWithSymbols struct extends the Context struct with symbols and pending properties.
- */
-pub struct ContextWithSymbols {
-    symbols: Symbols,
-    pending: PendingWithSymbols,
-}
-
-impl ContextWithSymbols {
     /**
-     * Constructs a new instance of the ContextWithSymbols struct.
+     * Handles actor input with the given id, payload, and options.
+     *
+     * @param {string} id - The id of the actor.
+     * @param {any} payload - The payload for the actor input.
+     * @param {Options} options - The options for handling the actor input.
      */
-    pub fn new(context: ContextProps, options: ContextOptions) -> Self {
-        let mut symbols = Symbols::new();
-        let enum_default_symbols = options.enum_default_symbols;
-
-        if let Some(symbols_list) = context.symbols {
-            symbols.copy_enum(enum_default_symbols);
-            symbols.reset(symbols_list);
-        } else {
-            symbols.copy_enum(enum_default_symbols);
+    pub fn actor_input(&mut self, id: String, payload: Value, tick: i32, options: Options<T>) {
+        let Options {
+            is_async_storage, ..
+        } = options;
+        if is_async_storage {
+            let result = block_on(self.store.store_input(id, payload));
+            self.actor_input_op(id, payload, options);
+            return result;
         }
-
-        Self {
-            symbols,
-            pending: PendingWithSymbols::new(),
-            ..Context::new(context, options)
-        }
+        let result = self.store.store_input(id, payload);
+        self.actor_input_op(id, payload, options);
+        return result;
     }
 
     /**
@@ -491,11 +803,13 @@ impl ContextWithSymbols {
     /**
      * Gets a symbol with the given index and options.
      */
-    pub fn get_symbol(&self, index: i32, options: Options) -> Option<String> {
+    pub fn get_symbol(&self, index: i32, options: Options<T>) -> Option<String> {
         let symbol = self.symbols.get(index);
+        let actions = options.actions;
 
         if symbol.is_none() {
-            let symbol_tuple = actions.fetch_symbol(symbol, self, options);
+            let fetch_symbol = actions.get("fetch_symbol");
+            let symbol_tuple = fetch_symbol(symbol, self, options);
             return Some(symbol_tuple.0);
         }
 
@@ -505,7 +819,7 @@ impl ContextWithSymbols {
     /**
      * Adds a symbol with the given symbol and options.
      */
-    pub fn add_symbol(&mut self, symbol: String, options: Options) -> Option<i32> {
+    pub fn add_symbol(&mut self, symbol: String, options: Options<T>) -> Option<i32> {
         let enum_symbols = self.symbols_enum();
         let mut index = enum_symbols.get(&symbol).cloned().unwrap_or(-1);
 
@@ -536,7 +850,12 @@ impl ContextWithSymbols {
     /**
      * Fetches a symbol with the given payload, options, and match function.
      */
-    pub fn fetch_symbol(&mut self, payload: String, options: Options, on_match: fn(symbol_tuple: (String, i32))) -> (String, i32) {
+    pub fn fetch_symbol(
+        &mut self,
+        payload: String,
+        options: Options<T>,
+        on_match: fn(symbol_tuple: (String, i32)),
+    ) -> (String, i32) {
         let symbol_tuple = self.symbols.fetch(payload);
 
         if let Some(symbol) = symbol_tuple.0 {
@@ -566,10 +885,13 @@ impl ContextWithSymbols {
     /**
      * Merges a symbol with the given payload and options.
      */
-    pub fn merge_symbol(&mut self, payload: String, options: Options) {
+    pub fn merge_symbol(&mut self, payload: String, options: Options<T>) {
         self.symbols.merge(payload);
 
-        if (options.is_symbol_leader || options.is_symbol_relay) && !options.skip_pending && self.pending.is_some() {
+        if (options.is_symbol_leader || options.is_symbol_relay)
+            && !options.skip_pending
+            && self.pending.is_some()
+        {
             self.pending.add_symbol(payload);
         }
 
@@ -581,64 +903,18 @@ impl ContextWithSymbols {
     /**
      * Resets symbols with the given payload and options.
      */
-    pub fn reset_symbols(&mut self, payload: String, options: Options) {
+    pub fn reset_symbols(&mut self, payload: String, options: Options<T>) {
         self.symbols.reset(payload);
 
-        if (options.is_symbol_leader || options.is_symbol_relay) && !options.skip_pending && self.pending.is_some() {
+        if (options.is_symbol_leader || options.is_symbol_relay)
+            && !options.skip_pending
+            && self.pending.is_some()
+        {
             self.pending.replace_symbols(payload);
         }
 
         if let Some(on_update) = options.on_update {
             on_update();
-        }
-    }
-}
-
-/**
- * The ContextWithPending struct extends the Context struct.
- * It includes additional functionality for handling pending operations.
- */
-pub struct ContextWithPending {
-    pending: Pending,
-}
-
-impl ContextWithPending {
-    /**
-     * Constructs a new instance of the ContextWithPending struct.
-     */
-    pub fn new(context: ContextProps, options: Options) -> Self {
-        Self {
-            pending: Pending::new(),
-            ..Context::new(context, options)
-        }
-    }
-
-    /**
-     * Resets the pending state.
-     */
-    pub fn reset_pending(&mut self) {
-        self.pending.reset_pending();
-    }
-}
-
-/**
- * The ContextWithPendingAndSymbols struct extends the ContextWithSymbols struct.
- * It includes additional functionality for handling pending operations and symbols.
- */
-pub struct ContextWithPendingAndSymbols {
-    symbols: Symbols,
-    pending: PendingWithSymbols,
-}
-
-impl ContextWithPendingAndSymbols {
-    /**
-     * Constructs a new instance of the ContextWithPendingAndSymbols struct.
-     */
-    pub fn new(context: ContextProps, options: Options) -> Self {
-        Self {
-            symbols: Symbols::new(),
-            pending: PendingWithSymbols::new(),
-            ..ContextWithSymbols::new(context, options)
         }
     }
 

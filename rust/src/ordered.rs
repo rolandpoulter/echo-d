@@ -1,28 +1,27 @@
-// use std::collections::HashMap;
-use rustc_hash::HashMap;
+use chrono::Utc;
+
+use crate::hash::HashMap;
 
 /**
- * The TicksData struct represents a mapping from keys to tick values.
+ * The OrderedData struct represents a mapping from keys to tick values.
  */
-struct TicksData {
-    data: HashMap<String, HashMap<String, i32>>,
-}
+type OrderedData = HashMap<u64, u32>;
 
 /**
- * The Ticks struct represents a collection of tick values.
+ * The Ordered struct represents a collection of tick values.
  */
-struct Ticks {
-    ticks: TicksData,
+pub struct Ordered<'a> {
+    ticks: &'a OrderedData,
 }
 
-impl Ticks {
+impl<'a> Ordered<'a> {
     /**
-     * Constructs a new Ticks object.
+     * Constructs a new Ordered object.
      *
-     * @param {TicksData} ticks - The initial tick values.
+     * @param {OrderedData} ticks - The initial tick values.
      */
-    fn new(ticks: TicksData) -> Self {
-        Ticks { ticks }
+    pub fn new(ticks: &OrderedData) -> Self {
+        Ordered { ticks }
     }
 
     /**
@@ -33,17 +32,17 @@ impl Ticks {
      * @param {i32} tick - The new tick value.
      * @returns {bool} Whether the operation was successful.
      */
-    fn change_component(&mut self, id: String, key: String, tick: i32) -> bool {
+    pub fn change_component(&mut self, id: String, key: String, tick: i32) -> bool {
         self.upsert_component(id, key, tick)
     }
 
     /**
      * Resets the tick values.
      *
-     * @param {TicksData} ticks - The new tick values.
-     * @returns {Ticks} The Ticks object.
+     * @param {OrderedData} ticks - The new tick values.
+     * @returns {Ordered} The Ordered object.
      */
-    fn reset(&mut self, ticks: TicksData) {
+    pub fn reset(&mut self, ticks: &OrderedData) {
         self.ticks = ticks;
     }
 
@@ -55,13 +54,13 @@ impl Ticks {
      * @param {i32} tick - The new tick value.
      * @returns {bool} Whether the operation was successful.
      */
-    fn upsert_component(&mut self, id: String, key: String, tick: i32) -> bool {
+    pub fn upsert_component(&mut self, id: String, key: String, tick: i32) -> bool {
         let component = self.ticks.data.entry(id).or_insert(HashMap::new());
         match component.get(&key) {
             Some(existing_tick) => {
                 if existing_tick < &tick {
                     let threshold = 0;
-                    if tick > (chrono::Utc::now().timestamp() + threshold) {
+                    if tick > (Utc::now().timestamp() + threshold) {
                         return false;
                     }
                     component.insert(key, tick);
