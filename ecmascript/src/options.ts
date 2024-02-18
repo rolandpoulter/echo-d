@@ -33,12 +33,13 @@ import { UpdateOptions } from './updater'
  * @property {Function} setGroupedValue - A function to set the value in a group.
  * @property {Object} storeOptions - An object containing the store options.
  * @property {Object} updateOptions - An object containing the valid keys for updates and any other options.
- * @property {any} worldOptions - An object containing the world options.
- */
+*/
+//* @property {any} worldOptions - An object containing the world options.
 export interface OptionsProps {
     actions?: {
         addSymbol?: Function;
         getSymbol?: Function;
+        [key: string]: Function | undefined;
     };
     batchActionPayloadSizes?: Object;
     compressStringsAsInts?: boolean;
@@ -66,7 +67,7 @@ export interface OptionsProps {
     setGroupedValue?: Function;
     storeOptions?: Object;
     updateOptions?: UpdateOptions;
-    worldOptions?: any;
+    // worldOptions?: any;
     // [key: string]: any;
 }
 
@@ -105,7 +106,7 @@ export class Options {
     setGroupedValue: Function;
     storeOptions: Object;
     updateOptions: UpdateOptions;
-    worldOptions: any;
+    // worldOptions: any;
     // [key: string]: any;
 
     /**
@@ -154,7 +155,7 @@ export class Options {
             setGroupedValue = Constants.defaultSetGroupedValue,
             storeOptions = {},
             updateOptions: overridenUpdateOptions = {},
-            worldOptions = null,
+            // worldOptions = null,
 
             // ...otherOptions
         } = options
@@ -198,7 +199,7 @@ export class Options {
         this.setGroupedValue = setGroupedValue
         this.storeOptions = storeOptions
         this.updateOptions = updateOptions as UpdateOptions
-        this.worldOptions = worldOptions
+        // this.worldOptions = worldOptions
         // Object.assign(this, otherOptions)
     }
 

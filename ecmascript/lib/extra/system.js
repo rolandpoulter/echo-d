@@ -11,7 +11,8 @@ export class System {
         this.components = components;
     }
     query() {
-        this.entities = System.query(this.handler, { with: this.components, without: this.exclude });
+        const entiteis = System.query(this.handler, { with: this.components, without: this.exclude });
+        this.entities = entiteis;
         return this.entities;
     }
     execute(fn, data = null) {

@@ -103,6 +103,7 @@ export class Emitter {
         if (index !== -1) {
             this.handlers.splice(index, 1);
         }
+        this.cleanup();
     }
     /**
      * Removes an emission from the Emitter.
@@ -114,6 +115,7 @@ export class Emitter {
         if (index !== -1) {
             this.emissions.splice(index, 1);
         }
+        this.cleanup();
     }
 }
 export default Emitter;

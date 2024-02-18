@@ -4,7 +4,7 @@ import { Context } from '../context';
 import { Storage } from '../storage';
 
 export class System {
-    static query (handler: Handler, query: any): Set<any> {
+    static query (handler: Handler, query: any):  Promise<Set<any>> | Set<any> {
         return handler.queryComponents(query)
     }
 
@@ -22,7 +22,8 @@ export class System {
     }
     
     query() {
-        this.entities = System.query(this.handler, { with: this.components, without: this.exclude })
+        const entiteis = System.query(this.handler, { with: this.components, without: this.exclude })
+        this.entities = entiteis as Set<any>
         return this.entities
     }
     

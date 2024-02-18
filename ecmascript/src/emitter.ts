@@ -117,6 +117,7 @@ export class Emitter<T> {
         if (index !== -1) {
             this.handlers.splice(index, 1)
         }
+        this.cleanup()
     }
 
     /**
@@ -129,6 +130,7 @@ export class Emitter<T> {
         if (index !== -1) {
             this.emissions.splice(index, 1)
         }
+        this.cleanup()
     }
 }
 

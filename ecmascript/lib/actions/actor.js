@@ -88,7 +88,7 @@ export const ActorActionsFactory = (Parent = Object) => class ActorActions exten
      */
     removeActor(id, context, options) {
         options = options = Options.ensure(options, this);
-        const { skipPending, getActorId, compressStringsAsInts } = options;
+        const { getActorId, compressStringsAsInts } = options;
         id = getActorId(id, context);
         if (id === undefined || id === null || id === '') {
             return;
@@ -99,7 +99,7 @@ export const ActorActionsFactory = (Parent = Object) => class ActorActions exten
                 return;
             }
         }
-        context.removeActor(id, skipPending);
+        context.removeActor(id, options);
     }
     /**
      * Spawns a new actor in the current context.
@@ -110,18 +110,18 @@ export const ActorActionsFactory = (Parent = Object) => class ActorActions exten
      */
     spawnActor(id, context, options) {
         options = options = Options.ensure(options, this);
-        const { skipPending, getActorId, compressStringsAsInts } = options;
+        const { getActorId, compressStringsAsInts } = options;
         id = getActorId(id, context);
         if (id === undefined || id === null || id === '') {
-            return;
+            return false;
         }
         if (compressStringsAsInts) {
             id = extractSymbol(id, context, options);
             if (id === '') {
-                return;
+                return false;
             }
         }
-        context.spawnActor(id, skipPending);
+        return context.spawnActor(id, options);
     }
 };
 /**

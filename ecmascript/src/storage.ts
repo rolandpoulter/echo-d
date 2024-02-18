@@ -108,6 +108,10 @@ export interface StorageInterface {
     storeId(list: Map<string, string> | any, id: string): Promise<boolean> | boolean;
 
     storeInput(id: string, input: any, tick: number): Promise<number> | number;
+
+    queryComponents(query: any): Promise<Set<any>> | Set<any>;
+    removeComponentsIndex(id: string, key: string, prevValue: any): Promise<void> | void;
+    updateComponentsIndex(id: string, key: string, prevValue: any, value: any): Promise<void> | void;
 }
 
 // export {

@@ -103,7 +103,7 @@ export const ActorActionsFactory = (Parent: any = Object): any => class ActorAct
      */
     removeActor(id: any, context: Context, options: Options | any) {
         options = options = Options.ensure(options, this)
-        const { skipPending, getActorId, compressStringsAsInts } = options
+        const { getActorId, compressStringsAsInts } = options
 
         id = getActorId(id, context)
         if (id === undefined || id === null || id === '') { return }
@@ -113,7 +113,7 @@ export const ActorActionsFactory = (Parent: any = Object): any => class ActorAct
             if (id === '') { return }
         }
 
-        context.removeActor(id, skipPending)
+        context.removeActor(id, options)
     }
 
     /**
@@ -123,19 +123,19 @@ export const ActorActionsFactory = (Parent: any = Object): any => class ActorAct
      * @param {Context} context - The current context in which the actor is to be spawned.
      * @param {OptionsExtended | any} options - The options for spawning the actor. If an instance of Options is not provided, a new one will be created.
      */
-    spawnActor(id: any, context: Context, options: Options | any) {
+    spawnActor(id: any, context: Context, options: Options | any): Promise<boolean> | boolean {
         options = options = Options.ensure(options, this)
-        const { skipPending, getActorId, compressStringsAsInts } = options
+        const { getActorId, compressStringsAsInts } = options
 
         id = getActorId(id, context)
-        if (id === undefined || id === null || id === '') { return }
+        if (id === undefined || id === null || id === '') { return false }
 
         if (compressStringsAsInts) {
             id = extractSymbol(id, context, options)
-            if (id === '') { return }
+            if (id === '') { return false }
         }
 
-        context.spawnActor(id, skipPending)
+        return context.spawnActor(id, options)
     }
 }
 

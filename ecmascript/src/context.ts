@@ -4,8 +4,7 @@ import { Options } from './options'
 import { Ordered } from './ordered'
 import { Pending } from './pending'
 import { Symbols } from './symbols'
-import { Storage, Components, Inputs } from './storage'
-import { AsyncStorage } from './storage/async'
+import { Storage, StorageInterface, Components, Inputs } from './storage'
 import { combineValues, now } from './utils'
 import { InputPayload } from './actions/actor'
 import { allActions } from './node'
@@ -35,14 +34,14 @@ interface ContextProps {
  * The Context class provides methods for managing the context.
 *
 * @property {any} events - The events.
-* @property {AsyncStorage | Storage} store - The store.
+* @property {StorageInterface} store - The store.
 * @property {Ordered | null} order - The order.
 * @property {Changes | null} changes - The changes.
 * @property {Pending | null} pending - The pending.
 */
 export class Context {
     declare events: any;
-    declare store: AsyncStorage | Storage;
+    declare store: StorageInterface;
     declare order: Ordered | null;
     declare changes: Changes | null;
     declare pending: Pending | null;
@@ -102,12 +101,6 @@ export class Context {
             this.order = null
         }
 
-        if (isDiffed) {
-            this.changes = new Changes(this, changes)
-        } else {
-            this.changes = null
-        }
-
         if (compressStringsAsInts) {
             if (symbols) {
                 this.symbols = new Symbols(symbols)
@@ -131,6 +124,12 @@ export class Context {
             types,
             indexes: enableQuerying ? indexes : null,
         })
+
+        if (isDiffed) {
+            this.changes = new Changes(this.store, changes)
+        } else {
+            this.changes = null
+        }
 
         // Object.assign(this, otherProps)
     }
@@ -169,7 +168,7 @@ export class Context {
         const { skipPending, isAsyncStorage, onUpdate } = options
         const addedOrPromise = this.store.storeActor(id)
 
-        const completeActorInput = (added: boolean) => {
+        const completeSpawnActor = (added: boolean) => {
             if (!added) {
                 return
             }
@@ -188,11 +187,11 @@ export class Context {
         }
 
         if (isAsyncStorage && addedOrPromise instanceof Promise) {
-            addedOrPromise.then(completeActorInput)
+            addedOrPromise.then(completeSpawnActor)
             return addedOrPromise as Promise<boolean>;
         }
 
-        completeActorInput(addedOrPromise as boolean)
+        completeSpawnActor(addedOrPromise as boolean)
         return addedOrPromise as boolean;
     }
 

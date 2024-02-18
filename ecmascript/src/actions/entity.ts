@@ -17,18 +17,18 @@ export const EntityActionsFactory = (Parent: any = Object): any => class EntityA
      * @param {Context} context - The current context in which the entity is to be created.
      * @param {Options | any} options - The options for creating the entity. If an instance of Options is not provided, a new one will be created.
      */
-    createEntity(id: any, context: Context, options: Options | any) {
+    createEntity(id: any, context: Context, options: Options | any): Promise<boolean> | boolean {  
         options = options = Options.ensure(options, this)
-        const { skipPending, compressStringsAsInts } = options
+        const { compressStringsAsInts } = options
 
-        if (id === undefined || id === null || id === '') { return }
+        if (id === undefined || id === null || id === '') { return false; }
 
         if (compressStringsAsInts) {
             id = extractSymbol(id, context, options)
-            if (id === '') { return }
+            if (id === '') { return false; }
         }
 
-        context.createEntity(id, skipPending)
+        return context.createEntity(id, options)
     }
 
     /**
@@ -81,7 +81,7 @@ export const EntityActionsFactory = (Parent: any = Object): any => class EntityA
      */
     removeEntity(id: any, context: Context, options: Options | any) {
         options = options = Options.ensure(options, this)
-        const { skipPending, compressStringsAsInts } = options
+        const { compressStringsAsInts } = options
 
         if (id === undefined || id === null || id === '') { return }
 
@@ -90,7 +90,7 @@ export const EntityActionsFactory = (Parent: any = Object): any => class EntityA
             if (id === '') { return }
         }
 
-        context.removeEntity(id, skipPending)
+        context.removeEntity(id, options)
     }
 }
 

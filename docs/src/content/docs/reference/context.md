@@ -58,7 +58,7 @@ ___
 ## Fields
 
 - `events: any`: The events.
-- `store: AsyncStorage | Storage`: The store.
+- `store: StorageInterface`: The store.
 - `order: Ordered | null`: The order.
 - `changes: Changes | null`: The changes.
 - `pending: Pending | null`: The pending.

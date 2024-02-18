@@ -2,20 +2,20 @@ import { typeOf } from './utils.js';
 /**
  * The Changes class provides methods for managing changes in a context.
  *
- * @property {Context} context - The context in which changes are to be managed.
+ * @property {StorageInterface} store - The storage in which changes are to be managed.
  * @property {Record<string, any>} diffs - The diffs of the changes.
  */
 export class Changes {
-    context;
+    store;
     diffs;
     /**
      * Creates a new instance of the Changes class.
      *
-     * @param {Context} context - The context in which changes are to be managed.
+     * @param {StorageInterface} store - The store in which changes are to be managed.
      * @param {ChangesInput} changes - An optional initial set of changes.
      */
-    constructor(context, changes) {
-        this.context = context;
+    constructor(store, changes) {
+        this.store = store;
         this.diffs = changes?.diffs || {};
     }
     /**
@@ -68,12 +68,12 @@ export class Changes {
      */
     upsertComponent(id, key, newValue, _prevValue, isAsyncStorage = false) {
         this.diffs[id] = this.diffs[id] || {};
-        const currentScopeOrPromise = this.context.store.findComponents(id);
+        const currentScopeOrPromise = this.store.findComponents(id);
         const promises = [];
         const completeUpsertComponent = (currentScope) => {
             if (currentScope === undefined || currentScope === null) {
                 this.diffs[id][key] = newValue;
-                const promise = this.context.store.storeComponent(id, key, newValue);
+                const promise = this.store.storeComponent(id, key, newValue);
                 if (isAsyncStorage && promise instanceof Promise) {
                     promises.push(promise);
                 }
@@ -133,7 +133,7 @@ export class Changes {
                 return [diff, currVal];
             };
             [diffObject, newValue] = recursiveDiff(key, diffObject, currentScope, newValue);
-            const promise = this.context.store.storeComponent(id, key, newValue);
+            const promise = this.store.storeComponent(id, key, newValue);
             if (isAsyncStorage && promise instanceof Promise) {
                 promises.push(promise);
             }

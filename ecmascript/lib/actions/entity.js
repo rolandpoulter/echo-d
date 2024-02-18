@@ -16,17 +16,17 @@ export const EntityActionsFactory = (Parent = Object) => class EntityActions ext
      */
     createEntity(id, context, options) {
         options = options = Options.ensure(options, this);
-        const { skipPending, compressStringsAsInts } = options;
+        const { compressStringsAsInts } = options;
         if (id === undefined || id === null || id === '') {
-            return;
+            return false;
         }
         if (compressStringsAsInts) {
             id = extractSymbol(id, context, options);
             if (id === '') {
-                return;
+                return false;
             }
         }
-        context.createEntity(id, skipPending);
+        return context.createEntity(id, options);
     }
     /**
      * Retrieves entities from the current context.
@@ -74,7 +74,7 @@ export const EntityActionsFactory = (Parent = Object) => class EntityActions ext
      */
     removeEntity(id, context, options) {
         options = options = Options.ensure(options, this);
-        const { skipPending, compressStringsAsInts } = options;
+        const { compressStringsAsInts } = options;
         if (id === undefined || id === null || id === '') {
             return;
         }
@@ -84,7 +84,7 @@ export const EntityActionsFactory = (Parent = Object) => class EntityActions ext
                 return;
             }
         }
-        context.removeEntity(id, skipPending);
+        context.removeEntity(id, options);
     }
 };
 /**

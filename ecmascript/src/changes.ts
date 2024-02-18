@@ -1,4 +1,4 @@
-import { Context } from './context'
+import { StorageInterface } from './storage'
 import { typeOf } from './utils'
 
 /**
@@ -13,21 +13,21 @@ interface ChangesInput {
 /**
  * The Changes class provides methods for managing changes in a context.
  *
- * @property {Context} context - The context in which changes are to be managed.
+ * @property {StorageInterface} store - The storage in which changes are to be managed.
  * @property {Record<string, any>} diffs - The diffs of the changes.
  */
 export class Changes {
-    private context: Context;
+    private store: StorageInterface;
     private diffs: Record<string, any>;
 
     /**
      * Creates a new instance of the Changes class.
      *
-     * @param {Context} context - The context in which changes are to be managed.
+     * @param {StorageInterface} store - The store in which changes are to be managed.
      * @param {ChangesInput} changes - An optional initial set of changes.
      */
-    constructor(context: Context, changes?: ChangesInput) {
-        this.context = context
+    constructor(store: StorageInterface, changes?: ChangesInput) {
+        this.store = store
         this.diffs = changes?.diffs || {}
     }
 
@@ -86,7 +86,7 @@ export class Changes {
      */
     upsertComponent(id: string, key: string, newValue: any, _prevValue: any, isAsyncStorage: boolean = false): Promise<any> | any {
         this.diffs[id] = this.diffs[id] || {}
-        const currentScopeOrPromise = this.context.store.findComponents(id)
+        const currentScopeOrPromise = this.store.findComponents(id)
 
         const promises: Promise<any>[] = [];
 
@@ -94,7 +94,7 @@ export class Changes {
             if (currentScope === undefined || currentScope === null) {
                 this.diffs[id][key] = newValue
 
-                const promise = this.context.store.storeComponent(id, key, newValue)
+                const promise: any = this.store.storeComponent(id, key, newValue)
                 if (isAsyncStorage && promise instanceof Promise) {
                     promises.push(promise)
                 }
@@ -163,7 +163,7 @@ export class Changes {
 
             [diffObject, newValue] = recursiveDiff(key, diffObject, currentScope, newValue)
 
-            const promise = this.context.store.storeComponent(id, key, newValue)
+            const promise: any = this.store.storeComponent(id, key, newValue)
             if (isAsyncStorage && promise instanceof Promise) {
                 promises.push(promise)
             }
