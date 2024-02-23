@@ -298,6 +298,9 @@ pub trait Store {
     }
 }
 
+pub trait StoreCtor {
+    fn new(self: &Self, props: StoreProps) -> &Self;
+}
 
 /**
  * The StoreProps struct represents the properties of a store.
@@ -319,7 +322,7 @@ pub struct Storage<'a> {
     inputs: &'a Inputs<'a>,
 }
 
-impl<'a> Storage<'a> {
+impl<'a> StoreCtor for Storage<'a> {
     fn new(self: &Self, props: StoreProps) -> &Self {
         let store = Box::<&dyn Store>::new(self);
         let store = create_store(store, props);

@@ -73,12 +73,12 @@ pub const PAD_ENUM: u16 = 0; // 10;
 /**
  * An enum of action names.
  */
-pub const ENUM_ACTIONS: EnumObject = create_enum(SetOrVec::<&String>::Vec(ACTIONS), PAD_ENUM);
+pub const ENUM_ACTIONS: EnumObject<&String, u32> = create_enum::<&String>(SetOrVec::<&String>::Vec(ACTIONS), PAD_ENUM);
 
 /**
  * An enum of common component names.
  */
-pub const ENUM_COMMON_COMPONENTS: EnumObject = create_enum::<String>(
+pub const ENUM_COMMON_COMPONENTS: EnumObject<&String, u32> = create_enum::<&String>(
     SetOrVec::<&String>::Vec(COMMON_COMPONENTS),
     ACTIONS.len() as u16 + PAD_ENUM,
 );
@@ -86,7 +86,7 @@ pub const ENUM_COMMON_COMPONENTS: EnumObject = create_enum::<String>(
 /**
  * An enum of default symbols.
  */
-pub const ENUM_DEFAULT_SYMBOLS: EnumObject =
+pub const ENUM_DEFAULT_SYMBOLS: EnumObject<&String, u32> =
     create_enum(SetOrVec::<&String>::Vec(DEFAULT_SYMBOLS), PAD_ENUM);
 
 /**

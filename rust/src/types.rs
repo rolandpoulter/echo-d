@@ -119,9 +119,9 @@ pub struct EntityPayload {
     // Define the properties of your payload here
 }
 
-pub type EnumObject<'a, T = String, I = u16> = HashMap<T, I>;
+pub type EnumObject<'a, T = String, I = u32> = HashMap<T, I>;
 
-pub type EnumDefaultSymbols<'a> = EnumObject<'a>;
+pub type EnumDefaultSymbols<'a> = EnumObject<'a, &'a String>;
 
 // #[derive(Clone)]
 // pub enum ExtendOptions<'a> {

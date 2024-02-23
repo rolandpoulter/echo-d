@@ -1,4 +1,4 @@
-use crate::storage::{create_store, Store, StoreProps};
+use crate::storage::{create_store, Store, StoreCtor, StoreProps};
 use crate::types::{Components, Inputs};
 
 pub struct AsyncStorage<'a> {
@@ -8,7 +8,7 @@ pub struct AsyncStorage<'a> {
     inputs: &'a Inputs<'a>,
 }
 
-impl<'a> AsyncStorage<'a> {
+impl<'a> StoreCtor for AsyncStorage<'a> {
     fn new(self: &Self, props: StoreProps) -> &Self {
         let store = Box::<&dyn Store>::new(self);
         let store = create_store(store, props);

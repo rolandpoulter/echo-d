@@ -85,6 +85,23 @@ impl<'a> Symbols<'a> {
         None
     }
 
+     /**
+     * Copies an enum into the Symbols object.
+     *
+     * @param {Enum} enumObj - The enum to be copied.
+     */
+    pub fn copy_enum(&self, enum_obj: &Enum) {
+        for symbol_tuple in enum_obj.values.iter() {
+            self.merge((symbol_tuple.0.to_string(), *symbol_tuple.1));
+        }
+    }
+
+    pub fn copy_enum_values(&self, values: &SymbolsHashMap) {
+        for symbol_tuple in values.iter() {
+            self.merge((symbol_tuple.0.to_string(), *symbol_tuple.1));
+        }
+    }
+
     /**
      * Fetches a symbol and its index based on a payload.
      *
@@ -129,6 +146,19 @@ impl<'a> Symbols<'a> {
     pub fn get_symbols(&self) -> &Vec<&String> {
         &self.list
     }
+
+    /**
+     * Merges a symbol tuple into the Symbols object.
+     *
+     * @param {[string, number]} symbolTuple - The symbol tuple to be merged.
+     */
+    pub fn merge(&mut self, symbol_tuple: (String, u32)) {
+        let (symbol, index) = symbol_tuple;
+
+        self.list.insert(index as usize, &symbol);
+        self.enum_obj.values.insert(&symbol, index);
+    }
+
 
     /**
      * Resets the Symbols object with a new vector of symbols.

@@ -10,6 +10,7 @@ use std::pin::Pin;
 use crate::changes::Changes;
 use crate::options::{Options, OptionsInput};
 use crate::pending::Pending;
+use crate::string::str;
 use crate::symbols::Symbols;
 // use crate::index_manager::IndexManager as Indexes;
 use crate::events::EventEmitter;
@@ -17,6 +18,7 @@ use crate::ordered::{Ordered, OrderedInput};
 use crate::storage::{
     // Storage,
     Store,
+    StoreCtor,
 };
 use crate::utils::combine_values;
 // use crate::actor::Actor;
@@ -66,7 +68,7 @@ impl<'a> Context<'a> {
     /**
      * Creates a new instance of the Context struct.
      */
-    pub fn new<T>(context: &ContextInput, options: &Options) -> Self {
+    pub fn new<T: Store + StoreCtor>(context: &ContextInput, options: &Options) -> Self {
         let props: ContextProps = match context {
             ContextInput::Props(props) => *props,
             ContextInput::Instance(context) => {
@@ -112,51 +114,47 @@ impl<'a> Context<'a> {
         let store_options = options.store_options;
 
         let order: Option<Ordered<'a>> = if is_ordered {
-            Some(Ordered::new(&OrderedInput::Instance(order.unwrap())))
+            Some(Ordered::new(&OrderedInput::Instance(&order.unwrap())))
         } else {
             None
         };
 
-        let symbols = if Some(symbols) {
-            Symbols::new(&symbols)
+        let symbols = if symbols.is_none() {
+            Symbols::new(&Vec::new())
         } else {
-            let symbols = Symbols::new(&symbols);
-            symbols.copy_enum(&enum_default_symbols);
+            let symbols = Symbols::new(&symbols.unwrap().list);
+            symbols.copy_enum_values(&enum_default_symbols);
             symbols
         };
 
         let pending = if is_read_only {
             None
         } else {
-            Pending::new(is_diffed);
-        };
-
-        let events = if Some(events) {
-            events;
-        } else {
-            // EventEmitter::new();
-            None;
+            Some(Pending::new(is_diffed))
         };
 
         let custom_store_props = StorageProps {
             // enable_querying,
-            types: Some(types),
-            indexes: Some(indexes),
+            types: Some(&types),
+            indexes: Some(&indexes),
             other: None,
         };
 
         let store_options = store_options.extend(&custom_store_props);
-        let store = T::new(&store, &store_options);
 
-        let &mut context = Self {
+        let store = T::new(store, &store_options);
+
+        let context: Context = Self {
             events,
             store,
             order,
             changes: None,
             pending,
-            symbols: &symbols,
-        } & context.changes = if is_diffed {
-            Changes::new(&context, &changes)
+            symbols,
+        };
+
+        context.changes = if is_diffed {
+            Some(Changes::new(context, None)) // changes))
         } else {
             None
         };
@@ -303,7 +301,7 @@ impl<'a> Context<'a> {
             None,
         );
 
-        let spawn_actor = actions.get("spawnActor");
+        let spawn_actor = actions.get(str("spawnActor"));
 
         if *is_async_storage {
             let mut futures = FuturesUnordered::<Pin<Box<dyn Future<Output = String>>>>::new();
@@ -474,7 +472,7 @@ impl<'a> Context<'a> {
             None,
         );
 
-        let create_entity = actions.get("createEntity");
+        let create_entity = actions.get(str("createEntity"));
 
         if *is_async_storage {
             let mut futures = FuturesUnordered::<Pin<Box<dyn Future<Output = String>>>>::new();
@@ -552,7 +550,9 @@ impl<'a> Context<'a> {
         }
 
         if !skip_pending && self.pending.is_some() {
-            self.pending.unwrap().change_component(pending_type, &id, &key);
+            self.pending
+                .unwrap()
+                .change_component(str(pending_type), &id, &key);
         }
 
         if let Some(events) = &self.events {
@@ -627,7 +627,9 @@ impl<'a> Context<'a> {
             }
 
             if !skip_pending && self.pending.is_some() {
-                self.pending.unwrap().upsert_component(pending_type, &id, &key);
+                self.pending
+                    .unwrap()
+                    .upsert_component(str(pending_type), &id, &key);
             }
 
             if let Some(events) = &self.events {
@@ -793,7 +795,7 @@ impl<'a> Context<'a> {
         let new_index = self.store.store_input(&id, &payload);
 
         if !skip_pending && self.pending.is_some() {
-            self.pending.unwrap().actor_input(id.clone(), new_index);
+            self.pending.unwrap().actor_input(id, new_index as i32);
         }
 
         if let Some(events) = &self.events {
@@ -857,16 +859,16 @@ impl<'a> Context<'a> {
      * Gets a symbol with the given index and options.
      */
     pub fn get_symbol(&self, index: u32, options: &Options) -> Option<&String> {
-        let symbol = self.symbols.get(index);
+        let symbol = self.symbols.get(index as usize);
         let actions = options.actions;
 
         if symbol.is_none() {
-            let fetch_symbol = actions.get("fetch_symbol");
+            let fetch_symbol = actions.get(str("fetch_symbol"));
             let symbol_tuple = fetch_symbol(symbol, self, options);
             return Some(symbol_tuple.0);
         }
 
-        symbol
+        Some(str(symbol.unwrap()))
     }
 
     /**
@@ -878,7 +880,7 @@ impl<'a> Context<'a> {
 
         if index == -1 {
             if options.is_symbol_leader {
-                index = self.symbols.add(symbol.clone()).unwrap_or(-1);
+                let index = self.symbols.add(symbol.clone()).unwrap_or(-1);
 
                 if !options.skip_pending && self.pending.is_some() {
                     self.pending.add_symbol((symbol.clone(), index));
@@ -960,13 +962,26 @@ impl<'a> Context<'a> {
      * Resets symbols with the given payload and options.
      */
     pub fn reset_symbols(&mut self, payload: &Value, options: &Options) {
-        self.symbols.reset(payload);
+        self.symbols.reset(
+            &payload
+                .as_array()
+                .unwrap()
+                .iter_mut()
+                .map(|x| str(x.as_str().unwrap()))
+                .collect::<Vec<&String>>(),
+        );
 
         if (options.is_symbol_leader || options.is_symbol_relay)
             && !options.skip_pending
             && self.pending.is_some()
         {
-            self.pending.unwrap().replace_symbols(payload);
+            let symbols = payload
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|x| (str(x.as_str().unwrap()), -1))
+                .collect::<Vec<(&String, i32)>>();
+            self.pending.unwrap().replace_symbols(&symbols);
         }
 
         if let Some(on_update) = options.on_update {

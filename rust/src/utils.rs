@@ -44,15 +44,15 @@ pub fn union_sets<'a, T: Eq + Hash + Clone, const S: usize>(
  * @param offset - The starting value of the enum.
  * @returns The created enum.
  */
-pub fn create_enum<'a, T: Eq + Hash + Clone>(set: SetOrVec<&T>, offset: u16) -> EnumObject<'a, T> {
-    let mut enum_map: EnumObject<T> = HashMap::new();
+pub fn create_enum<'a, T: Eq + Hash + Clone>(set: SetOrVec<T>, offset: u16) -> EnumObject<'a, T, u32> {
+    let mut enum_map: EnumObject<T, u32> = HashMap::new();
 
-    let mut i: u16 = offset as u16;
+    let mut i: u32 = offset as u32;
 
     match set {
         SetOrVec::Set(set) => {
             for v in set {
-                enum_map.insert(v.clone(), i);
+                enum_map.insert(v.clone(), i.into());
                 i += 1;
             }
         }
