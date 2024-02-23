@@ -1,20 +1,32 @@
 use serde_json::Value;
+use serde_json::Map;
 
+use crate::string::string;
 use crate::hash::HashMap;
+use crate::storage::Store;
 // use crate::context::Context;
 use crate::types::{
     // ChangesInput,
-    Component,
+    // Components,
+    // Component,
+    // ComponentsMap,
+    ComponentMap,
     // Components_ as Components,
 };
 
+pub enum ChangesInput<'a> {
+    Props(ChangesProps<'a>),
+    Instance(Changes<'a>),
+}
+
 /**
- * The ChangesInput struct represents the input for changes.
+ * The ChangesProps struct represents the input for changes.
  *
  * diffs: The diffs.
  */
-pub struct ChangesInput {
-    pub diffs: Option<HashMap<String, serde_json::Value>>,
+pub struct ChangesProps<'a> {
+    store: Option<&'a dyn Store>,
+    pub diffs: Option<ComponentMap>,
 }
 
 /**
@@ -23,21 +35,45 @@ pub struct ChangesInput {
  * context: The context in which changes are to be managed.
  * diffs: The diffs of the changes.
  */
-pub struct Changes<'a, T> {
-    store: &'a T,
-    pub diffs: HashMap<String, Value>,
+pub struct Changes<'a> {
+    store: &'a dyn Store,
+    // pub diffs: HashMap<String, Value>,
+    pub diffs: ComponentMap,
 }
 
-impl<'a, T> Changes<'a, T> {
+impl<'a> Changes<'a> {
     /**
      * Creates a new instance of the Changes struct.
      *
      * context: The context in which changes are to be managed.
      * changes: An optional initial set of changes.
      */
-    pub fn new(store: &T, changes: ChangesInput) -> Self {
-        let diffs = changes.diffs.unwrap_or_default();
-        Changes { store, diffs }
+    pub fn new(store: &dyn Store, changes: ChangesInput) -> Self {
+        match changes {
+            ChangesInput::Props(props) => {
+                let ChangesProps {
+                    store,
+                    diffs,
+                } = props;
+                let store = store.unwrap();
+                let diffs = props.diffs.unwrap_or_else(|| Map::new());
+                Changes {
+                    store,
+                    diffs,
+                }
+            },
+            ChangesInput::Instance(instance) => {
+                let Changes {
+                    store,
+                    diffs,
+                } = instance;
+                let diffs = instance.diffs.clone();
+                Changes {
+                    store,
+                    diffs,
+                }
+            },
+        }
     }
 
     /**
@@ -47,7 +83,7 @@ impl<'a, T> Changes<'a, T> {
      * key: The key of the property to be changed.
      * new_value: The new value of the property.
      */
-    pub fn change_component(&mut self, id: String, key: String, new_value: serde_json::Value) {
+    pub fn change_component(&mut self, id: &String, key: &String, new_value: &Value) {
         self.upsert_component(id, key, new_value);
     }
 
@@ -56,8 +92,8 @@ impl<'a, T> Changes<'a, T> {
      *
      * changes: The new set of changes.
      */
-    pub fn reset(&mut self, changes: ChangesInput) {
-        self.diffs = changes.diffs.unwrap_or_default();
+    pub fn reset(&mut self) {
+        self.diffs = Map::<String, Value>::new();
     }
 
     /**
@@ -67,49 +103,54 @@ impl<'a, T> Changes<'a, T> {
      * key: The key of the property to be updated or inserted.
      * new_value: The new value of the property.
      */
-    pub fn upsert_component(&mut self, id: String, key: String, new_value: Value) {
+    pub fn upsert_component(&mut self, id: &String, key: &String, new_value: &Value) {
         let components = self.store.get_components();
-        let current_scope = components.components.entry(id).or_insert_with(Component::default);
+        let mut current_scope = components.entry(&id).or_insert_with(|| &Value::Object(Map::new()));
         let diff_object = self.diffs.entry(id).or_insert_with(Value::default);
         recursive_diff(key, diff_object, current_scope, new_value);
     }
 }
 
-pub fn recursive_diff(key: String, diff: &mut Value, scope: &mut Component, next_val: Value) {
-    let prev_type = scope.properties.get(&key).map(|v| type_of(v));
+pub enum ValueOrHash<'a> {
+    Value(Value),
+    Hash(&'a HashMap<&'a String, &'a Value>),
+}
+
+pub fn recursive_diff(key: &String, diff: &mut Value, scope: &mut Value, next_val: &Value) {
+    let prev_type = scope.get(&key).map(|v| type_of(v));
     let next_type = type_of(&next_val);
     if prev_type != Some(next_type) {
-        diff[key] = next_val;
+        diff[key] = *next_val;
         return;
     }
-    match next_type {
-        "bigint" | "number" => {
-            let v1 = scope.properties.get(&key).and_then(|v| v.as_f64()).unwrap_or_default();
+    // match next_type {
+    match next_val {
+        Value::Number(next_val) => {
+            let v1 = scope.get(&key).and_then(|v| v.as_f64()).unwrap_or_default();
             let v2 = next_val.as_f64().unwrap_or_default();
             let d = v2 - v1;
-            scope.properties.insert(key.clone(), Value::from(v2));
+            if let Some(map) = scope.as_object_mut() {
+                map.insert(*key, Value::from(v2));
+            }
+            // scope.insert(&key, &Value::from(v2));
             diff[key] = Value::from(d);
         }
-        "array" => {
+        Value::Array(next_val) => {
             let diff = diff.get_mut(&key).unwrap();
-            let scope = scope.properties.get_mut(&key).unwrap();
-            if let Value::Array(next_val) = next_val {
-                for (i, next_val) in next_val.into_iter().enumerate() {
-                    recursive_diff(i.to_string(), diff, scope, next_val);
-                }
+            let scope = scope.get_mut(&key).unwrap();
+            for (i, next_val) in next_val.into_iter().enumerate() {
+                recursive_diff(string(&i.to_string()), diff, scope, next_val);
             }
         }
-        "object" => {
+        Value::Object(next_val) => {
             let diff = diff.get_mut(&key).unwrap();
-            let scope = scope.properties.get_mut(&key).unwrap();
-            if let Value::Object(next_val) = next_val {
-                for (k, next_val) in next_val.into_iter() {
-                    recursive_diff(k, diff, scope, next_val);
-                }
+            let scope = scope.get_mut(&key).unwrap();
+            for (k, next_val) in next_val.into_iter() {
+                recursive_diff(string(k), diff, scope, next_val);
             }
         }
         _ => {
-            diff[key] = next_val;
+            diff[key] = *next_val;
         }
     }
 }

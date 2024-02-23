@@ -1,18 +1,23 @@
 use futures::executor::block_on;
 use futures::stream::FuturesUnordered;
 use futures::{Future, StreamExt};
+use std::error::Error;
+// use promises::Promise;
 use serde_json::Value;
 use std::pin::Pin;
 
 // use super::{Context, ContextProps, ContextOptions, Store, Options, Pending, Symbols, PendingWithSymbols};
 use crate::changes::Changes;
-use crate::options::Options;
+use crate::options::{Options, OptionsInput};
 use crate::pending::Pending;
 use crate::symbols::Symbols;
 // use crate::index_manager::IndexManager as Indexes;
 use crate::events::EventEmitter;
-use crate::ordered::Ordered;
-use crate::storage::Storage;
+use crate::ordered::{Ordered, OrderedInput};
+use crate::storage::{
+    // Storage,
+    Store,
+};
 use crate::utils::combine_values;
 // use crate::actor::Actor;
 // use crate::query::Query;
@@ -21,6 +26,7 @@ use crate::hash::HashMap;
 use crate::types::{
     Actor,
     Inputs,
+    PromiseOrValue,
     // Entity,
     Query,
     StorageOptions as StorageProps,
@@ -29,37 +35,63 @@ use crate::types::{
 /**
  * The ContextProps struct represents the properties of the context.
  */
-pub struct ContextProps<'a, T> {
-    pub events: Option<&'a EventEmitter>,
-    pub store: Option<&'a Storage<'a>>, // TODO: use dyn with trait to allow custom stores
-    pub order: Option<&'a Ordered<'a>>,
-    pub changes: Option<&'a Changes<'a, T>>,
-    pub pending: Option<&'a Pending<'a>>,
-    pub symbols: Option<&'a Symbols<'a>>, // other_props: HashMap<String, Box<dyn Any>>,
+pub struct ContextProps<'a> {
+    pub events: Option<&'a mut EventEmitter>,
+    pub store: Option<&'a dyn Store>,
+    pub order: Option<Ordered<'a>>,
+    pub changes: Option<Changes<'a>>,
+    pub pending: Option<Pending<'a>>,
+    pub symbols: Option<Symbols<'a>>,
+    // pub other_props: HashMap<String, Box<dyn Any>>,
 }
 
-pub enum ContextInput<'a, T> {
-    Props(ContextProps<'a, T>),
-    Instance(Context<'a, T>),
+pub enum ContextInput<'a> {
+    Props(ContextProps<'a>),
+    Instance(Context<'a>),
 }
 
 /**
  * The Context struct provides methods for managing the context.
  */
-pub struct Context<'a, T> {
-    pub events: Option<&'a EventEmitter>,
-    pub store: &'a Storage<'a>, // TODO: use dyn with trait to allow custom stores
-    pub order: Option<&'a Ordered<'a>>,
-    pub changes: Option<&'a Changes<'a, T>>,
-    pub pending: Option<&'a Pending<'a>>,
-    pub symbols: &'a Symbols<'a>,
+pub struct Context<'a> {
+    pub events: Option<&'a mut EventEmitter>,
+    pub store: &'a dyn Store,
+    pub order: Option<Ordered<'a>>,
+    pub changes: Option<Changes<'a>>,
+    pub pending: Option<Pending<'a>>,
+    pub symbols: Symbols<'a>,
 }
 
-impl<'a, T> Context<'a, T> {
+impl<'a> Context<'a> {
     /**
      * Creates a new instance of the Context struct.
      */
-    pub fn new(context: &ContextInput<T>, options: &Options<T>) -> Self {
+    pub fn new<T>(context: &ContextInput, options: &Options) -> Self {
+        let props: ContextProps = match context {
+            ContextInput::Props(props) => *props,
+            ContextInput::Instance(context) => {
+                let Context {
+                    events,
+                    store,
+                    order,
+                    changes,
+                    pending,
+                    symbols,
+                } = context;
+
+                let props = ContextProps {
+                    events: *events,
+                    store: Some(*store),
+                    order: *order,
+                    changes: *changes,
+                    pending: *pending,
+                    symbols: Some(*symbols),
+                };
+
+                props
+            }
+        };
+
         let ContextProps {
             events,
             store,
@@ -67,15 +99,7 @@ impl<'a, T> Context<'a, T> {
             changes,
             pending,
             symbols,
-        } = match context {
-            ContextInput::Props(props) => {
-                props;
-            }
-            ContextInput::Instance(context) => {
-                let props: ContextProps = context;
-                props;
-            }
-        };
+        } = props;
 
         let enum_default_symbols = options.enum_default_symbols;
         let is_read_only = options.is_read_only;
@@ -87,14 +111,14 @@ impl<'a, T> Context<'a, T> {
         let indexes = options.indexes;
         let store_options = options.store_options;
 
-        let order = if is_ordered {
-            Ordered::new(&order)
+        let order: Option<Ordered<'a>> = if is_ordered {
+            Some(Ordered::new(&OrderedInput::Instance(order.unwrap())))
         } else {
             None
         };
 
         let symbols = if Some(symbols) {
-            Symbols::new(&symbols);
+            Symbols::new(&symbols)
         } else {
             let symbols = Symbols::new(&symbols);
             symbols.copy_enum(&enum_default_symbols);
@@ -130,18 +154,18 @@ impl<'a, T> Context<'a, T> {
             order,
             changes: None,
             pending,
-            symbols,
+            symbols: &symbols,
         } & context.changes = if is_diffed {
             Changes::new(&context, &changes)
         } else {
             None
         };
 
-        &context
+        context
     }
 
-    pub fn ensure<'b>(context: &ContextInput<T>, options: &Options<T>) -> Context<'b, T> {
-        Context::<T>::new(&context, &options)
+    pub fn ensure<'b>(context: &ContextInput, options: &Options) -> Context<'b> {
+        Context::new(&context, &options)
     }
 
     /**
@@ -158,11 +182,11 @@ impl<'a, T> Context<'a, T> {
         }
     }
 
-    pub fn get_actors(&self, query: Option<&Query>, page_size: Option<i16>) -> &Vec<&Actor> {
-        self.store.get_actors(query, page_size)
+    pub fn get_actors(&self, query: Option<&Query>, page_size: Option<i16>) -> &Vec<&Vec<Actor>> {
+        self.store.list_actors(query, page_size)
     }
 
-    fn spawn_actor_op(&self, added: bool, id: &String, options: &Options<T>) {
+    fn spawn_actor_op(&self, added: bool, id: &String, options: &Options) {
         let Options {
             skip_pending,
             on_update,
@@ -171,7 +195,7 @@ impl<'a, T> Context<'a, T> {
 
         if added {
             if !skip_pending && self.pending.is_some() {
-                self.pending.spawn_actor(&id);
+                self.pending.unwrap().spawn_actor(&id);
             }
 
             if let Some(events) = self.events {
@@ -190,11 +214,15 @@ impl<'a, T> Context<'a, T> {
      * @param {string} id - The id of the actor to spawn.
      * @param {Options} options - The options for spawning the actor.
      */
-    pub fn spawn_actor(&self, id: &String, options: &Options<T>) {
+    pub fn spawn_actor(
+        &self,
+        id: &String,
+        options: &Options,
+    ) -> PromiseOrValue<bool, Box<dyn Error + Send>> {
         let Options {
             is_async_storage, ..
         } = options;
-        if is_async_storage {
+        if *is_async_storage {
             let added = self.store.store_actor(&id);
             let result = block_on(added);
             self.spawn_actor_op(result, &id, &options);
@@ -205,7 +233,7 @@ impl<'a, T> Context<'a, T> {
         return added;
     }
 
-    fn remove_actor_op(&self, removed: bool, id: &String, options: &Options<T>) {
+    fn remove_actor_op(&self, removed: bool, id: &String, options: &Options) {
         let Options {
             skip_pending,
             on_update,
@@ -214,7 +242,7 @@ impl<'a, T> Context<'a, T> {
 
         if removed {
             if !skip_pending && self.pending.is_some() {
-                self.pending.remove_actor(id);
+                self.pending.unwrap().remove_actor(id);
             }
 
             if let Some(events) = self.events {
@@ -233,11 +261,15 @@ impl<'a, T> Context<'a, T> {
      * @param {string} id - The id of the actor to remove.
      * @param {Options} options - The options for removing the actor.
      */
-    pub fn remove_actor(&self, id: &String, options: &Options<T>) {
+    pub fn remove_actor(
+        &self,
+        id: &String,
+        options: &Options,
+    ) -> PromiseOrValue<bool, Box<dyn Error + Send>> {
         let Options {
             is_async_storage, ..
         } = options;
-        if is_async_storage {
+        if *is_async_storage {
             let removed = self.store.destroy_actor(&id);
             let result = block_on(removed);
             self.remove_actor_op(result, &id, &options);
@@ -254,7 +286,7 @@ impl<'a, T> Context<'a, T> {
      * @param {string[]} payload - The payload of the actors to merge.
      * @param {Options} options - The options for merging the actors.
      */
-    pub fn merge_actors(&self, payload: &Vec<&String>, options: &Options<T>) {
+    pub fn merge_actors(&self, payload: &Vec<&String>, options: &Options) {
         let Options {
             actions,
             is_async_storage,
@@ -263,17 +295,17 @@ impl<'a, T> Context<'a, T> {
         } = options;
 
         let next_options = options.extend(
-            &Options {
+            &OptionsInput::Instance(Options {
                 // actions,
                 on_update: None,
-                ..options
-            },
+                ..*options
+            }),
             None,
         );
 
         let spawn_actor = actions.get("spawnActor");
 
-        if is_async_storage {
+        if *is_async_storage {
             let mut futures = FuturesUnordered::<Pin<Box<dyn Future<Output = String>>>>::new();
 
             for id in payload {
@@ -321,10 +353,10 @@ impl<'a, T> Context<'a, T> {
         query: Option<&Query>,
         page_size: Option<i16>,
     ) -> &Vec<&Vec<&String>> {
-        self.store.get_entities(&query, page_size)
+        self.store.list_entities(query, page_size)
     }
 
-    fn create_entity_op(&self, added: bool, id: &String, options: &Options<T>) {
+    fn create_entity_op(&self, added: bool, id: &String, options: &Options) {
         let Options {
             skip_pending,
             on_update,
@@ -333,7 +365,7 @@ impl<'a, T> Context<'a, T> {
 
         if added {
             if !skip_pending && self.pending.is_some() {
-                self.pending.create_entity(&id);
+                self.pending.unwrap().create_entity(&id);
             }
 
             if let Some(events) = self.events {
@@ -352,11 +384,15 @@ impl<'a, T> Context<'a, T> {
      * @param {string} id - The id of the entity to create.
      * @param {Options} options - The options for creating the entity.
      */
-    pub fn create_entity(&self, id: &String, options: &Options<T>) {
+    pub fn create_entity(
+        &self,
+        id: &String,
+        options: &Options,
+    ) -> PromiseOrValue<bool, Box<dyn Error + Send>> {
         let Options {
             is_async_storage, ..
         } = options;
-        if is_async_storage {
+        if *is_async_storage {
             let added = self.store.store_entity(&id);
             let result = block_on(added);
             self.create_entity_op(result, &id, &options);
@@ -367,7 +403,7 @@ impl<'a, T> Context<'a, T> {
         return added;
     }
 
-    fn remove_entity_op(&self, id: &String, options: &Options<T>) {
+    fn remove_entity_op(&self, id: &String, options: &Options) {
         let Options {
             skip_pending,
             on_update,
@@ -377,7 +413,7 @@ impl<'a, T> Context<'a, T> {
 
         if removed {
             if !skip_pending && self.pending.is_some() {
-                self.pending.remove_entity(&id);
+                self.pending.unwrap().remove_entity(&id);
             }
 
             if let Some(events) = self.events {
@@ -396,11 +432,15 @@ impl<'a, T> Context<'a, T> {
      * @param {string} id - The id of the entity to remove.
      * @param {Options} options - The options for removing the entity.
      */
-    pub fn remove_entity(&self, id: &String, options: &Options<T>) {
+    pub fn remove_entity(
+        &self,
+        id: &String,
+        options: &Options,
+    ) -> PromiseOrValue<bool, Box<dyn Error + Send>> {
         let Options {
             is_async_storage, ..
         } = options;
-        if is_async_storage {
+        if *is_async_storage {
             let removed = self.store.destroy_entity(&id);
             let result = block_on(removed);
             self.remove_entity_op(&id, &options);
@@ -417,7 +457,7 @@ impl<'a, T> Context<'a, T> {
      * @param {string[]} payload - The payload of the entities to merge.
      * @param {Options} options - The options for merging the entities.
      */
-    pub fn merge_entities(&self, payload: &Vec<&String>, options: &Options<T>) {
+    pub fn merge_entities(&self, payload: &Vec<&String>, options: &Options) {
         let Options {
             actions,
             is_async_storage,
@@ -426,17 +466,17 @@ impl<'a, T> Context<'a, T> {
         } = options;
 
         let next_options = options.extend(
-            &Options {
+            &OptionsInput::Instance(Options {
                 // actions,
                 on_update: None,
-                ..options
-            },
+                ..*options
+            }),
             None,
         );
 
         let create_entity = actions.get("createEntity");
 
-        if is_async_storage {
+        if *is_async_storage {
             let mut futures = FuturesUnordered::<Pin<Box<dyn Future<Output = String>>>>::new();
 
             for id in payload {
@@ -458,7 +498,7 @@ impl<'a, T> Context<'a, T> {
         }
     }
 
-    pub fn components(&self) -> &HashMap<&String, &HashMap<&String, &Value>> {
+    pub fn components(&self) -> &HashMap<&String, &Value> {
         self.get_components()
     }
 
@@ -467,11 +507,11 @@ impl<'a, T> Context<'a, T> {
      *
      * @returns The components from the store.
      */
-    pub fn get_components(&self) -> &HashMap<&String, &HashMap<&String, &Value>> {
+    pub fn get_components(&self) -> &HashMap<&String, &Value> {
         self.store.get_components()
     }
 
-    fn change_component_op(&self, id: &String, key: &String, value: &Value, options: &Options<T>) {
+    fn change_component_op(&self, id: &String, key: &String, value: &Value, options: &Options) {
         let Options {
             skip_pending,
             on_update,
@@ -490,7 +530,7 @@ impl<'a, T> Context<'a, T> {
             // TODO: add tick to message payload when is_ticked is true
             let tick = 0;
             // let tick = arguments[3];
-            let is_valid_tick = self.order.change_component(&id, &key, tick);
+            let is_valid_tick = self.order.unwrap().change_component(&id, &key, tick);
             if !is_valid_tick && self.changes.is_none() {
                 return;
             }
@@ -512,7 +552,7 @@ impl<'a, T> Context<'a, T> {
         }
 
         if !skip_pending && self.pending.is_some() {
-            self.pending.change_component(pending_type, &id, &key);
+            self.pending.unwrap().change_component(pending_type, &id, &key);
         }
 
         if let Some(events) = &self.events {
@@ -534,26 +574,26 @@ impl<'a, T> Context<'a, T> {
      */
     pub fn change_component(
         &self,
-        id: String,
-        key: String,
-        value: Value,
+        id: &String,
+        key: &String,
+        value: &Value,
         tick: i32,
-        options: Options<T>,
-    ) {
+        options: &Options,
+    ) -> PromiseOrValue<(), Box<dyn Error + Send>> {
         let Options {
             is_async_storage, ..
         } = options;
-        if is_async_storage {
-            let result = block_on(self.store.store_component(id, key, value));
+        if *is_async_storage {
+            let result = block_on(self.store.store_component(&id, &key, &value));
             self.change_component_op(&id, &key, &value, &options);
             return result;
         }
-        let result = self.store.store_component(id, key, value);
+        let result = self.store.store_component(&id, &key, &value);
         self.change_component_op(&id, &key, &value, &options);
-        return result;
+        return PromiseOrValue::Value(result);
     }
 
-    fn upsert_component_op(&self, id: String, key: String, value: Value, options: Options<T>) {
+    fn upsert_component_op(&self, id: &String, key: &String, value: &Value, options: &Options) {
         let Options {
             skip_pending,
             on_update,
@@ -568,12 +608,12 @@ impl<'a, T> Context<'a, T> {
             "updated"
         };
 
-        if current_value != Some(value) {
+        if current_value != Some(&value) {
             if self.order.is_some() {
                 // TODO: add tick to message payload when is_ticked is true
                 let tick = 0;
                 // let tick = arguments[3];
-                let is_valid_tick = self.order.upsert_component(&id, &key, tick);
+                let is_valid_tick = self.order.unwrap().upsert_component(&id, &key, tick);
                 if !is_valid_tick && self.changes.is_none() {
                     return;
                 }
@@ -583,11 +623,11 @@ impl<'a, T> Context<'a, T> {
                 self.changes
                     .upsert_component(pending_type, &id, &key, value);
             } else {
-                self.store.store_component(&id, &key, value);
+                self.store.store_component(&id, &key, &value);
             }
 
             if !skip_pending && self.pending.is_some() {
-                self.pending.upsert_component(pending_type, &id, &key);
+                self.pending.unwrap().upsert_component(pending_type, &id, &key);
             }
 
             if let Some(events) = &self.events {
@@ -614,22 +654,22 @@ impl<'a, T> Context<'a, T> {
         key: &String,
         value: &Value,
         tick: i32,
-        options: Options<T>,
-    ) {
+        options: &Options,
+    ) -> PromiseOrValue<(), Box<dyn Error + Send>> {
         let Options {
             is_async_storage, ..
         } = options;
-        if is_async_storage {
+        if *is_async_storage {
             let result = block_on(self.store.store_component(&id, &key, &value));
             self.upsert_component_op(&id, &key, &value, &options);
             return result;
         }
         let result = self.store.store_component(&id, &key, &value);
         self.upsert_component_op(&id, &key, &value, &options);
-        return result;
+        return PromiseOrValue::Value(result);
     }
 
-    fn remove_component_op(&self, id: &String, key: &String, options: &Options<T>) {
+    fn remove_component_op(&self, id: &String, key: &String, options: &Options) {
         let Options {
             skip_pending,
             on_update,
@@ -642,7 +682,7 @@ impl<'a, T> Context<'a, T> {
             self.store.destroy_component(&id, &key);
 
             if !skip_pending && self.pending.is_some() {
-                self.pending.remove_component(&id, &key);
+                self.pending.unwrap().remove_component(&id, &key);
             }
 
             if let Some(events) = &self.events {
@@ -662,18 +702,23 @@ impl<'a, T> Context<'a, T> {
      * @param {string} key - The key of the component to remove.
      * @param {Options} options - The options for removing the component.
      */
-    pub fn remove_component(&self, id: String, key: String, options: Options<T>) {
+    pub fn remove_component(
+        &self,
+        id: &String,
+        key: &String,
+        options: &Options,
+    ) -> PromiseOrValue<bool, Box<dyn Error + Send>> {
         let Options {
             is_async_storage, ..
         } = options;
-        if is_async_storage {
-            let result = block_on(self.store.destroy_component(id, key));
+        if *is_async_storage {
+            let result = block_on(self.store.destroy_component(&id, &key));
             self.remove_component_op(&id, &key, &options);
             return result;
         }
-        let result = self.store.destroy_component(id, key);
+        let result = self.store.destroy_component(&id, &key);
         self.remove_component_op(&id, &key, &options);
-        return result;
+        return PromiseOrValue::Value(result);
     }
 
     /**
@@ -684,9 +729,9 @@ impl<'a, T> Context<'a, T> {
      */
     pub fn merge_components(
         &self,
-        payload: &HashMap<String, HashMap<String, Value>>,
-        options: &Options<T>,
-    ) {
+        payload: &Value, // &HashMap<&String, &Value>,
+        options: &Options,
+    ) -> bool {
         let Options {
             actions,
             is_async_storage,
@@ -695,22 +740,20 @@ impl<'a, T> Context<'a, T> {
             ..
         } = options;
         let next_options = options.extend(
-            &Options {
+            &OptionsInput::Instance(Options {
                 // actions,
-                skip_pending: is_component_relay,
-                on_update: None,
-                ..options
-            },
+                skip_pending: *is_component_relay,
+                on_update: Some(|| {}),
+                ..*options
+            }),
             None,
         );
-        if is_async_storage {
+        if *is_async_storage {
             let mut futures = FuturesUnordered::<Pin<Box<dyn Future<Output = String>>>>::new();
 
-            for (id, components) in payload {
+            for (id, components) in payload.into() {
                 for (key, value) in components {
-                    let future = self
-                        .store
-                        .store_component(id.clone(), key.clone(), value.clone());
+                    let future = self.store.store_component(&id, &key, &value);
                     futures.push(Box::pin(future));
                 }
             }
@@ -723,7 +766,11 @@ impl<'a, T> Context<'a, T> {
         return result;
     }
 
-    fn inputs(&self) -> Inputs {
+    fn merge_components_op(&self, result: bool, options: &Options) {
+        // TODO:
+    }
+
+    fn inputs(&self) -> &Inputs {
         self.get_inputs()
     }
 
@@ -732,21 +779,21 @@ impl<'a, T> Context<'a, T> {
      *
      * @returns The inputs from the store.
      */
-    pub fn get_inputs(&self) -> Inputs {
+    pub fn get_inputs(&self) -> &Inputs {
         self.store.get_inputs()
     }
 
-    fn actor_input_op(&mut self, id: String, payload: Value, options: Options<T>) {
+    fn actor_input_op(&mut self, id: &String, payload: &Value, options: &Options) {
         let Options {
             skip_pending,
             on_update,
             ..
         } = options;
 
-        let new_index = self.store.store_input(id.clone(), payload);
+        let new_index = self.store.store_input(&id, &payload);
 
         if !skip_pending && self.pending.is_some() {
-            self.pending.actor_input(id.clone(), new_index);
+            self.pending.unwrap().actor_input(id.clone(), new_index);
         }
 
         if let Some(events) = &self.events {
@@ -765,16 +812,22 @@ impl<'a, T> Context<'a, T> {
      * @param {any} payload - The payload for the actor input.
      * @param {Options} options - The options for handling the actor input.
      */
-    pub fn actor_input(&mut self, id: String, payload: Value, tick: i32, options: Options<T>) {
+    pub fn actor_input(
+        &mut self,
+        id: &String,
+        payload: &Value,
+        tick: i32,
+        options: &Options,
+    ) -> PromiseOrValue<u32, Box<dyn Error + Send>> {
         let Options {
             is_async_storage, ..
         } = options;
-        if is_async_storage {
-            let result = block_on(self.store.store_input(id, payload));
+        if *is_async_storage {
+            let result = block_on(self.store.store_input(&id, &payload));
             self.actor_input_op(id, payload, options);
             return result;
         }
-        let result = self.store.store_input(id, payload);
+        let result = self.store.store_input(&id, &payload);
         self.actor_input_op(id, payload, options);
         return result;
     }
@@ -782,28 +835,28 @@ impl<'a, T> Context<'a, T> {
     /**
      * Gets the list of symbols.
      */
-    pub fn symbols_list(&self) -> Vec<String> {
+    pub fn symbols_list(&self) -> &Vec<&String> {
         self.symbols.get_symbols()
     }
 
     /**
      * Gets the enum of symbols.
      */
-    pub fn symbols_enum(&self) -> HashMap<String, i32> {
-        self.symbols.get_symbols_enum()
+    pub fn symbols_enum(&self) -> &HashMap<&String, u32> {
+        self.symbols.enum_obj.values
     }
 
     /**
      * Sets the symbols with the given symbols.
      */
-    pub fn set_symbols(&mut self, symbols: Vec<String>) {
+    pub fn set_symbols(&mut self, symbols: &Vec<&String>) {
         self.symbols.reset(symbols);
     }
 
     /**
      * Gets a symbol with the given index and options.
      */
-    pub fn get_symbol(&self, index: i32, options: Options<T>) -> Option<String> {
+    pub fn get_symbol(&self, index: u32, options: &Options) -> Option<&String> {
         let symbol = self.symbols.get(index);
         let actions = options.actions;
 
@@ -819,7 +872,7 @@ impl<'a, T> Context<'a, T> {
     /**
      * Adds a symbol with the given symbol and options.
      */
-    pub fn add_symbol(&mut self, symbol: String, options: Options<T>) -> Option<i32> {
+    pub fn add_symbol(&mut self, symbol: &String, options: &Options) -> Option<u32> {
         let enum_symbols = self.symbols_enum();
         let mut index = enum_symbols.get(&symbol).cloned().unwrap_or(-1);
 
@@ -850,12 +903,15 @@ impl<'a, T> Context<'a, T> {
     /**
      * Fetches a symbol with the given payload, options, and match function.
      */
-    pub fn fetch_symbol(
+    pub fn fetch_symbol<F>(
         &mut self,
-        payload: String,
-        options: Options<T>,
-        on_match: fn(symbol_tuple: (String, i32)),
-    ) -> (String, i32) {
+        payload: &Value,
+        options: &Options,
+        on_match: F, // &dyn Fn((&String, u32)) // fn(symbol_tuple: (&String, u32)),
+    ) -> (String, u32)
+    where
+        F: Fn((&String, u32)) -> (),
+    {
         let symbol_tuple = self.symbols.fetch(payload);
 
         if let Some(symbol) = symbol_tuple.0 {
@@ -866,10 +922,10 @@ impl<'a, T> Context<'a, T> {
             } else {
                 if options.is_symbol_leader {
                     let index = self.symbols.add(symbol.clone()).unwrap_or(-1);
-                    symbol_tuple.1 = index;
+                    symbol_tuple.1 = Some(index);
 
                     if !options.skip_pending && self.pending.is_some() {
-                        self.pending.add_symbol(symbol_tuple);
+                        self.pending.unwrap().add_symbol(symbol_tuple);
                     }
 
                     if let Some(on_update) = options.on_update {
@@ -885,14 +941,14 @@ impl<'a, T> Context<'a, T> {
     /**
      * Merges a symbol with the given payload and options.
      */
-    pub fn merge_symbol(&mut self, payload: String, options: Options<T>) {
+    pub fn merge_symbol(&mut self, payload: &Value, options: &Options) {
         self.symbols.merge(payload);
 
         if (options.is_symbol_leader || options.is_symbol_relay)
             && !options.skip_pending
             && self.pending.is_some()
         {
-            self.pending.add_symbol(payload);
+            self.pending.unwrap().add_symbol(payload);
         }
 
         if let Some(on_update) = options.on_update {
@@ -903,14 +959,14 @@ impl<'a, T> Context<'a, T> {
     /**
      * Resets symbols with the given payload and options.
      */
-    pub fn reset_symbols(&mut self, payload: String, options: Options<T>) {
+    pub fn reset_symbols(&mut self, payload: &Value, options: &Options) {
         self.symbols.reset(payload);
 
         if (options.is_symbol_leader || options.is_symbol_relay)
             && !options.skip_pending
             && self.pending.is_some()
         {
-            self.pending.replace_symbols(payload);
+            self.pending.unwrap().replace_symbols(payload);
         }
 
         if let Some(on_update) = options.on_update {
@@ -922,6 +978,6 @@ impl<'a, T> Context<'a, T> {
      * Resets the pending state.
      */
     pub fn reset_pending(&mut self) {
-        self.pending.reset_pending();
+        self.pending.unwrap().reset_pending();
     }
 }

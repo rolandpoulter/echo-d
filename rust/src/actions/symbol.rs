@@ -1,24 +1,22 @@
+use serde_json::{Value, json};
+
 // use crate::hash::HashMap;
-use crate::options::Options;
+use crate::string::str;
+use crate::options::{
+    Options,
+    // OptionsInput
+};
 use crate::context::Context;
+// use crate::storage::Storage;
 use crate::types::{
     Actions as ActionsObject,
-    // Payload,
+    // SymbolPayload,
 };
-
-/**
- * The Payload struct represents the payload for a symbol action.
- *
- * @property {usize} length - The length of the symbol.
- */
-struct Payload {
-    length: usize,
-}
 
 /**
  * The SymbolActions struct provides methods for managing symbols in a context.
  */
-pub trait SymbolActions<T> {//}
+pub trait SymbolActions {//}
 
 // impl SymbolActions {
     /**
@@ -28,14 +26,8 @@ pub trait SymbolActions<T> {//}
      * @param {&dyn Context} context - The current context to which the symbol is to be added.
      * @param {&Options} options - The options for adding the symbol. If an instance of Options is not provided, a new one will be created.
      */
-    fn add_symbol(symbol: &String, context: &Context<T>, options: &Options<T>) {
-        let options = if let Some(options) = options.as_ref() {
-            options
-        } else {
-            Options::new(options, None)
-        };
-
-        context.add_symbol(symbol, options)
+    fn add_symbol(symbol: &Value, context: &Context, options: &Options) -> Option<u32> {
+        context.add_symbol(str(symbol.as_str().unwrap()), options)
     }
 
     /**
@@ -45,36 +37,28 @@ pub trait SymbolActions<T> {//}
      * @param {&dyn Context} context - The current context from which the symbol is to be fetched.
      * @param {&Options} options - The options for fetching the symbol. If an instance of Options is not provided, a new one will be created.
      */
-    fn fetch_symbol(payload: &Payload, context: &Context<T>, options: &Options<T>) {
-        let options = if let Some(options) = options.as_ref() {
-            options
-        } else {
-            Options::new(options, None)
-        };
-
+    fn fetch_symbol(payload: &Value, context: &Context, options: &Options) {
         let responder = options.responder;
         let enum_default_symbols = options.enum_default_symbols;
 
-        context.fetch_symbol(payload, options, |symbol_tuple| {
-            responder([enum_default_symbols.merge_symbol, symbol_tuple], None)
-        })
+        let symbols = context.symbols;
+        let merge_symbol_symbol = symbols.find(str("mergeSymbol")).unwrap();
+
+        context.fetch_symbol(payload, options, |symbol_tuple: (&String, u32)| {
+            responder(&json!([merge_symbol_symbol, symbol_tuple]), None)
+        });
     }
 
     /**
      * Retrieves a symbol from the current context by its index.
      *
-     * @param {usize} index - The index of the symbol to be retrieved.
+     * @param {u32} index - The index of the symbol to be retrieved.
      * @param {&dyn Context} context - The current context from which the symbol is to be retrieved.
      * @param {&Options} options - The options for retrieving the symbol. If an instance of Options is not provided, a new one will be created.
      */
-    fn get_symbol(index: usize, context: &Context<T>, options: &Options<T>) {
-        let options = if let Some(options) = options.as_ref() {
-            options
-        } else {
-            Options::new(options, None)
-        };
-
-        context.get_symbol(index, options)
+    fn get_symbol<'a>(index: &Value, context: &Context, options: &Options) -> Option<&'a String> {
+        let symbol = context.get_symbol(index.as_i64().unwrap() as u32, options);
+        symbol
     }
 
     /**
@@ -84,13 +68,7 @@ pub trait SymbolActions<T> {//}
      * @param {&dyn Context} context - The current context into which the symbol is to be merged.
      * @param {&Options} options - The options for merging the symbol. If an instance of Options is not provided, a new one will be created.
      */
-    fn merge_symbol(payload: &Payload, context: &Context<T>, options: &Options<T>) {
-        let options = if let Some(options) = options.as_ref() {
-            options
-        } else {
-            Options::new(options, None)
-        };
-
+    fn merge_symbol(payload: &Value, context: &Context, options: &Options) {
         context.merge_symbol(payload, options)
     }
 
@@ -101,15 +79,10 @@ pub trait SymbolActions<T> {//}
      * @param {&dyn Context} context - The current context into which the symbols are to be merged.
      * @param {&Options} options - The options for merging the symbols. If an instance of Options is not provided, a new one will be created.
      */
-    fn merge_symbols(payload: &Payload, context: &Context<T>, options: &Options<T>) {
-        let options = if let Some(options) = options.as_ref() {
-            options
-        } else {
-            Options::new(options, None)
-        };
-
-        if let Some(payload_length) = payload.length {
-            context.reset_symbols(payload_length, options)
+    fn merge_symbols(payload: &Value, context: &Context, options: &Options) {
+        let array = payload.as_array().unwrap();
+        if !array.is_empty() {
+            context.reset_symbols(payload, options)
         }
     }
 
@@ -120,13 +93,7 @@ pub trait SymbolActions<T> {//}
      * @param {&dyn Context} context - The current context from which the symbol is to be retrieved.
      * @param {&Options} options - The options for retrieving the symbol. If an instance of Options is not provided, a new one will be created.
      */
-    fn symbol(symbol: &String, context: &Context<T>, options: &Options<T>) {
-        let options = if let Some(options) = options.as_ref() {
-            options
-        } else {
-            Options::new(options, None)
-        };
-
+    fn symbol(symbol: &Value, context: &Context, options: &Options) {
         let actions = options.actions;
         let responder = options.responder;
         let enum_default_symbols = options.enum_default_symbols;
@@ -136,20 +103,33 @@ pub trait SymbolActions<T> {//}
             return;
         }
 
-        let enum_symbols = context.symbols_enum;
+        let symbols = context.symbols;
+        let enum_symbols = symbols.enum_obj.values;
 
-        let index = if enum_symbols.contains_key(symbol) {
-            enum_symbols[symbol]
+        let sym = str(symbol.as_str().unwrap());
+
+        let index = if enum_symbols.contains_key(sym) {
+            Some(*enum_symbols.get(sym).unwrap())
         } else {
-            -1
+            None
         };
 
-        if index == -1 {
-            actions.add_symbol(symbol, context, options)
-        }
+        let index = if index.is_none() {
+            let add_symbol = actions.get(str("addSymbol")).unwrap();
+            let execute = add_symbol.downcast_ref::<fn(&Value, &Context, &Options) -> Option<u32>>();
+            if !execute.is_none() {
+                execute.unwrap()(symbol, context, options)
+            } else {
+                None
+            }
+        } else {
+            index
+        };
 
-        if index != -1 {
-            responder([enum_default_symbols.merge_symbol, [symbol, index]], None)
+        if !index.is_none() {
+            let merge_symbol_symbol = symbols.find(str("mergeSymbol")).unwrap();
+        
+            responder(&json!([merge_symbol_symbol, [symbol, index]]), None)
         }
     }
 
@@ -160,13 +140,7 @@ pub trait SymbolActions<T> {//}
      * @param {&dyn Context} context - The current context from which the symbols are to be retrieved.
      * @param {&Options} options - The options for retrieving the symbols. If an instance of Options is not provided, a new one will be created.
      */
-    fn symbols(_: &String, context: &Context<T>, options: &Options<T>) {
-        let options = if let Some(options) = options.as_ref() {
-            options
-        } else {
-            Options::new(options, None)
-        };
-
+    fn symbols(_: &Value, context: &Context, options: &Options) {
         let responder = options.responder;
         let enum_default_symbols = options.enum_default_symbols;
         let compress_strings_as_ints = options.compress_strings_as_ints;
@@ -175,41 +149,46 @@ pub trait SymbolActions<T> {//}
             return;
         }
 
-        let symbols = context.symbols_list;
+        let symbols = context.symbols;
+        let merge_symbols_symbol = symbols.find(str("mergeSymbols")).unwrap();
+        
+        let symbols_list = symbols.list;
 
-        if let Some(symbols) = symbols {
-            responder([enum_default_symbols.merge_symbols, symbols], None)
-        }
+        // let symbols = context.symbols_list;
+        // if let Some(symbols) = symbols {
+        responder(&json!([merge_symbols_symbol, symbols_list]), None)
+        // }
     }
 }
 
-// struct Actions;
-// impl SymbolActions for Actions {}
+struct Actions;
+
+impl SymbolActions for Actions {}
 
 fn setup_actions<'a>(actions: &mut ActionsObject) -> &'a ActionsObject<'a> {
     actions.insert(
         &String::from("createEntity"),
-        Box::new(SymbolActions::add_symbol),
+        Box::new(&(Actions::add_symbol as fn(&Value, &Context, &Options) -> Option<u32>)),
     );
     actions.insert(
         &String::from("fetchSymbol"),
-        Box::new(SymbolActions::fetch_symbol),
+        Box::new(&(Actions::fetch_symbol as fn(&Value, &Context, &Options))),
     );
     actions.insert(
         &String::from("getSymbol"),
-        Box::new(SymbolActions::get_symbol),
+        Box::new(&(Actions::get_symbol as fn(&Value, &Context, &Options) -> Option<&'a String>)),
     );
     actions.insert(
         &String::from("mergeSymbols"),
-        Box::new(SymbolActions::merge_symbols),
+        Box::new(&(Actions::merge_symbols as fn(&Value, &Context, &Options))),
     );
     actions.insert(
         &String::from("symbol"),
-        Box::new(SymbolActions::symbol),
+        Box::new(&(Actions::symbol as fn(&Value, &Context, &Options))),
     );
     actions.insert(
         &String::from("symbols"),
-        Box::new(SymbolActions::symbols),
+        Box::new(&(Actions::symbols as fn(&Value, &Context, &Options))),
     );
     &actions
 }

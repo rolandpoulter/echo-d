@@ -1,27 +1,40 @@
+use serde_json::Value;
+
 // use crate::hash::HashMap;
+use crate::string::str;
 use crate::context::Context;
 use crate::options::Options;
-use crate::types::Actions as ActionsObject;
+// use crate::storage::Storage;
+use crate::types::{
+    Actions as ActionsObject,
+    // ActorsPayload,
+    // ComponentsPayload,
+    // ComponentPayload,
+    // ComponentTarget,
+    // EntityPayload,
+    // InputPayload,
+    // SymbolPayload,
+};
 
 use crate::actions::actor::{
-  ActorActions,
-  // ACTIONS as ACTOR_ACTIONS
+    ActorActions,
+    // ACTIONS as ACTOR_ACTIONS
 };
 use crate::actions::component::{
-  ComponentActions,
-  // ACTIONS as COMPONENT_ACTIONS
+    ComponentActions,
+    // ACTIONS as COMPONENT_ACTIONS
 };
 use crate::actions::core::{
-  CoreActions,
-  // ACTIONS as CORE_ACTIONS
+    CoreActions,
+    // ACTIONS as CORE_ACTIONS
 };
 use crate::actions::entity::{
-  EntityActions,
-  // ACTIONS as ENTITY_ACTIONS
+    EntityActions,
+    // ACTIONS as ENTITY_ACTIONS
 };
 use crate::actions::symbol::{
-  SymbolActions,
-  // ACTIONS as SYMBOL_ACTIONS
+    SymbolActions,
+    // ACTIONS as SYMBOL_ACTIONS
 };
 
 // TODO: replace this with options.isAuthority
@@ -31,121 +44,121 @@ use crate::actions::symbol::{
  */
 pub struct Actions {}
 
-impl<T> ActorActions<T> for Actions {
-  fn actors(_: Option<()>, c: &Context<T>, o: &Options<T>) {}
-  // fn inputs() -> ! {}
+impl ActorActions for Actions {
+    fn actors(_: &Value, c: &Context, o: &Options) {}
+    // fn inputs() -> ! {}
 }
 
-impl<T> ComponentActions<T> for Actions {
-  fn components(_: &String, c: &Context<T>, o: &Options<T>) {}
+impl ComponentActions for Actions {
+    fn components(_: &Value, c: &Context, o: &Options) {}
 }
 
-impl<T> CoreActions<T> for Actions {}
+impl CoreActions for Actions {}
 
-impl<T> EntityActions<T> for Actions {
-  fn entities(_: &String, c: &Context<T>, o: &Options<T>) {}
+impl EntityActions for Actions {
+    fn entities(_: &Value, c: &Context, o: &Options) {}
 }
 
-impl<T> SymbolActions<T> for Actions {
-  fn symbol(s: &String, c: &Context<T>, o: &Options<T>) {}
-  fn symbols(_: &String, c: &Context<T>, o: &Options<T>) {}
+impl SymbolActions for Actions {
+    fn symbol(s: &Value, c: &Context, o: &Options) {}
+    fn symbols(_: &Value, c: &Context, o: &Options) {}
 }
 
-pub fn get_actions<T>() -> Actions {
-    Actions::<T>::new()
+pub fn get_actions() -> Actions {
+    Actions {}
 }
 
 fn setup_actions<'a>(actions: &mut ActionsObject) -> &'a ActionsObject<'a> {
-  actions.insert(
-      &String::from("actorInput"),
-      Box::new(Actions::actor_input),
-  );
-  // actions.insert(
-  //     &String::from("actors"),
-  //     None,
-  // );
-  actions.insert(
-      &String::from("mergeActors"),
-      Box::new(Actions::merge_actors),
-  );
-  actions.insert(
-      &String::from("removeActor"),
-      Box::new(Actions::remove_actor),
-  );
-  actions.insert(
-      &String::from("spawnActor"),
-      Box::new(Actions::spawn_actor),
-  );
+    actions.insert(
+        str("actorInput"),
+        Box::new(&(Actions::actor_input as fn(&Value, &Context, &Options))),
+    );
+    // actions.insert(
+    //     str("actors"),
+    //     Box::new(None),
+    // );
+    actions.insert(
+        str("mergeActors"),
+        Box::new(&(Actions::merge_actors as fn(&Value, &Context, &Options))),
+    );
+    actions.insert(
+        str("removeActor"),
+        Box::new(&(Actions::remove_actor as fn(&Value, &Context, &Options))),
+    );
+    actions.insert(
+        str("spawnActor"),
+        Box::new(&(Actions::spawn_actor as fn(&Value, &Context, &Options))),
+    );
 
-  // actions.insert(
-  //     &String::from("components"),
-  //     None
-  // );
-  actions.insert(
-      &String::from("changeComponent"),
-      Box::new(ComponentActions::change_component)
-  );
-  actions.insert(
-      &String::from("mergeComponents"),
-      Box::new(ComponentActions::merge_components)
-  );
-  actions.insert(
-      &String::from("removeComponent"),
-      Box::new(ComponentActions::remove_component)
-  );
-  actions.insert(
-      &String::from("upsertComponent"),
-      Box::new(ComponentActions::upsert_component)
-  );
+    actions.insert(
+        str("changeComponent"),
+        Box::new(&(Actions::change_component as fn(&Value, &Context, &Options))),
+    );
+    // actions.insert(
+    //     str("components"),
+    //     Box::new(None),
+    // );
+    actions.insert(
+        str("mergeComponents"),
+        Box::new(&(Actions::merge_components as fn(&Value, &Context, &Options))),
+    );
+    actions.insert(
+        str("removeComponent"),
+        Box::new(&(Actions::remove_component as fn(&Value, &Context, &Options))),
+    );
+    actions.insert(
+        str("upsertComponent"),
+        Box::new(&(Actions::upsert_component as fn(&Value, &Context, &Options))),
+    );
 
-  actions.insert(
-      &String::from("batch"),
-      Box::new(CoreActions::batch)
-  );
+    actions.insert(
+        &String::from("batch"),
+        Box::new(&(Actions::batch as fn(&Value, &Context, &Options))),
+    );
 
-  actions.insert(
-      &String::from("createEntity"),
-      Box::new(EntityActions::create_entity),
-  );
-  // actions.insert(
-  //     &String::from("entities"),
-  //     None
-  // );
-  actions.insert(
-      &String::from("mergeEntities"),
-      Box::new(EntityActions::merge_entities),
-  );
-  actions.insert(
-      &String::from("removeEntity"),
-      Box::new(EntityActions::remove_entity),
-  );
+    actions.insert(
+        &String::from("createEntity"),
+        Box::new(&(Actions::create_entity as fn(&Value, &Context, &Options))),
+    );
+    // actions.insert(
+    //     &String::from("entities"),
+    //     Box::new(None),
+    // );
+    actions.insert(
+        &String::from("mergeEntities"),
+        Box::new(&(Actions::merge_entities as fn(&Value, &Context, &Options))),
+    );
+    actions.insert(
+        &String::from("removeEntity"),
+        Box::new(&(Actions::remove_entity as fn(&Value, &Context, &Options))),
+    );
 
-  actions.insert(
-      &String::from("createEntity"),
-      Box::new(SymbolActions::add_symbol),
-  );
-  actions.insert(
-      &String::from("fetchSymbol"),
-      Box::new(SymbolActions::fetch_symbol),
-  );
-  actions.insert(
-      &String::from("getSymbol"),
-      Box::new(SymbolActions::get_symbol),
-  );
-  actions.insert(
-      &String::from("mergeSymbols"),
-      Box::new(SymbolActions::merge_symbols),
-  );
-  // actions.insert(
-  //     &String::from("symbol"),
-  //     None
-  // );
-  // actions.insert(
-  //     &String::from("symbols"),
-  //     None
-  // );
+    actions.insert(
+        &String::from("createEntity"),
+        Box::new(&(Actions::add_symbol as fn(&Value, &Context, &Options) -> Option<u32>)),
+    );
+    actions.insert(
+        &String::from("fetchSymbol"),
+        Box::new(&(Actions::fetch_symbol as fn(&Value, &Context, &Options))),
+    );
+    actions.insert(
+        &String::from("getSymbol"),
+        Box::new(&(Actions::get_symbol as fn(&Value, &Context, &Options) -> Option<&'a String>)),
+    );
+    actions.insert(
+        &String::from("mergeSymbols"),
+        Box::new(&(Actions::merge_symbols as fn(&Value, &Context, &Options))),
+    );
+    // actions.insert(
+    //     &String::from("symbol"),
+    //     Box::new(None),
+    // );
+    // actions.insert(
+    //     &String::from("symbols"),
+    //     Box::new(None),
+    // );
 
-  &actions
+    &actions
 }
 
 /**

@@ -1,58 +1,64 @@
 use serde_json::Value;
+// use std::any::Any;
 
 // use crate::hash::HashMap;
 use crate::context::Context;
+use crate::string::str;
 use crate::types::{
-    DefaultOptions, EnumObject, IndexParams, Indexes, MaskObject, Payload, PayloadSize,
-    PayloadSizeObject, PayloadSizes, SetOrVec, Type, Types, UpdateOptions, ValidKeys,
+    // InputPayload,
+    // Payload,
+    // InputPayload,
+    BatchActionPayloadSizes, DefaultOptions, EnumObject, IndexParams, Indexes, MaskObject, PayloadSize, PayloadSizeObject, SetOrVec, StorageOptions, Type, Types, UpdateOptions, ValidKeys
 };
 use crate::utils::{create_enum, union_sets};
 
 // Define ACTIONS and COMMON_COMPONENTS arrays
 const ACTIONS: Vec<&String> = [
-    &String::from("actorInput"),
-    &String::from("actors"),
-    &String::from("addSymbol"),
-    &String::from("batch"),
-    &String::from("changeComponent"),
-    &String::from("components"),
-    &String::from("createEntity"),
-    &String::from("entities"),
-    &String::from("fetchSymbol"),
-    &String::from("getSymbol"),
-    &String::from("mergeActors"),
-    &String::from("mergeComponents"),
-    &String::from("mergeEntities"),
-    &String::from("mergeSymbols"),
-    &String::from("mergeSymbol"),
-    &String::from("removeActor"),
-    &String::from("removeComponent"),
-    &String::from("removeEntity"),
-    &String::from("spawnActor"),
-    &String::from("symbol"),
-    &String::from("symbols"),
-    &String::from("upsertComponent"),
+    str("actorInput"),
+    str("actors"),
+    str("addSymbol"),
+    str("batch"),
+    str("changeComponent"),
+    str("components"),
+    str("createEntity"),
+    str("entities"),
+    str("fetchSymbol"),
+    str("getSymbol"),
+    str("mergeActors"),
+    str("mergeComponents"),
+    str("mergeEntities"),
+    str("mergeSymbols"),
+    str("mergeSymbol"),
+    str("removeActor"),
+    str("removeComponent"),
+    str("removeEntity"),
+    str("spawnActor"),
+    str("symbol"),
+    str("symbols"),
+    str("upsertComponent"),
 ]
 .iter()
 .cloned()
 .collect();
 
 const COMMON_COMPONENTS: Vec<&String> = [
-    &String::from("asset"),
-    &String::from("collider"),
-    &String::from("color"),
-    &String::from("hidden"),
-    &String::from("position"),
-    &String::from("rotation"),
-    &String::from("velocity"),
-    &String::from("spin"),
+    str("asset"),
+    str("collider"),
+    str("color"),
+    str("hidden"),
+    str("position"),
+    str("rotation"),
+    str("velocity"),
+    str("spin"),
 ]
 .iter()
 .cloned()
 .collect();
 
-const ACTIONS_AND_COMMON_COMPONENTS: [SetOrVec<&String>; 2] =
-    [SetOrVec::Vec(ACTIONS), SetOrVec::Vec(COMMON_COMPONENTS)];
+const ACTIONS_AND_COMMON_COMPONENTS: [SetOrVec<&String>; 2] = [
+    SetOrVec::<&String>::Vec(ACTIONS),
+    SetOrVec::<&String>::Vec(COMMON_COMPONENTS),
+];
 
 /**
  * A set of default symbols, which is the union of Actions and CommonComponents.
@@ -62,51 +68,52 @@ pub const DEFAULT_SYMBOLS: Vec<&String> = union_sets::<String, 2>(ACTIONS_AND_CO
 /**
  * Padding for the enum.
  */
-pub const PAD_ENUM: i16 = 0; // 10;
+pub const PAD_ENUM: u16 = 0; // 10;
 
 /**
  * An enum of action names.
  */
-pub const ENUM_ACTIONS: EnumObject = create_enum(SetOrVec::Vec(ACTIONS), PAD_ENUM);
+pub const ENUM_ACTIONS: EnumObject = create_enum(SetOrVec::<&String>::Vec(ACTIONS), PAD_ENUM);
 
 /**
  * An enum of common component names.
  */
-pub const ENUM_COMMON_COMPONENTS: EnumObject = create_enum(
-    SetOrVec::Vec(COMMON_COMPONENTS),
-    ACTIONS.len() as i16 + PAD_ENUM,
+pub const ENUM_COMMON_COMPONENTS: EnumObject = create_enum::<String>(
+    SetOrVec::<&String>::Vec(COMMON_COMPONENTS),
+    ACTIONS.len() as u16 + PAD_ENUM,
 );
 
 /**
  * An enum of default symbols.
  */
-pub const ENUM_DEFAULT_SYMBOLS: EnumObject = create_enum(SetOrVec::Vec(DEFAULT_SYMBOLS), PAD_ENUM);
+pub const ENUM_DEFAULT_SYMBOLS: EnumObject =
+    create_enum(SetOrVec::<&String>::Vec(DEFAULT_SYMBOLS), PAD_ENUM);
 
 /**
  * An object that maps action names to their payload sizes.
  */
-pub const BATCH_ACTION_PAYLOAD_SIZES: PayloadSizes = [
+pub const BATCH_ACTION_PAYLOAD_SIZES: BatchActionPayloadSizes = [
     (
-        &String::from("actorInput"),
-        &PayloadSize::Object(&PayloadSizeObject {
+        str("actorInput"),
+        PayloadSize::Object(PayloadSizeObject {
             default: 1,
             rollback: Some(2),
             ordered: None,
         }),
     ),
     (
-        &String::from("changeComponent"),
-        &PayloadSize::Object(&PayloadSizeObject {
+        str("changeComponent"),
+        PayloadSize::Object(PayloadSizeObject {
             default: 3,
             ordered: Some(4),
             rollback: None,
         }),
     ),
-    (&String::from("mergeSymbols"), &PayloadSize::Number(2)),
-    (&String::from("removeComponent"), &PayloadSize::Number(2)),
+    (str("mergeSymbols"), PayloadSize::Number(2)),
+    (str("removeComponent"), PayloadSize::Number(2)),
     (
-        &String::from("upsertComponent"),
-        &PayloadSize::Object(&PayloadSizeObject {
+        str("upsertComponent"),
+        PayloadSize::Object(PayloadSizeObject {
             default: 3,
             ordered: Some(4),
             rollback: None,
@@ -123,9 +130,9 @@ pub const DEFAULT_INDEXES: Indexes = [
     // ("color", { _type: "sorted" }),
     // ("hidden", { _type: "sorted" }),
     (
-        &String::from("position"),
+        str("position"),
         &IndexParams {
-            _type: &String::from("spatial"),
+            _type: str("spatial"),
         },
     ),
 ]
@@ -134,38 +141,38 @@ pub const DEFAULT_INDEXES: Indexes = [
 .collect();
 
 pub const DEFAULT_TYPES: Types = [
-    (&String::from("asset"), &Type::String(&String::from("str"))),
+    (str("asset"), &Type::String(str("str"))),
     (
-        &String::from("collider"),
-        &Type::String(&String::from("str")),
+        str("collider"),
+        &Type::String(str("str")),
     ),
     (
-        &String::from("color"),
-        &Type::Tuple((&String::from("ui8"), 4)),
+        str("color"),
+        &Type::Tuple((str("ui8"), 4)),
     ),
     (
-        &String::from("hidden"),
-        &Type::String(&String::from("bool")),
+        str("hidden"),
+        &Type::String(str("bool")),
     ),
     (
-        &String::from("position"),
-        &Type::Tuple((&String::from("f32"), 3)),
+        str("position"),
+        &Type::Tuple((str("f32"), 3)),
     ),
     (
-        &String::from("rotation"),
-        &Type::Tuple((&String::from("f32"), 3)),
+        str("rotation"),
+        &Type::Tuple((str("f32"), 3)),
     ),
     (
-        &String::from("velocity"),
-        &Type::Tuple((&String::from("f32"), 3)),
+        str("velocity"),
+        &Type::Tuple((str("f32"), 3)),
     ),
     (
-        &String::from("spin"),
-        &Type::Tuple((&String::from("f32"), 3)),
+        str("spin"),
+        &Type::Tuple((str("f32"), 3)),
     ),
     (
-        &String::from("size"),
-        &Type::Tuple((&String::from("f32"), 3)),
+        str("size"),
+        &Type::Tuple((str("f32"), 3)),
     ),
 ]
 .iter()
@@ -178,11 +185,11 @@ pub const DEFAULT_PAGE_SIZE: i32 = 100;
  * Default options for the application.
  */
 pub const DEFAULT_OPTIONS: DefaultOptions = DefaultOptions {
-    batch_action_payload_sizes: &BATCH_ACTION_PAYLOAD_SIZES,
+    batch_action_payload_sizes: BATCH_ACTION_PAYLOAD_SIZES,
     compress_strings_as_ints: true,
     enable_querying: !true,
     enable_rollback: !true,
-    indexes: &DEFAULT_INDEXES,
+    indexes: DEFAULT_INDEXES,
     is_async_storage: false,
     is_authority: true,
     is_component_relay: true,
@@ -192,9 +199,9 @@ pub const DEFAULT_OPTIONS: DefaultOptions = DefaultOptions {
     is_read_only: false,
     is_symbol_leader: false,
     is_symbol_relay: false,
-    page_size: DEFAULT_PAGE_SIZE as i16,
+    page_size: DEFAULT_PAGE_SIZE as u16,
     skip_pending: false,
-    types: &DEFAULT_TYPES,
+    types: DEFAULT_TYPES,
 };
 
 /**
@@ -205,7 +212,7 @@ pub const DEFAULT_UPDATE_OPTIONS: UpdateOptions = UpdateOptions {
     _type: true,
     batched: true,
     batch_size: 100,
-    valid_keys: &DEFAULT_VALID_KEYS,
+    valid_keys: DEFAULT_VALID_KEYS,
 };
 
 /**
@@ -223,50 +230,65 @@ pub const DEFAULT_MASK_ALL: MaskObject = MaskObject {
  * An object that maps keys to their validity.
  */
 pub const DEFAULT_VALID_KEYS: ValidKeys = [
-    (&String::from("asset"), true),
-    (&String::from("collider"), true),
-    (&String::from("color"), true),
-    (&String::from("hidden"), true),
-    (&String::from("position"), true),
-    (&String::from("rotation"), true),
-    (&String::from("velocity"), true),
-    (&String::from("spin"), true),
-    (&String::from("size"), true),
+    (str("asset"), true),
+    (str("collider"), true),
+    (str("color"), true),
+    (str("hidden"), true),
+    (str("position"), true),
+    (str("rotation"), true),
+    (str("velocity"), true),
+    (str("spin"), true),
+    (str("size"), true),
 ]
 .iter()
 .cloned()
 .collect::<ValidKeys>();
 
+pub const DEFAULT_STORAGE_OPTIONS: StorageOptions = StorageOptions {
+    indexes: None,
+    types: None,
+    other: None,
+};
+
 /**
  * A responder fn that does nothing and returns nothing.
  */
-pub fn void_responder() {}
+pub fn void_responder(_data: &Value, _type: Option<u8>) {}
 
 pub fn default_on_update() {}
 
 /**
  * The Payload trait represents a payload that can be sent to an action.
  */
-pub trait PayloadWithId {
-    fn get_id(&self) -> Option<&String> {
-        if let Some(id) = self.get("id") {
-            if let Some(id) = id.as_string() {
-                return Some(id);
-            }
-        }
-        None
-    }
-}
+// pub trait PayloadWithId {
+//     fn get_id<'a>(&self) -> Option<&'a String>;
+// }
+
+// impl PayloadWithId for InputPayload {
+//     fn get_id<'a>(&self) -> Option<&'a String> {
+//         Some(&self.id)
+//     }
+// }
 
 /**
  * A fn that retrieves the actor ID from a payload.
  *
- * @param {Payload} payload - The payload from which the actor ID is to be retrieved.
+ * @param {InputPayload} payload - The payload from which the actor ID is to be retrieved.
  * @param {any} _context - The current context. This parameter is not used.
  * @returns {string | undefined} The actor ID, or undefined if it cannot be found.
  */
-pub fn default_get_actor_id<'a, T>(payload: &Payload, _context: &Context<T>) -> Option<&'a String> {
-    payload.get_id()
+pub fn default_get_actor_id<'a>(
+    // payload: &dyn PayloadWithId,
+    payload: &Value,
+    _context: &Context,
+) -> Option<&'a String> {
+    // payload.get_id()
+    if let Some(id) = payload.get("id") {
+        if let Some(id) = id.as_str() {
+            return Some(str(id));
+        }
+    }
+    None
 }
 
 /**
@@ -278,18 +300,15 @@ pub fn default_get_actor_id<'a, T>(payload: &Payload, _context: &Context<T>) -> 
  * @param {string} key - The key of the grouped value.
  * @returns {any} The value from the group.
  */
-pub fn default_get_grouped_value<'a>(
-    value: &Value,
-    i: i32,
-    types: &Types,
-    key: &String,
-) -> &'a Value {
-    if let Some(type_arr) = types.get(&key) {
-        if let Value::Array(arr) = type_arr {
-            return &value[i * arr[1]..(i + 1) * arr[1]];
-        }
-    }
-    &value[i]
+pub fn default_get_grouped_value<'a>(value: &Value, i: u32, types: &Types, key: &String) -> &'a Value {
+    // TODO:
+    // if let Some(type_arr) = types.get(&key) {
+    //     if let Value::Array(arr) = *type_arr {
+    //         return &value[i * arr[1]..(i + 1) * arr[1]];
+    //     }
+    // }
+    // &value[i]
+    &value
 }
 
 /**
@@ -301,5 +320,5 @@ pub fn default_get_grouped_value<'a>(
  * @returns {any} The value from the group.
  */
 pub fn default_set_grouped_value<'a>(value: &Value, _types: &Types, _key: &String) -> &'a Value {
-    return value;
+    &value
 }

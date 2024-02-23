@@ -1,28 +1,29 @@
-// use serde_json::Value;
+// use futures::executor::block_on;
+// use futures::stream::FuturesUnordered;
+// use futures::{Future, StreamExt};
+use promises::Promise;
+use serde_json::{Value, json};
+use std::error::Error;
 
+use crate::string::str;
+use crate::context::Context;
 use crate::hash::HashMap;
 use crate::options::Options;
-use crate::context::Context;
-use crate::symbols::{
-    ensure_symbol_index,
-    recursive_symbol_indexes_ensured
-};
 use crate::pending::{
-    // Pending,
-    SymbolsState,
-    CreatedState,
-    RemovedState,
-    UpdatedState
+    // self,
+    CreatedState, RemovedState, SymbolsState, UpdatedState
 };
+use crate::symbols::{ensure_symbol_index, recursive_symbol_indexes_ensured};
 use crate::types::{
     UpdateOptions,
-    ValueEnum,
+    // ValueEnum,
     // Mask,
     // ExtendedOptions,
     // EnumDefaultSymbols
 };
 
-type BatchBlock = Vec<ValueEnum>;
+type BatchBlock<'a> = Value;
+// type BatchBlock<'a> = Vec<&'a Value>;
 
 /**
  * The updater function updates the context based on the provided options.
@@ -30,13 +31,11 @@ type BatchBlock = Vec<ValueEnum>;
  * @param {Context} context - The current context.
  * @param {ExtendedOptions | any} options - The options for updating the context.
  */
-pub fn updater<T>(context: &Context<T>, options: &Options<T>, tick: i32) {
-    let options = if let Options::ExtendedOptions(opt) = options {
-        opt
-    } else {
-        &Options::new(&options, &context)
-    };
-
+pub fn updater<'a>(
+    context: &Context<'a>,
+    options: &Options<'a>,
+    tick: i32,
+) -> Promise<Vec<&'a Value>, Box<dyn Error + Send>> {
     let Context {
         pending,
         symbols,
@@ -59,272 +58,250 @@ pub fn updater<T>(context: &Context<T>, options: &Options<T>, tick: i32) {
         valid_keys,
     } = update_options;
 
-    if pending.is_none() || pending.is_empty() {
-        return;
+    if pending.is_none() {
+        return Promise::resolve(Vec::new());
     }
 
-    let created: CreatedState = pending.created;
-    let removed: RemovedState = pending.removed;
-    let symbols: SymbolsState = pending.symbols;
-    let updated: UpdatedState = pending.updated;
+    let mut pending = pending.unwrap();
 
-    let mut batch: Vec<Vec<ValueEnum>> = Vec::new();
+    let mut created: CreatedState = pending.created;
+    let mut removed: RemovedState = pending.removed;
+    let _symbols: SymbolsState = *pending.symbols;
+    let mut updated: UpdatedState = pending.updated;
+
+    let mut batch: Vec<Value> = Vec::new();
     let mut batch_block: Vec<BatchBlock> = Vec::new();
 
-    
-    let merge_batch = |action: ValueEnum| {
-        if batched && !batch_block.is_empty() {
-            batch.push(vec![action].append(&mut batch_block));
+    let mut merge_batch = |action: Value| {
+        if *batched && !batch_block.is_empty() {
+            let mut vec = vec![action];
+            vec.append(&mut batch_block);
+            batch.push(Value::Array(vec));
             batch_block.clear();
         }
     };
 
-    let queue_message = |action: ValueEnum, payload: ValueEnum| {
-        if batched {
-            batch_block.extend(payload);
+    let mut queue_message = |action: Value, payload: Value| {
+        if *batched {
+            batch_block.extend(*payload.as_array().unwrap());
 
-            if batch_block.len() >= batch_size {
+            if batch_block.len() as u16 >= *batch_size {
                 merge_batch(action);
             }
         } else {
-            if compress_strings_as_ints {
-                action = ensure_symbol_index(action, context, options);
-            }
-            responder([action, payload], _type);
+            let action = if *compress_strings_as_ints {
+                let result = ensure_symbol_index(str(action.as_str().unwrap()) , context, options);
+                Value::Number(result.unwrap().into())
+            } else {
+                action
+            };
+            responder(&json!([action, payload]), Some((if *_type { 1 } else { 0 }) as u8));
         }
     };
 
-    let ensure_symbol = |symbol: ValueEnum| -> ValueEnum {
-        if compress_strings_as_ints {
-            symbol = ensure_symbol_index(symbol, context, options);
+    let ensure_symbol = |symbol: Value| -> Value {
+        if *compress_strings_as_ints {
+            let symbol = ensure_symbol_index(str(symbol.as_str().unwrap()), context, options);
+            // let symbol = symbol
+            Value::Number(symbol.unwrap().into())
+        } else {
+            symbol
         }
-        symbol
     };
 
-    if !mask || !mask.entities {
-        let action = ValueEnum::Number(
-            symbols.get(
-                symbols.get(String::from("createEntity"))
-            ).1
-        );
+    if mask.is_none() || !mask.unwrap().entities {
+        let action = Value::Number(symbols.find(str("createEntity")).unwrap().into());
 
-        for key in created.entities.unwrap_or_default() {
-            let nkey = ensure_symbol(key);
+        for key in created.entities {
+            let nkey = ensure_symbol(Value::String(*key));
 
             queue_message(action, nkey);
         }
 
         merge_batch(action);
-        created.entities = Vec::new();
+        created.entities = &mut Vec::new();
     }
 
-    if !mask || !mask.actors {
-        let action = ValueEnum::Number(
-            symbols.get(
-                symbols.get(String::from("spawnActor"))
-            ).1
-        );
-        
-        for id in created.actors.unwrap_or_default() {
-            let nid = ensure_symbol(id);
+    if mask.is_none() || !mask.unwrap().actors {
+        let action = Value::Number(symbols.find(str("spawnActor")).unwrap().into());
+
+        for id in created.actors {
+            let nid = ensure_symbol(Value::String(*id.0));
             queue_message(action, nid);
         }
 
         merge_batch(action);
-        created.actors = Vec::new();
+        created.actors = &mut HashMap::new();
     }
 
-    if !mask || !mask.entities {
-        let action = ValueEnum::Number(
-            symbols.get(
-                symbols.get(String::from("removeEntity"))
-            ).1
-        );
+    if mask.is_none() || !mask.unwrap().entities {
+        let action = Value::Number(symbols.find(str("removeEntity")).unwrap().into());
 
-        for key in removed.entities.unwrap_or_default() {
-            let nkey = ensure_symbol(key);
+        for key in removed.entities {
+            let nkey = ensure_symbol(Value::String(*key));
 
             queue_message(action, nkey);
         }
 
         merge_batch(action);
-        removed.entities = Vec::new();
+        removed.entities = &mut Vec::new();
     }
 
-    if !mask || !mask.actors {
-        let action = ValueEnum::Number(
-            symbols.get(
-                symbols.get(String::from("removeActor"))
-            ).1
-        );
+    if !mask.is_none() || !mask.unwrap().actors {
+        let action = Value::Number(symbols.find(str("removeActor")).unwrap().into());
 
-        for id in removed.actors.unwrap_or_default() {
-            let nid = ensure_symbol(id);
+        for id in removed.actors {
+            let nid = ensure_symbol(Value::String(*id.0));
 
             queue_message(action, nid);
         }
 
         merge_batch(action);
-        removed.actors = Vec::new();
+        removed.actors = &mut HashMap::new();
     }
 
-    if !mask || !mask.components {
-        let action = ValueEnum::Number(
-            symbols.get(
-                symbols.get(String::from("removeComponent"))
-            ).1
-        );
+    if mask.is_none() || !mask.unwrap().components {
+        let action = Value::Number(symbols.find(str("removeComponent")).unwrap().into());
 
-        for (id, components) in removed.components.unwrap_or_default() {
-            let nid = ensure_symbol(id);
+        for (id, components) in removed.components {
+            let nid = ensure_symbol(Value::String(*id));
 
             for (key, _) in components {
-                if valid_keys && !valid_keys[key] {
+                if valid_keys.is_empty() || *valid_keys.get(&key).unwrap_or(&false) {
                     break;
                 }
 
-                let nkey = ensure_symbol(key);
+                let nkey = ensure_symbol(Value::String(*key));
 
                 let payload = [nid, nkey];
 
-                queue_message(action, payload);
+                queue_message(action, Value::Array(payload.to_vec()));
             }
         }
 
         merge_batch(action);
-        removed.components = HashMap::new();
+        removed.components = &mut HashMap::new();
     }
 
-    if !mask || !mask.components {
-        let components = context.components;
-        let action = ValueEnum::Number(
-            symbols.get(
-                symbols.get(String::from("upsertComponent"))
-            ).1
-        );
+    if mask.is_none() || !mask.unwrap().components {
+        let components = context.components();
+        let action = Value::Number(symbols.find(str("upsertComponent")).unwrap().into());
 
-        for (id, _) in created.components.unwrap_or_default() {
-            if !components || !components[id] {
+        for (id, _) in created.components {
+            if components.is_empty() || components[&id].is_null() {
                 break;
             }
 
-            for (key, value) in components[id] {
-                if valid_keys && !valid_keys[key] {
+            for (key, value) in components[&id].as_object().unwrap() {
+                if valid_keys.is_empty() || *valid_keys.get(str(key)).unwrap_or(&false) {
                     break;
                 }
 
-                let nid = ensure_symbol(id);
-                let nkey = ensure_symbol(key);
+                let nid = ensure_symbol(Value::String(*id));
+                let nkey = ensure_symbol(Value::String(*str(key)));
 
-                let payload = [nid, nkey, value];
+                let payload = [nid, nkey, *value];
 
-                queue_message(action, payload);
+                queue_message(action, Value::Array(payload.to_vec()));
             }
         }
 
         merge_batch(action);
-        created.components = HashMap::new();
+        created.components = &mut HashMap::new();
     }
 
-    if !mask || !mask.components {
-        let components = context.components;
-        let action = ValueEnum::Number(
-            symbols.get(
-                symbols.get(String::from("upsertComponent"))
-            ).1
-        );
+    if mask.is_none() || !mask.unwrap().components {
+        let components = context.components();
 
-        for (id, updatedComponents) in updated.components.unwrap_or_default() {
-            if !components || !components[id] {
+        let action = Value::Number(symbols.find(&str("upsertComponent")).unwrap().into());
+
+        for (id, updated_components) in updated.components {
+            if components.is_empty() || components[&id].is_null() {
                 break;
             }
 
-            for (key, _) in updatedComponents[id] {
-                if valid_keys && !valid_keys[key] {
+            for (key, _) in updated_components {
+                if valid_keys.is_empty() || !valid_keys[key] {
                     break;
                 }
 
-                let value = components[id][key];
+                let mut value = components[&id][key];
 
-                if compress_strings_as_ints {
+                if *compress_strings_as_ints {
                     // value = value.unwrap_or_default();
-                    value = &recursive_symbol_indexes_ensured(&key, &value, &context, &options);
+                    value = *recursive_symbol_indexes_ensured(&key, &value, &context, &options);
                 }
 
-                let nid = ensure_symbol(id);
-                let nkey = ensure_symbol(key);
+                let nid = ensure_symbol(Value::String(*id));
+                let nkey = ensure_symbol(Value::String(*str(key)));
 
                 let payload = [nid, nkey, value];
 
-                queue_message(action, payload);
+                queue_message(action, Value::Array(payload.to_vec()));
             }
         }
 
         merge_batch(action);
-        updated.components = HashMap::new();
+        updated.components = &mut HashMap::new();
     }
 
-    if !mask || !mask.inputs {
-        let action = ValueEnum::Number(
-            symbols.get(
-                symbols.get(String::from("actorInput"))
-            ).1
-        );
+    if mask.is_none() || !mask.unwrap().inputs {
+        let action = Value::Number(symbols.find(str("actorInput")).unwrap().into());
 
-        for (id, createdInputs) in created.inputs.unwrap_or_default() {
-            for index in createdInputs.unwrap_or_default() {
-                let payload = createdInputs[index];
+        for (id, createdInputs) in created.inputs {
+            for index in createdInputs {
+                let payload = createdInputs[*index as usize];
 
                 let input = payload;
 
-                queue_message(action, input);
+                queue_message(action, Value::Number(input.into()));
             }
         }
 
         merge_batch(action);
-        created.inputs = HashMap::new();
+        created.inputs = &mut HashMap::new();
     }
 
-    if !mask || !mask.symbols {
-        let action = ValueEnum::Number(
-            symbols.get(
-                symbols.get(String::from("mergeSymbol"))
-            ).1
-        );
+    if mask.is_none() || !mask.unwrap().symbols {
+        let action = Value::Number(symbols.find(str("mergeSymbol")).unwrap().into());
 
-        for symbolOp in symbols {
-            if batched {
-                batch_block.push(symbolOp);
+        for symbol_op in _symbols {
+            if *batched {
+                batch_block.push(json!([symbol_op.0, symbol_op.1]));
             } else {
-                let message = [action, symbolOp];
-                responder(message, _type);
+                let message = json!([action, symbol_op]);
+                responder(&message, Some((if *_type { 1 } else { 0 }) as u8));
             }
 
-            if batch_block.len() >= batch_size && !batch_block.is_empty() {
-                batch.insert(0, [action].append(&mut batch_block));
+            if batch_block.len() as u16 >= *batch_size && !batch_block.is_empty() {
+                let mut vec = vec![action];
+                vec.append(&mut batch_block);
+                batch.insert(0, Value::Array(vec));
                 batch_block.clear();
             }
         }
 
-        if batched && !batch_block.is_empty() {
-            batch.insert(0, [action].append(&mut batch_block));
+        if *batched && !batch_block.is_empty() {
+            let mut vec = vec![action];
+            vec.append(&mut batch_block);
+            batch.insert(0, Value::Array(vec));
             batch_block.clear();
         }
 
-        context.pending.symbols = Vec::new();
+        pending.symbols = &mut Vec::new();
     }
 
-    if batched && !batch.is_empty() {
-        let action = ValueEnum::Number(
-            symbols.get(
-                symbols.get(String::from("batch"))
-            ).1
-        );
+    if *batched && !batch.is_empty() {
+        let action = Value::Number(symbols.find(str("batch")).unwrap().into());
 
-        for batchSlice in batch {
-            if let Some(batchSlice) = batchSlice {
-                responder([action, batchSlice], _type);
-            }
+        for batch_slice in batch {
+            // if let Some(batch_slice) = batch_slice {
+            responder(&json!([action, batch_slice]), Some((if *_type { 1 } else { 0 }) as u8));
+            // }
         }
+        
     }
+
+    // TODO: return the batch promise
+    Promise::resolve(Vec::new())
 }

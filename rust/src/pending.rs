@@ -1,48 +1,51 @@
 use crate::hash::HashMap;
+use crate::string::str;
 // use crate::context::Context;
+
+pub type PendingComponents = HashMap<String, HashMap<String, bool>>;
 
 /**
  * The RemovedState struct represents the state of removed actors, entities, and components.
  */
-pub struct RemovedState {
-    pub actors: HashMap<String, bool>,
-    pub entities: Vec<String>,
-    pub components: HashMap<String, HashMap<String, bool>>,
+pub struct RemovedState<'a> {
+    pub actors: &'a mut HashMap<String, bool>,
+    pub entities: &'a mut Vec<String>,
+    pub components: &'a mut PendingComponents,
 }
 
 /**
  * The UpdatedState struct represents the state of updated components.
  */
-pub struct UpdatedState {
-    pub components: HashMap<String, HashMap<String, bool>>,
+pub struct UpdatedState<'a> {
+    pub components: &'a mut PendingComponents,
 }
 
 /**
  * The CreatedState struct represents the state of created actors, entities, components, and inputs.
  */
-pub struct CreatedState {
-    pub actors: HashMap<String, bool>,
-    pub entities: Vec<String>,
-    pub components: HashMap<String, HashMap<String, bool>>,
-    pub inputs: HashMap<String, Vec<i32>>,
+pub struct CreatedState<'a> {
+    pub actors: &'a mut HashMap<String, bool>,
+    pub entities: &'a mut Vec<String>,
+    pub components: &'a mut PendingComponents,
+    pub inputs: &'a mut HashMap<String, Vec<i32>>,
 }
 
-pub type SymbolsState = Vec<(String, i32)>;
+pub type SymbolsState<'a> = Vec<(&'a String, i32)>;
 
 /**
  * The PendingContext struct represents the context of pending operations.
  */
-struct PendingContext<'a> {
-    pending: Option<Pending<'a>>,
-}
+// struct PendingContext<'a> {
+//     pending: Option<Pending<'a>>,
+// }
 
 /**
  * The Pending struct represents a pending state with removed, updated, and created states.
  */
 pub struct Pending<'a> {
-    pub removed: RemovedState,
-    pub updated: UpdatedState,
-    pub created: CreatedState,
+    pub removed: RemovedState<'a>,
+    pub updated: UpdatedState<'a>,
+    pub created: CreatedState<'a>,
     
     pub symbols: &'a Vec<(&'a String, i32)>,
     pub is_diffed: bool,
@@ -55,20 +58,20 @@ impl<'a> Pending<'a> {
     pub fn new(is_diffed: bool) -> Self {
         Self {
             removed: RemovedState {
-                actors: HashMap::new(),
-                entities: Vec::new(),
-                components: HashMap::new(),
+                actors: &mut HashMap::new(),
+                entities: &mut Vec::new(),
+                components: &mut HashMap::new(),
             },
             updated: UpdatedState {
-                components: HashMap::new(),
+                components: &mut HashMap::new(),
             },
             created: CreatedState {
-                actors: HashMap::new(),
-                entities: Vec::new(),
-                components: HashMap::new(),
-                inputs: HashMap::new(),
+                actors: &mut HashMap::new(),
+                entities: &mut Vec::new(),
+                components: &mut HashMap::new(),
+                inputs: &mut HashMap::new(),
             },
-            symbols: &Vec::new(),
+            symbols: &mut Vec::new(),
             is_diffed,
         }
     }
@@ -79,8 +82,8 @@ impl<'a> Pending<'a> {
      * @param {String} id - The ID of the actor.
      * @param {i32} newindex - The index of the new input.
      */
-    pub fn actor_input(&mut self, id: String, newindex: i32) {
-        self.created.inputs.entry(id).or_insert(Vec::new()).push(newindex);
+    pub fn actor_input(&mut self, id: &String, newindex: i32) {
+        self.created.inputs.entry(*id).or_insert(Vec::new()).push(newindex);
     }
 
     /**
@@ -90,7 +93,7 @@ impl<'a> Pending<'a> {
      * @param {String} id - The ID of the entity.
      * @param {String} key - The key of the component.
      */
-    pub fn change_component(&mut self, pending_type: String, id: String, key: String) {
+    pub fn change_component(&mut self, pending_type: &String, id: &String, key: &String) {
         self.upsert_component(pending_type, id, key);
     }
 
@@ -99,8 +102,8 @@ impl<'a> Pending<'a> {
      *
      * @param {String} id - The ID of the entity to create.
      */
-    pub fn create_entity(&mut self, id: String) {
-        self.created.entities.push(id);
+    pub fn create_entity(&mut self, id: &String) {
+        self.created.entities.push(*id);
     }
 
     /**
@@ -108,8 +111,8 @@ impl<'a> Pending<'a> {
      *
      * @param {String} id - The ID of the actor to remove.
      */
-    pub fn remove_actor(&mut self, id: String) {
-        self.removed.actors.insert(id, true);
+    pub fn remove_actor(&mut self, id: &String) {
+        self.removed.actors.insert(*id, true);
     }
 
     /**
@@ -127,8 +130,8 @@ impl<'a> Pending<'a> {
      *
      * @param {String} id - The ID of the entity to remove.
      */
-    pub fn remove_entity(&mut self, id: String) {
-        self.removed.entities.push(id);
+    pub fn remove_entity(&mut self, id: &String) {
+        self.removed.entities.push(*id);
     }
 
     /**
@@ -143,8 +146,8 @@ impl<'a> Pending<'a> {
      *
      * @param {String} id - The ID of the actor to spawn.
      */
-    pub fn spawn_actor(&mut self, id: String) {
-        self.created.actors.insert(id, true);
+    pub fn spawn_actor(&mut self, id: &String) {
+        self.created.actors.insert(*id, true);
     }
 
     /**
@@ -154,19 +157,23 @@ impl<'a> Pending<'a> {
      * @param {String} id - The ID of the entity.
      * @param {String} key - The key of the component.
      */
-    pub fn upsert_component(&mut self, pending_type: String, id: String, key: String) {
-        let pending = if pending_type == "created" {
-            &mut self.created
+    pub fn upsert_component(&mut self, pending_type: &String, id: &String, key: &String) {
+        if pending_type == str("created") {
+            let pending = &mut self.created;
+            Self::upsert_component_op(&mut pending.components, id, key);
         } else {
-            &mut self.updated
+            let pending = &mut self.updated;
+            Self::upsert_component_op(&mut pending.components, id, key);
         };
+    }
 
-        if let Some(components) = pending.components.get_mut(&id) {
-            components.insert(key, true);
+    fn upsert_component_op(components: &mut PendingComponents, id: &String, key: &String) {
+        if let Some(components) = components.get_mut(id) {
+            components.insert(*key, true);
         } else {
             let mut new_components = HashMap::new();
-            new_components.insert(key, true);
-            pending.components.insert(id, new_components);
+            new_components.insert(*key, true);
+            components.insert(*id, new_components);
         }
     }
 
@@ -175,8 +182,10 @@ impl<'a> Pending<'a> {
      *
      * @param {String} symbol_tuple - The symbol tuple to add.
      */
-    pub fn add_symbol(&mut self, symbol_tuple: (String, i32)) {
-        self.symbols.push(symbol_tuple);
+    pub fn add_symbol<'b>(&mut self, symbol_tuple: &'a (&String, i32)) {
+        let symbol = symbol_tuple.0;
+        let index = symbol_tuple.1;
+        self.symbols.push((&symbol, index));
     }
 
     /**
@@ -184,7 +193,19 @@ impl<'a> Pending<'a> {
      *
      * @param {Vec<(String, i32)>} symbols - The new array of symbols.
      */
-    pub fn replace_symbols(&mut self, symbols: Vec<(String, i32)>) {
+    pub fn replace_symbols<'b>(&mut self, symbols: &'b Vec<(&String, i32)>) {
         self.symbols = symbols;
+    }
+
+    pub fn reset_pending(&mut self) {
+        self.removed.actors = &mut HashMap::new();
+        self.removed.entities = &mut Vec::new();
+        self.removed.components = &mut HashMap::new();
+        self.updated.components = &mut HashMap::new();
+        self.created.actors = &mut HashMap::new();
+        self.created.entities = &mut Vec::new();
+        self.created.components = &mut HashMap::new();
+        self.created.inputs = &mut HashMap::new();
+        self.symbols = &mut Vec::new();
     }
 }

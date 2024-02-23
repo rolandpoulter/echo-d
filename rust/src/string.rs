@@ -20,11 +20,11 @@ pub fn string(s: &String) -> &String {
     if let Some(str) = STRINGS.get(s) {
         str
     } else {
-        STRINGS.insert(s);
+        STRINGS.insert(*s);
         &s
     }
 }
 
 pub fn string_drop(s: &String) {
-    STRINGS.remove(&s);
+    STRINGS.remove(s);
 }

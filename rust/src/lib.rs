@@ -18,6 +18,7 @@ pub mod updater;
 pub mod options;
 pub mod context;
 
+pub mod async_storage;
 pub mod storage;
 pub mod actions;
 

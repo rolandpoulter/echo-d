@@ -2,47 +2,62 @@
 // use std::pin::Pin;
 use std::marker::Send;
 
-// use std::any::Any;
-use serde_json::Value;
+use std::any::Any;
+use serde_json::{Value, Map};
 use promises::Promise;
 
 use crate::hash::{HashMap, HashSet};
-use crate::options::Options;
+// use crate::options::Options;
+// use crate::context::Context;
 
-pub enum Action<'a> {
+pub type Action<'a> = &'a String;
+
+#[derive(Clone)]
+pub enum ActionInput<'a> {
     String(&'a String),
-    Number(i32),
+    Number(u16),
 }
 
-pub type Actions<'a> = HashMap<&'a String, Box<&'a fn()>>; // dyn Any
+pub type Actions<'a> = HashMap<&'a String, Box<&'a dyn Any>>; // &'a dyn Fn()
 
 pub type Actor<'a> = &'a String;
+
+#[derive(Clone)]
+pub enum ActorInput<'a> {
+    String(Actor<'a>),
+    Number(u32),
+}
 
 /**
  * The Payload struct represents the payload for an actor action.
  */
-pub struct ActorPayload {
-    pub id: String,
+#[derive(Clone)]
+pub struct ActorPayload<'a> {
+    pub id: ActorInput<'a>,
 }
 
+#[derive(Clone)]
 pub struct ActorsPayload {}
 
-pub type BatchActionPayloadSizes<'a> = HashMap<&'a String, &'a Vec<&'a PayloadSize<'a>>>;
+pub type BatchActionPayloadSizes<'a> = HashMap<&'a String, PayloadSize>;
 
 /**
  * The Payload struct represents the payload for a component action.
  */
+#[derive(Clone)]
 pub struct ComponentPayload {
     pub id: String,
     pub key: String,
     pub value: String,
 }
 
+#[derive(Clone)]
 pub struct ComponentTarget {
     pub id: String,
     pub key: String,
 }
 
+#[derive(Clone)]
 pub struct ComponentsPayload {
     pub components: HashMap<String, ComponentPayload>,
 }
@@ -50,17 +65,25 @@ pub struct ComponentsPayload {
 /**
  * The Components struct represents a mapping from keys to any value.
  */
-pub type Components<'a> = HashMap<&'a String, &'a HashMap<&'a String, &'a Value>>;
+pub type Components<'a> = HashMap<&'a String, &'a Value>;
+
+/**
+ * The Component struct represents a component with dynamic properties.
+ */
+pub type Component<'a> = HashMap<&'a String, &'a Value>;
+
+pub type ComponentMap = Map<String, Value>;
 
 /**
  * Default options for the application.
  */
+#[derive(Clone)]
 pub struct DefaultOptions<'a> {
-    pub batch_action_payload_sizes: &'a PayloadSizes<'a>,
+    pub batch_action_payload_sizes: BatchActionPayloadSizes<'a>,
     pub compress_strings_as_ints: bool,
     pub enable_querying: bool,
     pub enable_rollback: bool,
-    pub indexes: &'a Indexes<'a>,
+    pub indexes: Indexes<'a>,
     pub is_async_storage: bool,
     pub is_authority: bool,
     pub is_component_relay: bool,
@@ -70,40 +93,51 @@ pub struct DefaultOptions<'a> {
     pub is_read_only: bool,
     pub is_symbol_leader: bool,
     pub is_symbol_relay: bool,
-    pub page_size: i16,
+    pub page_size: u16,
     pub skip_pending: bool,
-    pub types: &'a Types<'a>,
+    pub types: Types<'a>,
 }
 
 /**
  * Default options for updates.
  */
+#[derive(Clone)]
 pub struct UpdateOptions<'a> {
-    pub mask: Option<&'a MaskObject>,
+    pub mask: Option<MaskObject>,
     pub _type: bool,
     pub batched: bool,
-    pub batch_size: i32,
-    pub valid_keys: &'a ValidKeys<'a>,
+    pub batch_size: u16,
+    pub valid_keys: ValidKeys<'a>,
 }
 
 pub type Entity<'a> = &'a String;
 
-pub type EnumObject<'a> = HashMap<&'a String, i32>;
+/**
+ * The Payload struct represents the payload for an entity action.
+ */
+pub struct EntityPayload {
+    // Define the properties of your payload here
+}
+
+pub type EnumObject<'a, T = String, I = u16> = HashMap<T, I>;
 
 pub type EnumDefaultSymbols<'a> = EnumObject<'a>;
 
-pub enum ExtendOptions<'a, T> {
-    Object(Options<'a, T>),
-    Empty,
-    // Empty(PhantomData<&'a T>), // TODO: this should be for None/Empty
-}
+// #[derive(Clone)]
+// pub enum ExtendOptions<'a> {
+//     Object(Options<'a>),
+//     Empty,
+//     // Empty(PhantomData<&'a T>), // TODO: this should be for None/Empty
+// }
 
+#[derive(Clone)]
 pub struct IndexParams<'a> {
     pub _type: &'a String,
 }
 
 pub type Indexes<'a> = HashMap<&'a String, &'a IndexParams<'a>>;
 
+#[derive(Clone)]
 pub struct InputPayload {
     pub id: String,
     pub key: String,
@@ -115,6 +149,7 @@ pub struct InputPayload {
  */
 pub type Inputs<'a> = HashMap<&'a String, &'a Vec<&'a Value>>;
 
+#[derive(Clone)]
 pub struct MaskObject {
     pub actors: bool,
     pub components: bool,
@@ -128,6 +163,7 @@ pub struct MaskObject {
  * It can be an array of values with the first value being considered the action, and the remaining the payload.
  * Or it can be an object with an action and a payload.
  */
+#[derive(Clone)]
 pub enum Message<'a> {
     Array(&'a Vec<&'a Value>),
     Object(&'a MessageObject<'a>),
@@ -136,6 +172,7 @@ pub enum Message<'a> {
 /**
  * The Messages enum represents one or more messages with actions and a payloads.
  */
+#[derive(Clone)]
 pub enum Messages<'a> {
     Array(MessageArray<'a>),
     Object(&'a MessageObject<'a>),
@@ -144,6 +181,7 @@ pub enum Messages<'a> {
 /**
  * The MessageArray struct represents a list of messages
  */
+#[derive(Clone)]
 pub enum MessageArray<'a> {
     Tuple(&'a Vec<&'a Value>),
     Messages(&'a Vec<&'a Message<'a>>),
@@ -153,22 +191,25 @@ pub enum MessageArray<'a> {
 /**
  * The MessageObject struct represents a message with an action and a payload.
  */
+#[derive(Clone)]
 pub struct MessageObject<'a> {
     pub action: &'a String,
-    pub payload: Payload<'a>,
+    pub payload: &'a Value,
 }
 
 /**
  * The Payload enum represents the payload of a message.
  */
-pub enum Payload<'a> {
-    Array(&'a Vec<&'a Value>),
-    Object(&'a Value),
-}
+// #[derive(Clone)]
+// pub enum Payload<'a> {
+//     Array(&'a Vec<&'a Value>),
+//     Object(&'a Value),
+// }
 
-pub enum PayloadSize<'a> {
+#[derive(Clone)]
+pub enum PayloadSize {
     Number(i8),
-    Object(&'a PayloadSizeObject)
+    Object(PayloadSizeObject)
 }
 
 // pub enum PayloadSizeObjectType {
@@ -176,6 +217,7 @@ pub enum PayloadSize<'a> {
 //     Ordered,
 // }
 
+#[derive(Clone)]
 pub struct PayloadSizeObject {
     pub default: i8,
     pub rollback: Option<i8>,
@@ -185,7 +227,7 @@ pub struct PayloadSizeObject {
     // kind: PayloadSizeObjectType, 
 }
 
-pub type PayloadSizes<'a> = HashMap<&'a String, &'a PayloadSize<'a>>;
+// pub type PayloadSizes<'a> = HashMap<&'a String, PayloadSize>;
 
 
 pub enum PromiseOrValue<T: Send, E: Send> {
@@ -196,6 +238,7 @@ pub enum PromiseOrValue<T: Send, E: Send> {
 /**
  * A enum that can be either a Set or a Vec.
  */
+#[derive(Clone)]
 pub enum SetOrVec<T> {
     Set(HashSet<T>),
     Vec(Vec<T>)
@@ -204,6 +247,7 @@ pub enum SetOrVec<T> {
 /**
 * The StorageOptions interface represents the options of a store.
 */
+#[derive(Clone)]
 pub struct StorageOptions<'a> {
     pub types: Option<&'a Types<'a>>,
     pub indexes: Option<&'a Indexes<'a>>,
@@ -211,40 +255,35 @@ pub struct StorageOptions<'a> {
 }
 
 // pub type Symbols = HashMap<u32, &String>;
-pub type Symbols<'a> = HashMap<&'a String, i32>;
+pub type Symbols<'a> = HashMap<&'a String, u32>;
+
+
+/**
+ * The Payload struct represents the payload for a symbol action.
+ *
+ * @property {usize} length - The length of the symbol.
+ */
+#[derive(Clone)]
+pub struct SymbolPayload {
+    pub length: usize,
+}
 
 #[derive(Clone)]
 pub enum Type<'a> {
     String(&'a String),
-    Tuple((&'a String, i8)),
+    Tuple((&'a String, u8)),
 }
 
 pub type Types<'a> = HashMap<&'a String, &'a Type<'a>>;
 
 pub type ValidKeys<'a> = HashMap<&'a String, bool>;
 
-pub enum ValueEnum {
-    String(String),
-    Number(i32),
-}
-
-// CHAOS SECTION BELOW
-
-/**
- * The Component struct represents a component with dynamic properties.
- */
-pub struct Component {
-    pub properties: HashMap<String, serde_json::Value>,
-}
-
-/**
- * The Components struct represents a collection of components.
- *
- * id: The component identified by id.
- */
-pub struct Components_ {
-    pub components: HashMap<String, Component>,
-}
+// #[derive(Clone)]
+// pub enum ValueEnum {
+//     String(String),
+//     Number(f64),
+// }
 
 // TODO:
+#[derive(Clone)]
 pub struct Query {}
