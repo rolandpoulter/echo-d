@@ -174,100 +174,34 @@ export class Storage {
     /**
      * Gets the actors.
      *
-     * @param {any} query - The query to use.
-     * @param {number} pageSize - The page size to use.
-     * @returns {string[][]} The actors.
+     * @returns {string[]} The actors.
      */
-    getActors(query = null, pageSize = Infinity) {
-        if (query !== null) {
-            let results = {};
-            for (let key in query) {
-                const index = this.indexes[key];
-                if (index) {
-                    const result = index.actors.query(query[key]);
-                    result.forEach((id) => {
-                        results[id] = true;
-                    });
-                }
-            }
-            const ids = Object.keys(results);
-            return paginate(ids, pageSize);
-        }
-        return paginate(this.actors, pageSize);
+    getActors() {
+        return this.actors;
     }
     /**
      * Gets the components.
      *
-     * @param {any} query - The query to use.
-     * @param {number} pageSize - The page size to use.
      * @returns {Components} The components.
      */
-    getComponents(query = null, pageSize = Infinity) {
-        let object = this.components;
-        if (query !== null) {
-            const results = {};
-            for (let key of query) {
-                results[key] = this.components[key];
-            }
-            object = results;
-        }
-        const ids = Object.keys(object);
-        const pages = paginate(ids, pageSize);
-        return pages.map((page) => {
-            const components = {};
-            for (let id of page) {
-                components[id] = object[id];
-            }
-            return components;
-        });
+    getComponents() {
+        return this.components;
     }
     /**
      * Gets the entities.
      *
-     * @param {any} query - The query to use.
-     * @param {number} pageSize - The page size to use.
      * @returns {string[]} The entities.
      */
-    getEntities(query = null, pageSize = Infinity) {
-        if (query !== null) {
-            let results = {};
-            for (let key in query) {
-                const index = this.indexes[key];
-                if (index) {
-                    const result = index.entities.query(query[key]);
-                    result.forEach((id) => {
-                        results[id] = true;
-                    });
-                }
-            }
-            const ids = Object.keys(results);
-            return paginate(ids, pageSize);
-        }
-        return paginate(this.entities, pageSize);
+    getEntities() {
+        return this.entities;
     }
     /**
      * Gets the inputs.
      *
      * @returns {Inputs} The inputs.
      */
-    getInputs(query = null, pageSize = Infinity) {
-        let object = this.inputs;
-        if (query !== null) {
-            const results = {};
-            for (let key of query) {
-                results[key] = this.inputs[key];
-            }
-            object = results;
-        }
-        const ids = Object.keys(object);
-        const pages = paginate(ids, pageSize);
-        return pages.map((page) => {
-            const inputs = {};
-            for (let id of page) {
-                inputs[id] = object[id];
-            }
-            return inputs;
-        });
+    getInputs() {
+        return this.inputs;
     }
     /**
      * Checks if an ID is an actor.
@@ -288,6 +222,104 @@ export class Storage {
     isEntity(id) {
         const entities = this.entities;
         return entities.indexOf(id) !== -1;
+    }
+    /**
+     * Lists the actors.
+     *
+     * @param {any} query - The query to use.
+     * @param {number} pageSize - The page size to use.
+     * @returns {string[][]} The actors.
+     */
+    listActors(query = null, pageSize = Infinity) {
+        if (query !== null) {
+            let results = {};
+            for (let key in query) {
+                const index = this.indexes[key];
+                if (index) {
+                    const result = index.actors.query(query[key]);
+                    result.forEach((id) => {
+                        results[id] = true;
+                    });
+                }
+            }
+            const ids = Object.keys(results);
+            return paginate(ids, pageSize);
+        }
+        return paginate(this.actors, pageSize);
+    }
+    /**
+     * Lists the components.
+     *
+     * @param {any} query - The query to use.
+     * @param {number} pageSize - The page size to use.
+     * @returns {Components} The components.
+     */
+    listComponents(query = null, pageSize = Infinity) {
+        let object = this.components;
+        if (query !== null) {
+            const results = {};
+            for (let key of query) {
+                results[key] = this.components[key];
+            }
+            object = results;
+        }
+        const ids = Object.keys(object);
+        const pages = paginate(ids, pageSize);
+        return pages.map((page) => {
+            const components = {};
+            for (let id of page) {
+                components[id] = object[id];
+            }
+            return components;
+        });
+    }
+    /**
+     * Lists the entities.
+     *
+     * @param {any} query - The query to use.
+     * @param {number} pageSize - The page size to use.
+     * @returns {string[]} The entities.
+     */
+    listEntities(query = null, pageSize = Infinity) {
+        if (query !== null) {
+            let results = {};
+            for (let key in query) {
+                const index = this.indexes[key];
+                if (index) {
+                    const result = index.entities.query(query[key]);
+                    result.forEach((id) => {
+                        results[id] = true;
+                    });
+                }
+            }
+            const ids = Object.keys(results);
+            return paginate(ids, pageSize);
+        }
+        return paginate(this.entities, pageSize);
+    }
+    /**
+     * Lists the inputs.
+     *
+     * @returns {Inputs} The inputs.
+     */
+    listInputs(query = null, pageSize = Infinity) {
+        let object = this.inputs;
+        if (query !== null) {
+            const results = {};
+            for (let key of query) {
+                results[key] = this.inputs[key];
+            }
+            object = results;
+        }
+        const ids = Object.keys(object);
+        const pages = paginate(ids, pageSize);
+        return pages.map((page) => {
+            const inputs = {};
+            for (let id of page) {
+                inputs[id] = object[id];
+            }
+            return inputs;
+        });
     }
     /**
      * Sets the actors.

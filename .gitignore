@@ -38,3 +38,6 @@ rust/target/
 
 # vscode settings
 .vscode/settings.json
+
+# zed settings
+.zed/settings.json

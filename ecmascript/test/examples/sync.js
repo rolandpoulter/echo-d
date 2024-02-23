@@ -7,10 +7,10 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
     const miniplexExample = extras.miniplex.miniplexExample
 
     const expectUpdatedView = (view, a, e, c, i) => {
-        const actors = view.context.store.getActors();
-        const entities = view.context.store.getEntities();
-        const components = view.context.store.getComponents();
-        const inputs = view.context.store.getInputs();
+        const actors = view.context.store.listActors();
+        const entities = view.context.store.listEntities();
+        const components = view.context.store.listComponents();
+        const inputs = view.context.store.listInputs();
         if (a !== null)  {
             expect(actors).toEqual(a);
         }

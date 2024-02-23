@@ -197,15 +197,39 @@ export class BitECSStorage extends Storage {
         }
     }
 
-    getActors(query: any = null, pageSize: number) {
+    getActors() {
+        return super.getActors();
+    }
+
+    getComponents() {
+        return super.getComponents();
+    }
+
+    getEntities() {
+        return super.getEntities();
+    }
+
+    getInputs() {
+        return super.getInputs();
+    }
+
+    isActor(id: string) {
+        return this.actors.has(id);
+    }
+
+    isEntity(id: string) {
+        return this.entities.has(id);
+    }
+
+    listActors(query: any = null, pageSize: number) {
         if (query !== null) {
-            return super.getActors(query, pageSize);
+            return super.listActors(query, pageSize);
         }
         const actors = this.actors.keys()
         return paginate(actors, pageSize)
     }
 
-    getComponents(query: any = null, pageSize: number): any[] {
+    listComponents(query: any = null, pageSize: number): any[] {
         // const queryKeys = Object.keys(query);
         // const entities = this.world.with(...queryKeys);
         let ids
@@ -239,24 +263,16 @@ export class BitECSStorage extends Storage {
         })
     }
 
-    getEntities(query: any = null, pageSize: number) {
+    listEntities(query: any = null, pageSize: number) {
         if (query !== null) {
-            return super.getEntities(query, pageSize);
+            return super.listEntities(query, pageSize);
         }
         const entities = this.entities.keys()
         return paginate(entities, pageSize)
     }
 
-    getInputs(query: any = null, pageSize: number) {
-        return super.getInputs(query, pageSize);
-    }
-
-    isActor(id: string) {
-        return this.actors.has(id);
-    }
-
-    isEntity(id: string) {
-        return this.entities.has(id);
+    listInputs(query: any = null, pageSize: number) {
+        return super.listInputs(query, pageSize);
     }
 
     setActors(actors: string[]) {

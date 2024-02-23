@@ -39,14 +39,15 @@ export const ActorActionsFactory = (Parent: any = Object): any => class ActorAct
             input = payload as InputPayload
         }
 
-        let id = getActorId(input?.id, context)
+        let id: string | number | undefined = input?.id;
         if (id === undefined || id === null || id === '') { return }
-
+        
         if (compressStringsAsInts) {
             id = extractSymbol(id, context, options)
             if (id === '') { return }
         }
-
+        
+        id = getActorId(id, context) as string;
         if (!input?.id) { input.id = id }
 
         context.actorInput(id, input, tick, options)
@@ -105,14 +106,14 @@ export const ActorActionsFactory = (Parent: any = Object): any => class ActorAct
         options = options = Options.ensure(options, this)
         const { getActorId, compressStringsAsInts } = options
 
-        id = getActorId(id, context)
         if (id === undefined || id === null || id === '') { return }
-
+        
         if (compressStringsAsInts) {
             id = extractSymbol(id, context, options)
             if (id === '') { return }
         }
-
+        
+        id = getActorId(id, context)
         context.removeActor(id, options)
     }
 
@@ -127,14 +128,14 @@ export const ActorActionsFactory = (Parent: any = Object): any => class ActorAct
         options = options = Options.ensure(options, this)
         const { getActorId, compressStringsAsInts } = options
 
-        id = getActorId(id, context)
         if (id === undefined || id === null || id === '') { return false }
-
+        
         if (compressStringsAsInts) {
             id = extractSymbol(id, context, options)
             if (id === '') { return false }
         }
-
+        
+        id = getActorId(id, context)
         return context.spawnActor(id, options)
     }
 }

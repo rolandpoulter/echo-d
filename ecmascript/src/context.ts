@@ -155,7 +155,7 @@ export class Context {
      * @returns {Emitter<string[][]> | string[][]} The actors from the store.
      */
     getActors(query: any, pageSize: number): Emitter<string[][]> | string[][] {
-        return this.store.getActors(query, pageSize)
+        return this.store.listActors(query, pageSize)
     }
 
     /**
@@ -289,7 +289,7 @@ export class Context {
      * @returns {Emitter<string[][]> | string[][]} The entities from the store.
      */
     getEntities(query: any, pageSize: number): Emitter<string[][]> | string[][] {
-        return this.store.getEntities(query, pageSize)
+        return this.store.listEntities(query, pageSize)
     }
 
     /**
@@ -420,7 +420,7 @@ export class Context {
      * @returns {Emitter<Components[]> | Components[]} The components from the store.
      */
     getComponents(query: any, pageSize: number): Emitter<Components[]> | Components[] {
-        return this.store.getComponents(query, pageSize)
+        return this.store.listComponents(query, pageSize)
     }
 
     /**
@@ -737,7 +737,7 @@ export class Context {
      * @returns {Emitter<Inputs[]> | Inputs[]} The inputs from the store.
      */
     getInputs(query: any, pageSize: number): Emitter<Inputs[]> | Inputs[] {
-        return this.store.getInputs(query, pageSize)
+        return this.store.listInputs(query, pageSize)
     }
 
     /**

@@ -26,7 +26,7 @@ export const ActorActionsFactory = (Parent = Object) => class ActorActions exten
         else {
             input = payload;
         }
-        let id = getActorId(input?.id, context);
+        let id = input?.id;
         if (id === undefined || id === null || id === '') {
             return;
         }
@@ -36,6 +36,7 @@ export const ActorActionsFactory = (Parent = Object) => class ActorActions exten
                 return;
             }
         }
+        id = getActorId(id, context);
         if (!input?.id) {
             input.id = id;
         }
@@ -89,7 +90,6 @@ export const ActorActionsFactory = (Parent = Object) => class ActorActions exten
     removeActor(id, context, options) {
         options = options = Options.ensure(options, this);
         const { getActorId, compressStringsAsInts } = options;
-        id = getActorId(id, context);
         if (id === undefined || id === null || id === '') {
             return;
         }
@@ -99,6 +99,7 @@ export const ActorActionsFactory = (Parent = Object) => class ActorActions exten
                 return;
             }
         }
+        id = getActorId(id, context);
         context.removeActor(id, options);
     }
     /**
@@ -111,7 +112,6 @@ export const ActorActionsFactory = (Parent = Object) => class ActorActions exten
     spawnActor(id, context, options) {
         options = options = Options.ensure(options, this);
         const { getActorId, compressStringsAsInts } = options;
-        id = getActorId(id, context);
         if (id === undefined || id === null || id === '') {
             return false;
         }
@@ -121,6 +121,7 @@ export const ActorActionsFactory = (Parent = Object) => class ActorActions exten
                 return false;
             }
         }
+        id = getActorId(id, context);
         return context.spawnActor(id, options);
     }
 };

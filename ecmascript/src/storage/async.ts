@@ -135,43 +135,28 @@ export class AsyncStorage implements StorageInterface {
     /**
      * Gets the actors.
      *
-     * @param {any} query - The query to use.
-     * @param {number} pageSize - The page size to use.
-     * @returns {string[][]} The actors.
+     * @returns {string[]} The actors.
      */
-    getActors(query: any = null, pageSize: number = Infinity): Emitter<string[][]> | string[][] {
-        const pages = StoragePrototype.getActors.call(this, query, pageSize)
-        return pages;
-        // const emitter = new Emitter<string[][]>(pages as string[][], true); 
-        // return emitter;
+    getActors(): Emitter<string[]> | string[] {
+        return StoragePrototype.getActors.call(this)
     }
 
     /**
      * Gets the components.
      *
-     * @param {any} query - The query to use.
-     * @param {number} pageSize - The page size to use.
      * @returns {Components} The components.
      */
-    getComponents(query: any = null, pageSize: number = Infinity): Emitter<Components[]> | Components[] {
-        const pages = StoragePrototype.getComponents.call(this, query, pageSize)
-        return pages;
-        // const emitter = new Emitter<Components[]>(pages as Components[], true); 
-        // return emitter;
+    getComponents(): Emitter<Components> | Components {
+        return StoragePrototype.getComponents.call(this);
     }
 
     /**
      * Gets the entities.
      *
-     * @param {any} query - The query to use.
-     * @param {number} pageSize - The page size to use.
      * @returns {string[]} The entities.
      */
-    getEntities(query: any = null, pageSize: number = Infinity): Emitter<string[][]> | string[][] {
-        const pages = StoragePrototype.getEntities.call(this, query, pageSize)
-        return pages;
-        // const emitter = new Emitter<string[][]>(pages as string[][], true); 
-        // return emitter;
+    getEntities(): Emitter<string[]> | string[] {
+        return StoragePrototype.getEntities.call(this);
     }
 
     /**
@@ -179,11 +164,8 @@ export class AsyncStorage implements StorageInterface {
      *
      * @returns {Inputs} The inputs.
      */
-    getInputs(query: any = null, pageSize: number = Infinity): Emitter<Inputs[]> | Inputs[] {
-        const pages = StoragePrototype.getInputs.call(this, query, pageSize)
-        return pages;
-        // const emitter = new Emitter<Inputs[]>(pages as Inputs[], true); 
-        // return emitter;
+    getInputs(): Emitter<Inputs> | Inputs {
+        return StoragePrototype.getInputs.call(this);
     }
 
     /**
@@ -204,6 +186,60 @@ export class AsyncStorage implements StorageInterface {
      */
     isEntity(id: string): boolean {
         return StoragePrototype.isEntity.call(this, id)
+    }
+
+    /**
+     * Lists the actors.
+     *
+     * @param {any} query - The query to use.
+     * @param {number} pageSize - The page size to use.
+     * @returns {string[][]} The actors.
+     */
+    listActors(query: any = null, pageSize: number = Infinity): Emitter<string[][]> | string[][] {
+        const pages = StoragePrototype.listActors.call(this, query, pageSize)
+        return pages;
+        // const emitter = new Emitter<string[][]>(pages as string[][], true); 
+        // return emitter;
+    }
+
+    /**
+     * Lists the components.
+     *
+     * @param {any} query - The query to use.
+     * @param {number} pageSize - The page size to use.
+     * @returns {Components} The components.
+     */
+    listComponents(query: any = null, pageSize: number = Infinity): Emitter<Components[]> | Components[] {
+        const pages = StoragePrototype.listComponents.call(this, query, pageSize)
+        return pages;
+        // const emitter = new Emitter<Components[]>(pages as Components[], true); 
+        // return emitter;
+    }
+
+    /**
+     * Lists the entities.
+     *
+     * @param {any} query - The query to use.
+     * @param {number} pageSize - The page size to use.
+     * @returns {string[]} The entities.
+     */
+    listEntities(query: any = null, pageSize: number = Infinity): Emitter<string[][]> | string[][] {
+        const pages = StoragePrototype.listEntities.call(this, query, pageSize)
+        return pages;
+        // const emitter = new Emitter<string[][]>(pages as string[][], true); 
+        // return emitter;
+    }
+
+    /**
+     * Lists the inputs.
+     *
+     * @returns {Inputs} The inputs.
+     */
+    listInputs(query: any = null, pageSize: number = Infinity): Emitter<Inputs[]> | Inputs[] {
+        const pages = StoragePrototype.listInputs.call(this, query, pageSize)
+        return pages;
+        // const emitter = new Emitter<Inputs[]>(pages as Inputs[], true); 
+        // return emitter;
     }
 
     /**

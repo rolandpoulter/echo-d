@@ -33,12 +33,16 @@ ___
 - `findComponent(id: string, key: string): Promise<any>`: Fetches a component.
 - `findInputs(id: string): Promise<InputPayload>`: Fetches an actor's inputs asynchronously.
 - `findInput(id: string, index: number): Promise<InputPayload>`: Fetches an actor's input asynchronously.
-- `getActors(query: any = null, pageSize: number = Infinity): Emitter<string[][]> | string[][]`: Gets the actors.
-- `getComponents(query: any = null, pageSize: number = Infinity): Emitter<Components[]> | Components[]`: Gets the components.
-- `getEntities(query: any = null, pageSize: number = Infinity): Emitter<string[][]> | string[][]`: Gets the entities.
-- `getInputs(query: any = null, pageSize: number = Infinity): Emitter<Inputs[]> | Inputs[]`: Gets the inputs.
+- `getActors(): Emitter<string[]> | string[]`: Gets the actors.
+- `getComponents(): Emitter<Components> | Components`: Gets the components.
+- `getEntities(): Emitter<string[]> | string[]`: Gets the entities.
+- `getInputs(): Emitter<Inputs> | Inputs`: Gets the inputs.
 - `isActor(id: string): boolean`: Checks if an ID is an actor.
 - `isEntity(id: string): boolean`: Checks if an ID is an entity.
+- `listActors(query: any = null, pageSize: number = Infinity): Emitter<string[][]> | string[][]`: Lists the actors.
+- `listComponents(query: any = null, pageSize: number = Infinity): Emitter<Components[]> | Components[]`: Lists the components.
+- `listEntities(query: any = null, pageSize: number = Infinity): Emitter<string[][]> | string[][]`: Lists the entities.
+- `listInputs(query: any = null, pageSize: number = Infinity): Emitter<Inputs[]> | Inputs[]`: Lists the inputs.
 - `setActors(actors: string[]): Promise<string[]>`: Sets the actors.
 - `setComponents(components: Components): Promise<Components>`: Sets the components asynchronously.
 - `setEntities(entities: string[]): Promise<string[]>`: Sets the entities asynchronously.

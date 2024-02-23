@@ -96,52 +96,34 @@ export class AsyncStorage {
     /**
      * Gets the actors.
      *
-     * @param {any} query - The query to use.
-     * @param {number} pageSize - The page size to use.
-     * @returns {string[][]} The actors.
+     * @returns {string[]} The actors.
      */
-    getActors(query = null, pageSize = Infinity) {
-        const pages = StoragePrototype.getActors.call(this, query, pageSize);
-        return pages;
-        // const emitter = new Emitter<string[][]>(pages as string[][], true); 
-        // return emitter;
+    getActors() {
+        return StoragePrototype.getActors.call(this);
     }
     /**
      * Gets the components.
      *
-     * @param {any} query - The query to use.
-     * @param {number} pageSize - The page size to use.
      * @returns {Components} The components.
      */
-    getComponents(query = null, pageSize = Infinity) {
-        const pages = StoragePrototype.getComponents.call(this, query, pageSize);
-        return pages;
-        // const emitter = new Emitter<Components[]>(pages as Components[], true); 
-        // return emitter;
+    getComponents() {
+        return StoragePrototype.getComponents.call(this);
     }
     /**
      * Gets the entities.
      *
-     * @param {any} query - The query to use.
-     * @param {number} pageSize - The page size to use.
      * @returns {string[]} The entities.
      */
-    getEntities(query = null, pageSize = Infinity) {
-        const pages = StoragePrototype.getEntities.call(this, query, pageSize);
-        return pages;
-        // const emitter = new Emitter<string[][]>(pages as string[][], true); 
-        // return emitter;
+    getEntities() {
+        return StoragePrototype.getEntities.call(this);
     }
     /**
      * Gets the inputs.
      *
      * @returns {Inputs} The inputs.
      */
-    getInputs(query = null, pageSize = Infinity) {
-        const pages = StoragePrototype.getInputs.call(this, query, pageSize);
-        return pages;
-        // const emitter = new Emitter<Inputs[]>(pages as Inputs[], true); 
-        // return emitter;
+    getInputs() {
+        return StoragePrototype.getInputs.call(this);
     }
     /**
      * Checks if an ID is an actor.
@@ -160,6 +142,56 @@ export class AsyncStorage {
      */
     isEntity(id) {
         return StoragePrototype.isEntity.call(this, id);
+    }
+    /**
+     * Lists the actors.
+     *
+     * @param {any} query - The query to use.
+     * @param {number} pageSize - The page size to use.
+     * @returns {string[][]} The actors.
+     */
+    listActors(query = null, pageSize = Infinity) {
+        const pages = StoragePrototype.listActors.call(this, query, pageSize);
+        return pages;
+        // const emitter = new Emitter<string[][]>(pages as string[][], true); 
+        // return emitter;
+    }
+    /**
+     * Lists the components.
+     *
+     * @param {any} query - The query to use.
+     * @param {number} pageSize - The page size to use.
+     * @returns {Components} The components.
+     */
+    listComponents(query = null, pageSize = Infinity) {
+        const pages = StoragePrototype.listComponents.call(this, query, pageSize);
+        return pages;
+        // const emitter = new Emitter<Components[]>(pages as Components[], true); 
+        // return emitter;
+    }
+    /**
+     * Lists the entities.
+     *
+     * @param {any} query - The query to use.
+     * @param {number} pageSize - The page size to use.
+     * @returns {string[]} The entities.
+     */
+    listEntities(query = null, pageSize = Infinity) {
+        const pages = StoragePrototype.listEntities.call(this, query, pageSize);
+        return pages;
+        // const emitter = new Emitter<string[][]>(pages as string[][], true); 
+        // return emitter;
+    }
+    /**
+     * Lists the inputs.
+     *
+     * @returns {Inputs} The inputs.
+     */
+    listInputs(query = null, pageSize = Infinity) {
+        const pages = StoragePrototype.listInputs.call(this, query, pageSize);
+        return pages;
+        // const emitter = new Emitter<Inputs[]>(pages as Inputs[], true); 
+        // return emitter;
     }
     /**
      * Sets the actors.

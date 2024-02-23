@@ -9,8 +9,8 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
 
         // if (world !== undefined && world !== null) {
             // console.log('cleanup world:', world);
-            // extras.bitecs.api.getAllEntities(world).forEach(entity => {
-            //     extras.bitecs.api.getEntityComponents(world, entity).forEach(component => {
+            // extras.bitecs.api.listAllEntities(world).forEach(entity => {
+            //     extras.bitecs.api.listEntityComponents(world, entity).forEach(component => {
             //         extras.bitecs.api.removeComponent(world, component, entity, true);
             //     });
             //     extras.bitecs.api.removeEntity(world, entity);
@@ -43,7 +43,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
         it('should be able to create an entity', () => {
             const { echo } = echoExample();
             echo.createEntity('entity1');
-            const entities = echo.store.getEntities();
+            const entities = echo.store.listEntities();
             cleanup(echo)
             expect(entities).toEqual([['entity1']]);
         });
@@ -52,7 +52,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             const { echo } = echoExample();
             echo.createEntity('entity1');
             echo.removeEntity('entity1');
-            const entities = echo.store.getEntities();
+            const entities = echo.store.listEntities();
             cleanup(echo)
             expect(entities).toEqual([]);
         });
@@ -61,7 +61,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             const { echo } = echoExample();
             echo.createEntity('entity1');
             echo.createEntity('entity2');
-            const entities = echo.store.getEntities();
+            const entities = echo.store.listEntities();
             cleanup(echo)
             expect(entities).toEqual([['entity1', 'entity2']]);
         });
@@ -69,7 +69,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
         it('should be able to create an actor', () => {
             const { echo } = echoExample();
             echo.createEntity('actor1');
-            const entities = echo.store.getEntities();
+            const entities = echo.store.listEntities();
             cleanup(echo)
             expect(entities).toEqual([['actor1']]);
         });
@@ -78,7 +78,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             const { echo } = echoExample();
             echo.createEntity('actor1');
             echo.removeEntity('actor1');
-            const actors = echo.store.getActors();
+            const actors = echo.store.listActors();
             cleanup(echo)
             expect(actors).toEqual([]);
         });
@@ -90,7 +90,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             echo.createEntity('actor1');
             const now = performance.timeOrigin + performance.now();
             echo.actorInput('actor1', { type: 'jump' }, now);
-            const inputs = echo.store.getInputs();
+            const inputs = echo.store.listInputs();
             cleanup(echo)
             expect(inputs).toEqual([{
                 actor1: [ [ { type: 'jump' }, now ] ]
@@ -101,7 +101,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             const { echo } = echoExample();
             echo.spawnActor('actor1');
             echo.spawnActor('actor2');
-            const actors = echo.store.getActors();
+            const actors = echo.store.listActors();
             cleanup(echo)
             expect(actors).toEqual([['actor1', 'actor2']]);
         });
@@ -111,8 +111,8 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             echo.createEntity('entity1');
             echo.upsertComponent('entity1', 'position', new Float32Array([0, 0, 0]));
             
-            const entities = echo.store.getEntities();
-            const components = echo.store.getComponents();
+            const entities = echo.store.listEntities();
+            const components = echo.store.listComponents();
             cleanup(echo)
             expect(entities).toEqual([['entity1']]);
             expect(components).toEqual([{
@@ -125,8 +125,8 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             echo.spawnActor('actor1');
             echo.upsertComponent('actor1', 'position', new Float32Array([0, 0, 0]));
             
-            const actors = echo.store.getActors();
-            const components = echo.store.getComponents();
+            const actors = echo.store.listActors();
+            const components = echo.store.listComponents();
             cleanup(echo)
             expect(actors).toEqual([['actor1']]);
             expect(components).toEqual([{
@@ -145,9 +145,9 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             echo.upsertComponent('entity1', 'position', new Float32Array([0, 0, 0]));
             echo.upsertComponent('entity2', 'position', new Float32Array([0, 0, 0]));
             
-            const actors = echo.store.getActors();
-            const entities = echo.store.getEntities();
-            const components = echo.store.getComponents();
+            const actors = echo.store.listActors();
+            const entities = echo.store.listEntities();
+            const components = echo.store.listComponents();
             cleanup(echo)
             expect(actors).toEqual([['actor1', 'actor2']]);
             expect(entities).toEqual([['entity1', 'entity2']]);
@@ -165,7 +165,7 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             echo.upsertComponent('actor1', 'position', new Float32Array([0, 0, 0]));
             echo.removeComponent('actor1', 'position');
             
-            const components = echo.store.getComponents();
+            const components = echo.store.listComponents();
             cleanup(echo)
             expect(components).toEqual([{
                 actor1: {}
@@ -205,10 +205,10 @@ export default function (echo, extras, { describe, it, expect, mock, spy, xit, x
             }
             
             const expectUpdatedView = (view, a, e, c, i) => {
-                const actors = view.context.store.getActors();
-                const entities = view.context.store.getEntities();
-                const components = view.context.store.getComponents();
-                const inputs = view.context.store.getInputs();
+                const actors = view.context.store.listActors();
+                const entities = view.context.store.listEntities();
+                const components = view.context.store.listComponents();
+                const inputs = view.context.store.listInputs();
                 expect(actors).toEqual(a);
                 expect(entities).toEqual(e);
                 expect(components).toEqual(c);

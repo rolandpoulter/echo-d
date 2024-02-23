@@ -46,12 +46,16 @@ ___
 - `findComponent(id: string, key: string): any`: Fetches a component from an entity.
 - `findInputs(id: string): InputPayload`: Fetches the inputs for an actor.
 - `findInput(id: string, index: number): InputPayload`: Fetches an input for an actor.
-- `getActors(query: any = null, pageSize: number = Infinity): string[][]`: Gets the actors in the store.
-- `getComponents(query: any = null, pageSize: number = Infinity): Components[]`: Gets the components in the store.
-- `getEntities(query: any = null, pageSize: number = Infinity): string[][]`: Gets the entities in the store.
-- `getInputs(query: any = null, pageSize: number = Infinity): Inputs[]`: Gets the inputs in the store.
+- `getActors(): string[]`: Gets the actors in the store.
+- `getComponents(): Components`: Gets the components in the store.
+- `getEntities(): string[]`: Gets the entities in the store.
+- `getInputs(): Inputs`: Gets the inputs in the store.
 - `isActor(id: string): boolean`: Checks if an ID is an actor.
 - `isEntity(id: string): boolean`: Checks if an ID is an entity.
+- `listActors(query: any = null, pageSize: number = Infinity): string[][]`: Lists the actors in the store.
+- `listComponents(query: any = null, pageSize: number = Infinity): Components[]`: Lists the components in the store.
+- `listEntities(query: any = null, pageSize: number = Infinity): string[][]`: Lists the entities in the store.
+- `listInputs(query: any = null, pageSize: number = Infinity): Inputs[]`: Lists the inputs in the store.
 - `setActors(actors: string[]): string[]`: Sets the actors in the store.
 - `setComponents(components: Components): Components`: Sets the components in the store.
 - `setEntities(entities: string[]): string[]`: Sets the entities in the store.

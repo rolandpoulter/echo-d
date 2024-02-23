@@ -225,9 +225,33 @@ export class BecsyStorage extends AsyncStorage {
         }
     }
 
-    getActors(query: any = null, pageSize: number): Emitter<string[][]> | string[][] {
+    getActors(): Emitter<string[]> | string[] {
+        return super.getActors();
+    }
+
+    getComponents(): Emitter<Components> | Components {
+        return super.getComponents();
+    }
+
+    getEntities(): Emitter<string[]> | string[] {
+        return super.getEntities();
+    }
+
+    getInputs(): Emitter<Inputs> | Inputs {
+        return super.getInputs();
+    }
+
+    isActor(id: string) {
+        return this.actors.has(id);
+    }
+
+    isEntity(id: string) {
+        return this.entities.has(id);
+    }
+
+    listActors(query: any = null, pageSize: number): Emitter<string[][]> | string[][] {
         if (query !== null) {
-            return super.getActors(query, pageSize);
+            return super.listActors(query, pageSize);
         }
         const actors = Array.from(this.actors.keys())
         const pages = paginate(actors, pageSize)
@@ -235,7 +259,7 @@ export class BecsyStorage extends AsyncStorage {
         // return new Emitter<string[][]>(pages, true)
     }
 
-    getComponents(query: any = null, pageSize: number): Emitter<Components[]> | Components[] {
+    listComponents(query: any = null, pageSize: number): Emitter<Components[]> | Components[] {
         // const queryKeys = Object.keys(query);
         // const entities = this.world.with(...queryKeys);
         let ids
@@ -271,9 +295,9 @@ export class BecsyStorage extends AsyncStorage {
         // return new Emitter<Components[]>(pages, true)
     }
 
-    getEntities(query: any = null, pageSize: number): Emitter<string[][]> | string[][] {
+    listEntities(query: any = null, pageSize: number): Emitter<string[][]> | string[][] {
         if (query !== null) {
-            return super.getEntities(query, pageSize);
+            return super.listEntities(query, pageSize);
         }
         const entities = this.entities.keys()
         const pages = paginate(entities, pageSize)
@@ -281,16 +305,8 @@ export class BecsyStorage extends AsyncStorage {
         // return new Emitter<string[][]>(pages, true)
     }
 
-    getInputs(query: any = null, pageSize: number): Emitter<Inputs[]> | Inputs[] {
-        return super.getInputs(query, pageSize);
-    }
-
-    isActor(id: string) {
-        return this.actors.has(id);
-    }
-
-    isEntity(id: string) {
-        return this.entities.has(id);
+    listInputs(query: any = null, pageSize: number): Emitter<Inputs[]> | Inputs[] {
+        return super.listInputs(query, pageSize);
     }
 
     async setActors(actors: string[]) {
